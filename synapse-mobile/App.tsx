@@ -36,6 +36,7 @@ import {captureRef,releaseCapture} from './src/captureTheme';
 import {ThemeReveal,type ThemeSnapshot} from './src/components/ThemeReveal';
 import type { Article } from './src/content/types';
 import {GeminiIntegration,type GeminiConfigurationState} from './src/content/geminiIntegration';
+import {GeminiSettings} from './src/components/GeminiSettings';
 type Collection='saved'|'history'|'settings'|null;
 export default function App(){
   const [fonts,error]=useFonts({Newsreader_400Regular,Newsreader_500Medium,SourceSans3_400Regular,SourceSans3_600SemiBold});
@@ -213,10 +214,16 @@ function Synapse(){
             <Label strong style={{fontSize:18,marginBottom:16}}>Dimensione del testo</Label><View style={{flexDirection:'row',gap:6}}>{[18,20,23].map((n,i)=><Button key={n} label={['Testo piccolo','Testo medio','Testo grande'][i]} onPress={()=>lib.updateSettings({size:n})} style={{flex:1,borderRadius:24,backgroundColor:lib.settings.size===n?palette.active:palette.surface}}><Label style={{color:palette.ink}}>{['Piccolo','Medio','Grande'][i]}</Label></Button>)}</View>
             <Label muted style={{fontSize:lib.settings.size,lineHeight:lib.settings.size*1.5,marginVertical:24}}>Una piccola scoperta può cambiare il modo in cui guardiamo il mondo.</Label>
             <Pressable accessibilityRole="switch" accessibilityState={{checked:lib.settings.dark}} onPress={()=>void changeTheme()} style={[styles.menu,{borderColor:palette.line}]}><Label strong style={{flex:1,fontSize:19}}>Tema scuro</Label><Icon name={lib.settings.dark?'toggle-switch':'toggle-switch-off-outline'} size={42}/></Pressable>
-            <Pressable accessibilityRole="switch" accessibilityState={{checked:lib.settings.aiEnabled}} onPress={()=>lib.updateSettings({aiEnabled:!lib.settings.aiEnabled})} style={[styles.menu,{borderColor:palette.line}]}><Label strong style={{flex:1,fontSize:19}}>Revisione con Gemini</Label><Icon name={lib.settings.aiEnabled?'toggle-switch':'toggle-switch-off-outline'} size={42}/></Pressable>
-            <Label muted accessibilityLiveRegion="polite" style={{fontSize:15,lineHeight:21,marginTop:12}}>{geminiState.message}</Label>
-            {geminiState.configured&&<Button label="Rimuovi chiave Gemini" onPress={()=>{keyRevision.current++;void gemini.current!.remove().then(()=>{setAIKey('');setKeyEdited(false);lib.updateSettings({aiEnabled:false})}).catch(()=>setToast('Chiave non rimossa. Riprova.'))}}><Label>Rimuovi chiave</Label></Button>}
-            {lib.settings.aiEnabled&&<View style={{paddingVertical:20,gap:14}}><Label muted style={{fontSize:15,lineHeight:21}}>Facoltativa. Usa una tua chiave Gemini con quota gratuita e fatturazione disattivata. Quando la quota termina, rimane disponibile Wikipedia. I testi vengono inviati a Google; non i tuoi salvataggi o la cronologia.</Label><TextInput accessibilityLabel="Chiave API Gemini" secureTextEntry autoCapitalize="none" autoCorrect={false} value={aiKey} onChangeText={v=>{keyRevision.current++;setAIKey(v);setKeyEdited(true)}} placeholder="Chiave API personale" placeholderTextColor={palette.muted} style={[styles.input,{color:palette.ink,backgroundColor:palette.surface}]} onBlur={()=>{if(keyEdited)void persistAIKey()}}/><Button label="Memorizza chiave AI" onPress={()=>void persistAIKey(true)}><Label>Salva chiave</Label></Button></View>}
+            <GeminiSettings
+              state={geminiState}
+              aiKey={aiKey}
+              keyEdited={keyEdited}
+              onChangeKey={v=>{keyRevision.current++;setAIKey(v);setKeyEdited(true)}}
+              onSaveKey={()=>void persistAIKey(true)}
+              onRemoveKey={()=>{keyRevision.current++;void gemini.current!.remove().then(()=>{setAIKey('');setKeyEdited(false);lib.updateSettings({aiEnabled:false})}).catch(()=>setToast('Chiave non rimossa. Riprova.'))}}
+              aiEnabled={lib.settings.aiEnabled}
+              onToggleEnabled={enabled=>lib.updateSettings({aiEnabled:enabled})}
+            />
           </>
         </ScrollView>:<ArticleList key={displayCollection} removalEnabled={!reader} onRemove={displayCollection==='saved'?removeSaved:undefined} articles={sourceRows} onOpen={open} hiddenId={collectionReturn.released?undefined:reader?.article.id} returnId={reader?.article.id} animate={collectionReturn.animate} bottomPadding={bottom+110} empty={<View style={{paddingTop:42}}><Label style={{fontFamily:heading,fontSize:28}}>{displayCollection==='saved'?'Le tue prossime riletture':'Le tue scoperte, qui'}</Label></View>}/>}
       </Animated.View>
