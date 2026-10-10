@@ -53,6 +53,21 @@ Gli strumenti Android locali non sono distribuiti dal repository.
 La Category Patch non è implementata. Il ramo predisposto è
 `category-patch-0.1.12`, inizialmente allo stesso commit di `main`.
 
+## Pubblicazione completata
+
+Repository privato: https://github.com/progettarsi/synapse
+
+Checkpoint iniziale: `166658302b2919db4aa3d2350140da14d374cc35`.
+Accesso Git Credential Manager completato dall'utente; repository creato
+nell'account personale confermato e privacy verificata tramite API GitHub.
+Pubblicati main e category-patch-0.1.12, con tracking origin e SHA remoti
+verificati. Nessun repository remoto preesistente sovrascritto.
+
+Git locale è operativo. Il connettore GitHub di Codex non vede ancora questo
+nuovo repository privato: se serve usarlo, verificare che l'integrazione GitHub
+abbia accesso anche a synapse. Questa autorizzazione aggiuntiva non è necessaria
+per il lavoro locale tramite Git Credential Manager.
+
 ## Codex → Antigravity → Codex
 
 1. Prima del passaggio, controllare `git status`, `git diff` e i file da aggiungere.
