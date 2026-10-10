@@ -5,7 +5,7 @@ import Animated,{useAnimatedStyle,useAnimatedReaction,useSharedValue,withSpring,
 import {useMotionPreference} from '../useMotionPreference';
 import * as Haptics from 'expo-haptics';
 import type { Article } from '../content/types';
-import { CATEGORIES } from '../content/categories';
+import { categoryLabel } from '../content/categories';
 import { heading,spring } from '../theme';
 import { Label,Icon,useTheme } from './Atoms';
 import type { TitleGeometry } from './TitleWords';
@@ -60,7 +60,7 @@ const FeedCard=memo(function FeedCard({article,height,size,saved,hidden,hideMeta
   const double=Gesture.Tap().numberOfTaps(2).maxDistance(7).maxDuration(200).maxDelay(280).runOnJS(true).onEnd((_,ok)=>{if(ok){onSave(article,true);setConfirmed(true);feedback.value=reduced?1:withSpring(1,spring);void Haptics.selectionAsync().catch(()=>{})}});
   const single=Gesture.Tap().maxDistance(7).maxDuration(250).runOnJS(true).onBegin(()=>{press.value=reduced?1:withTiming(.985,{duration:80})}).onEnd((_,ok)=>{press.value=reduced?1:withSpring(1,spring);if(ok)onOpen(article,node.current,'home')}).onFinalize(()=>press.value=reduced?1:withSpring(1,spring));
   return <View style={{height,paddingHorizontal:24,paddingTop:4}}>
-    <View style={[styles.meta,{opacity:hideMeta?0:1}]}><View style={[styles.badge,{backgroundColor:palette.surface}]}><Icon name="tag-outline" size={17}/><Label style={{fontSize:14}}>{CATEGORIES.find(c=>c.id===article.category)?.label||'Scoperte'}</Label></View><View style={{flex:1}}/><SaveButton gestureManaged saved={saved} onPress={()=>onSave(article)}/></View>
+    <View style={[styles.meta,{opacity:hideMeta?0:1}]}><View style={[styles.badge,{backgroundColor:palette.surface}]}><Icon name="tag-outline" size={17}/><Label style={{fontSize:14}}>{categoryLabel(article.category)}</Label></View><View style={{flex:1}}/><SaveButton gestureManaged saved={saved} onPress={()=>onSave(article)}/></View>
     <GestureDetector gesture={Gesture.Exclusive(double,single)}><Animated.View ref={node} style={[styles.reading,style,{opacity:hidden?0:1}]} accessible accessibilityRole="button" accessibilityLabel={`Approfondisci: ${article.title}`} accessibilityActions={[{name:'activate',label:'Apri articolo'},{name:'longpress',label:'Salva articolo'}]} onAccessibilityAction={e=>e.nativeEvent.actionName==='longpress'?onSave(article,true):onOpen(article,node.current,'home')}>
       <Label accessibilityRole="header" style={styles.title}>{article.title}</Label>{article.preview.map((p,i)=><Label key={i} style={{fontSize:size,lineHeight:size*1.47,marginBottom:22}}>{p}</Label>)}
       <Animated.View pointerEvents="none" style={[styles.confirmation,{backgroundColor:palette.active},bookmark]}><Icon name="bookmark" size={36}/></Animated.View>

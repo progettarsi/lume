@@ -1,0 +1,1385 @@
+{
+  "calls": 4,
+  "topics": [
+    {
+      "id": "science",
+      "matching": [
+        "Effetto Doppler",
+        "Camera oscura"
+      ]
+    },
+    {
+      "id": "technology",
+      "matching": [
+        "GPS",
+        "Stampa 3D"
+      ]
+    },
+    {
+      "id": "history",
+      "matching": [
+        "Stele di Rosetta"
+      ]
+    },
+    {
+      "id": "geography",
+      "matching": [
+        "Fuso orario",
+        "Delta fluviale"
+      ]
+    },
+    {
+      "id": "nature",
+      "matching": []
+    },
+    {
+      "id": "philosophy",
+      "matching": [
+        "Paradosso della nave di Teseo",
+        "Mito della caverna"
+      ]
+    },
+    {
+      "id": "psychology",
+      "matching": [
+        "Effetto Dunning-Kruger"
+      ]
+    },
+    {
+      "id": "arts",
+      "matching": [
+        "Origami"
+      ]
+    },
+    {
+      "id": "entertainment",
+      "matching": []
+    },
+    {
+      "id": "food",
+      "matching": [
+        "Fermentazione",
+        "Reazione di Maillard"
+      ]
+    },
+    {
+      "id": "sport",
+      "matching": [
+        "Scacchi"
+      ]
+    },
+    {
+      "id": "society",
+      "matching": [
+        "Calendario gregoriano",
+        "Esperanto"
+      ]
+    },
+    {
+      "id": "politics",
+      "matching": [
+        "Parlamento",
+        "Democrazia"
+      ]
+    },
+    {
+      "id": "music",
+      "matching": [
+        "Jazz",
+        "Sinfonia"
+      ]
+    },
+    {
+      "id": "cinema",
+      "matching": [
+        "Colonna sonora",
+        "Passo uno",
+        "Cinema d'animazione"
+      ]
+    },
+    {
+      "id": "biology",
+      "matching": [
+        "Bioluminescenza",
+        "Cellula",
+        "DNA"
+      ]
+    },
+    {
+      "id": "economics",
+      "matching": [
+        "Inflazione"
+      ]
+    },
+    {
+      "id": "astronomy",
+      "matching": [
+        "Buco nero",
+        "Sistema solare"
+      ]
+    },
+    {
+      "id": "literature",
+      "matching": [
+        "Romanzo",
+        "Poesia"
+      ]
+    },
+    {
+      "id": "medicine",
+      "matching": [
+        "Vaccino"
+      ]
+    },
+    {
+      "id": "mathematics",
+      "matching": [
+        "Probabilità",
+        "Numero primo"
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "requestedBy": [
+        "geography"
+      ],
+      "id": "wiki:12079",
+      "title": "Fuso orario",
+      "category": "geography",
+      "paragraphs": [
+        "I fusi orari sono porzioni longitudinali della superficie terrestre comprese tra due o più meridiani, che adottano lo stesso orario per scopi legali, economici e sociali. Prima della loro introduzione, nelle varie aree del pianeta si utilizzava l'ora solare locale (media o vera).",
+        "I fusi orari, unificando una fascia o una zona, permettono di regolare gli orologi di una regione o di uno stato sull'ora solare media del meridiano centrale del fuso in cui la zona si trova. Inizialmente, il mondo era suddiviso in 24 zone temporali, ciascuna delle quali copriva 15° di longitudine, con un proprio fuso orario e differiva da quella adiacente per un'ora. Successivamente, principalmente per ragioni politiche, si crearono 39 fusi orari, tuttora in uso.",
+        "La maggior parte dei fusi si discosta dal Tempo Coordinato Universale (UTC) per un numero intero di ore, da UTC-12 (isole Baker e Howland) a UTC+14 (isole della Linea); alcuni, tuttavia, presentano uno scostamento di 30 o 45 minuti (ad esempio il fuso orario di Terranova è UTC-3:30 e quello del Nepal è UTC+5:45).",
+        "Alcuni stati adottano l'ora legale per parte dell'anno, solitamente anticipando l'orario di un'ora. Molti fusi orari terrestri sono spostati verso est rispetto ai corrispondenti fusi orari nautici, creando così un effetto di ora legale permanente."
+      ],
+      "preview": [
+        "I fusi orari sono porzioni longitudinali della superficie terrestre comprese tra due o più meridiani, che adottano lo stesso orario per scopi legali, economici e sociali. Prima della loro introduzione, nelle varie aree del pianeta si utilizzava l'ora solare locale (media o vera).",
+        "I fusi orari, unificando una fascia o una zona, permettono di regolare gli orologi di una regione o di uno stato sull'ora solare media del meridiano centrale del fuso in cui la zona si trova. Inizialmente, il mondo era suddiviso in 24 zone temporali, ciascuna delle quali copriva 15° di longitudine, con un proprio fuso orario e differiva da quella adiacente per un'ora. Successivamente, principalmente per ragioni politiche, si crearono 39 fusi orari, tuttora in uso."
+      ],
+      "source": "https://it.wikipedia.org/wiki/Fuso_orario",
+      "revision": 152773807,
+      "sourceCategories": [
+        "Categoria:Calendari",
+        "Categoria:Fusi orari"
+      ],
+      "fetchedAt": 0,
+      "topics": [
+        "economics",
+        "society"
+      ],
+      "classification": {
+        "version": 1,
+        "fingerprint": "1:wiki:12079:152773807:80b15788",
+        "provider": "local",
+        "confidence": 0.46153846153846156
+      },
+      "readable": true,
+      "eligible": true
+    },
+    {
+      "requestedBy": [
+        "technology"
+      ],
+      "id": "wiki:20365",
+      "title": "GPS",
+      "category": "technology",
+      "paragraphs": [
+        "Il sistema di posizionamento globale (acronimo in inglese: Global Positioning System, a sua volta abbreviazione di NAVSTAR GPS, acronimo di NAVigation Satellite Timing And Ranging Global Positioning System o di NAVigation Signal Timing And Ranging Global Positioning System) è un sistema di posizionamento e navigazione satellitare militare statunitense.",
+        "Attraverso una rete dedicata di satelliti artificiali in orbita, fornisce a un terminale mobile o ricevitore GPS informazioni sulle sue coordinate geografiche e sul suo orario in ogni condizione meteorologica, ovunque sulla Terra o nelle sue immediate vicinanze, dove vi sia un contatto privo di ostacoli con almeno quattro satelliti del sistema. La localizzazione avviene tramite la trasmissione di un segnale radio da parte di ciascun satellite e l'elaborazione dei segnali ricevuti da parte del ricevitore.",
+        "È gestito dal governo degli Stati Uniti ed è liberamente accessibile da chiunque sia dotato di un ricevitore GPS. Il suo grado attuale di accuratezza è dell'ordine di pochi metri, in dipendenza dalle condizioni meteorologiche, dalla disponibilità e dalla posizione dei satelliti rispetto al ricevitore, dalla qualità e dal tipo di ricevitore, dagli effetti di radiopropagazione del segnale radio in ionosfera e troposfera (es. rifrazione), e dagli effetti della relatività."
+      ],
+      "preview": [
+        "Il sistema di posizionamento globale (acronimo in inglese: Global Positioning System, a sua volta abbreviazione di NAVSTAR GPS, acronimo di NAVigation Satellite Timing And Ranging Global Positioning System o di NAVigation Signal Timing And Ranging Global Positioning System) è un sistema di posizionamento e navigazione satellitare militare statunitense.",
+        "Attraverso una rete dedicata di satelliti artificiali in orbita, fornisce a un terminale mobile o ricevitore GPS informazioni sulle sue coordinate geografiche e sul suo orario in ogni condizione meteorologica, ovunque sulla Terra o nelle sue immediate vicinanze, dove vi sia un contatto privo di ostacoli con almeno quattro satelliti del sistema. La localizzazione avviene tramite la trasmissione di un segnale radio da parte di ciascun satellite e l'elaborazione dei segnali ricevuti da parte del ricevitore.",
+        "È gestito dal governo degli Stati Uniti ed è liberamente accessibile da chiunque sia dotato di un ricevitore GPS."
+      ],
+      "source": "https://it.wikipedia.org/wiki/GPS",
+      "revision": 152522756,
+      "sourceCategories": [
+        "Categoria:Radionavigazione",
+        "Categoria:Reti satellitari",
+        "Categoria:Strumenti di navigazione",
+        "Categoria:Topografia"
+      ],
+      "fetchedAt": 0,
+      "topics": [
+        "astronomy"
+      ],
+      "classification": {
+        "version": 1,
+        "fingerprint": "1:wiki:20365:152522756:e5a035ba",
+        "provider": "local",
+        "confidence": 0.5945945945945946
+      },
+      "readable": true,
+      "eligible": true
+    },
+    {
+      "requestedBy": [
+        "geography"
+      ],
+      "id": "wiki:26207",
+      "title": "Delta fluviale",
+      "category": "geography",
+      "paragraphs": [
+        "Un delta fluviale, o semplicemente delta, è un accumulo di sedimenti, o corpo sedimentario, che si forma in un'area di foce dove un corso d'acqua convoglia sedimenti terrigeni in un bacino con una massa d'acqua relativamente stazionaria. In base al tipo di bacino (mare o lago), si può avere quindi un delta marino o un delta lacustre. Si contrappone alla foce ad estuario."
+      ],
+      "preview": [
+        "Un delta fluviale, o semplicemente delta, è un accumulo di sedimenti, o corpo sedimentario, che si forma in un'area di foce dove un corso d'acqua convoglia sedimenti terrigeni in un bacino con una massa d'acqua relativamente stazionaria. In base al tipo di bacino (mare o lago), si può avere quindi un delta marino o un delta lacustre. Si contrappone alla foce ad estuario."
+      ],
+      "source": "https://it.wikipedia.org/wiki/Delta_fluviale",
+      "revision": 151683023,
+      "sourceCategories": [
+        "Categoria:Ecosistemi",
+        "Categoria:Esogeologia",
+        "Categoria:Geomorfologia fluviale",
+        "Categoria:Sedimentologia"
+      ],
+      "fetchedAt": 0,
+      "topics": [],
+      "classification": {
+        "version": 1,
+        "fingerprint": "1:wiki:26207:151683023:ce498b5d",
+        "provider": "local",
+        "confidence": 0.8461538461538461
+      },
+      "readable": true,
+      "eligible": true
+    },
+    {
+      "requestedBy": [
+        "science"
+      ],
+      "id": "wiki:38875",
+      "title": "Effetto Doppler",
+      "category": "science",
+      "paragraphs": [
+        "L'effetto Doppler è un fenomeno fisico che consiste nel cambiamento apparente, rispetto al valore originario, della frequenza o della lunghezza d'onda percepita da un osservatore raggiunto da un'onda emessa da una sorgente che si trovi in movimento rispetto all'osservatore stesso. Se la sorgente e l'osservatore si muovono entrambi rispetto al mezzo di propagazione delle onde, l'effetto Doppler totale è derivato dalla combinazione dei due movimenti. Perciò ognuno di essi è analizzato separatamente."
+      ],
+      "preview": [
+        "L'effetto Doppler è un fenomeno fisico che consiste nel cambiamento apparente, rispetto al valore originario, della frequenza o della lunghezza d'onda percepita da un osservatore raggiunto da un'onda emessa da una sorgente che si trovi in movimento rispetto all'osservatore stesso. Se la sorgente e l'osservatore si muovono entrambi rispetto al mezzo di propagazione delle onde, l'effetto Doppler totale è derivato dalla combinazione dei due movimenti. Perciò ognuno di essi è analizzato separatamente."
+      ],
+      "source": "https://it.wikipedia.org/wiki/Effetto_Doppler",
+      "revision": 152637736,
+      "sourceCategories": [
+        "Categoria:Acustica",
+        "Categoria:Radiopropagazione"
+      ],
+      "fetchedAt": 0,
+      "topics": [],
+      "classification": {
+        "version": 1,
+        "fingerprint": "1:wiki:38875:152637736:e85f662c",
+        "provider": "local",
+        "confidence": 0.8823529411764706
+      },
+      "readable": true,
+      "eligible": true
+    },
+    {
+      "requestedBy": [
+        "philosophy"
+      ],
+      "id": "wiki:173166",
+      "title": "Paradosso della nave di Teseo",
+      "category": "philosophy",
+      "paragraphs": [
+        "Il paradosso della nave di Teseo esprime la questione metafisica dell'effettiva persistenza dell'identità originaria, per un'entità le cui parti possono cambiare nel tempo; in altre parole, se un tutto unico rimanga (o meno) davvero sé stesso dopo che, col passare del tempo, tutti i suoi pezzi componenti sono cambiati con altri uguali o simili.",
+        "Plutarco narra in Vite parallele che la nave in legno sulla quale viaggiò il mitico eroe greco Teseo fosse conservata nel corso degli anni, sostituendone le parti che via via si deterioravano. Giunse quindi un momento in cui tutte le parti usate in origine per costruirla erano state sostituite, benché la nave stessa conservasse esattamente la sua forma originaria. Ragionando su tale situazione (la nave è stata \"completamente sostituita\", ma allo stesso tempo la nave è rimasta \"la\" nave di Teseo), la questione che ci si può porre è: la nave di Teseo si è conservata oppure no? Ovvero: l'entità (la nave), modificata nella sostanza ma senza variazioni nella forma, è ancora proprio \"la stessa\" entità, o le somiglia soltanto?",
+        "Si può anche rivolgere il paradosso riguardo all'identità della nostra stessa persona che nel corso degli anni cambia ampiamente, sia nella sostanza che la compone sia nella sua forma, ma nonostante ciò sembra rimanere \"quella\" stessa persona. L'antico testo buddista Da Zhidu Lun contiene un enigma filosofico simile, la storia di un viaggiatore che incontrò due demoni nella notte: mentre uno dei due demoni strappava via tutte le parti del corpo del viaggiatore, una per una, l'altro demone le sostituiva con quelle di un cadavere, e il viaggiatore non sapeva più chi fosse.",
+        "Tale questione si può facilmente applicare a innumerevoli altri casi; per esempio alla scrupolosa conservazione dei templi giapponesi del Santuario di Ise (anch'essi principalmente in legno, come la nave di Teseo), che vengono smantellati e ricostruiti sempre identici una volta ogni vent'anni, per i quali ci si può domandare se siano ancora templi \"originali\".",
+        "Oltre un millennio più tardi, il filosofo Thomas Hobbes nel De corpore sviluppò il paradosso supponendo che un custode di una nave avesse raccolto tutte le parti smantellate dalla nave, man mano che venivano smaltite e sostituite dagli Ateniesi, e avesse usato quel materiale per costruire una seconda nave: Hobbes pose quindi la questione di quale delle due navi risultanti, quella del custode o quella degli Ateniesi, fosse la nave \"originale\".",
+        "Un esempio moderno del paradosso è preso in esame nel nono episodio della serie WandaVision di Disney+: nel finale, i personaggi di Visione e Visione bianco interrompono il loro scontro per interrogarsi su quale dei due sia l'originale e quale una copia.",
+        "Un altro esempio può essere trovato nel romanzo Mickey7 dello scrittore statunitense Edward Ashton su cui è stato basato il film Mickey 17. Il protagonista del romanzo è infatti un sacrificabile, un membro dell'equipaggio di una colonia spaziale adibito a svolgere tutti i compiti più pericolosi. I suoi ricordi e la conformazione molecolare del suo corpo sono caricati interamente su un computer. Ogni volta che un Mickey muore ne viene creato un altro esattamente identico al precedente e che possiede tutti i suoi ricordi. Nel romanzo, a causa di un incidente, si trovano a coesistere due Mickey. A quel punto appare chiaro che i due non possano essere la stessa persona."
+      ],
+      "preview": [
+        "Il paradosso della nave di Teseo esprime la questione metafisica dell'effettiva persistenza dell'identità originaria, per un'entità le cui parti possono cambiare nel tempo; in altre parole, se un tutto unico rimanga (o meno) davvero sé stesso dopo che, col passare del tempo, tutti i suoi pezzi componenti sono cambiati con altri uguali o simili.",
+        "Plutarco narra in Vite parallele che la nave in legno sulla quale viaggiò il mitico eroe greco Teseo fosse conservata nel corso degli anni, sostituendone le parti che via via si deterioravano. Giunse quindi un momento in cui tutte le parti usate in origine per costruirla erano state sostituite, benché la nave stessa conservasse esattamente la sua forma originaria. Ragionando su tale situazione (la nave è stata \"completamente sostituita\", ma allo stesso tempo la nave è rimasta \"la\" nave di Teseo), la questione che ci si può porre è: la nave di Teseo si è conservata oppure no?"
+      ],
+      "source": "https://it.wikipedia.org/wiki/Paradosso_della_nave_di_Teseo",
+      "revision": 152790060,
+      "sourceCategories": [
+        "Categoria:Paradossi",
+        "Categoria:Teseo"
+      ],
+      "fetchedAt": 0,
+      "topics": [],
+      "classification": {
+        "version": 1,
+        "fingerprint": "1:wiki:173166:152790060:8076b5ed",
+        "provider": "local",
+        "confidence": 0.8823529411764706
+      },
+      "readable": true,
+      "eligible": true
+    },
+    {
+      "requestedBy": [
+        "nature"
+      ],
+      "id": "wiki:776412",
+      "title": "Bioluminescenza",
+      "category": "biology",
+      "paragraphs": [
+        "La bioluminescenza è la produzione di luce da parte di un organismo come risultato di una reazione di chemiluminescenza. Si osserva in un'ampia varietà di organismi, tra cui vertebrati e invertebrati marini, artropodi terrestri come le lucciole, alcuni funghi e microrganismi come certi batteri e dinoflagellati. In alcuni animali, la luce è batteriogenica, cioè prodotta da batteri simbionti, come quelli del genere Vibrio; in altri è autogena, ossia prodotta dagli animali stessi. La bioluminescenza si è evoluta indipendentemente almeno 94 volte, comparendo per la prima volta negli ottocoralli circa 540 milioni di anni fa.",
+        "Nella maggior parte dei casi, la principale reazione chimica alla base della bioluminescenza coinvolge un substrato chiamato luciferina e un enzima chiamato luciferasi. Poiché si tratta di nomi generici, luciferine e luciferasi vengono spesso distinte in base alla specie o al gruppo di appartenenza: ad esempio, si parla di luciferina delle lucciole o di luciferina della Cypridina. In tutti i casi caratterizzati, l'enzima catalizza l'ossidazione della luciferina, producendo ossiluciferina in stato eccitato, che costituisce l'emettitore luminoso della reazione. Quando l'ossiluciferina ritorna allo stato fondamentale, emette luce visibile.",
+        "In alcune specie, la luciferasi richiede altri cofattori, come ioni calcio o magnesio, e talvolta anche la molecola energetica adenosina trifosfato (ATP). Dal punto di vista evolutivo, le luciferine variano relativamente poco: una in particolare, la celenterazina, è presente in 11 diversi phyla animali, sebbene in alcuni di essi venga ottenuta attraverso la dieta. Al contrario, le luciferasi variano notevolmente tra specie diverse. Nel corso della storia evolutiva, la bioluminescenza è comparsa più di 40 volte.",
+        "Sia Aristotele sia Plinio il Vecchio osservarono che il legno umido talvolta emette una debole luminescenza. Molti secoli più tardi, Robert Boyle dimostrò che l'ossigeno era coinvolto nel processo, nel legno, nei pesci e nelle lucciole. Solo alla fine del XIX secolo, tuttavia, la bioluminescenza iniziò a essere studiata in modo sistematico. Il fenomeno è ampiamente diffuso tra i gruppi animali, soprattutto negli ambienti marini. Sulla terraferma si riscontra in funghi, batteri e in alcuni gruppi di invertebrati, inclusi gli insetti.",
+        "Tra gli usi della bioluminescenza negli animali figurano il camuffamento per controilluminazione, il mimetismo di altri animali, ad esempio per attirare le prede, e la comunicazione con individui della stessa specie, come nel richiamo dei partner. In laboratorio, i sistemi basati sulla luciferasi sono impiegati nell'ingegneria genetica e nella ricerca biomedica."
+      ],
+      "preview": [
+        "La bioluminescenza è la produzione di luce da parte di un organismo come risultato di una reazione di chemiluminescenza. Si osserva in un'ampia varietà di organismi, tra cui vertebrati e invertebrati marini, artropodi terrestri come le lucciole, alcuni funghi e microrganismi come certi batteri e dinoflagellati. In alcuni animali, la luce è batteriogenica, cioè prodotta da batteri simbionti, come quelli del genere Vibrio; in altri è autogena, ossia prodotta dagli animali stessi. La bioluminescenza si è evoluta indipendentemente almeno 94 volte, comparendo per la prima volta negli ottocoralli circa 540 milioni di anni fa.",
+        "Nella maggior parte dei casi, la principale reazione chimica alla base della bioluminescenza coinvolge un substrato chiamato luciferina e un enzima chiamato luciferasi. Poiché si tratta di nomi generici, luciferine e luciferasi vengono spesso distinte in base alla specie o al gruppo di appartenenza: ad esempio, si parla di luciferina delle lucciole o di luciferina della Cypridina."
+      ],
+      "source": "https://it.wikipedia.org/wiki/Bioluminescenza",
+      "revision": 151910394,
+      "sourceCategories": [
+        "Categoria:Biologia marina",
+        "Categoria:Fisiologia animale",
+        "Categoria:Luminescenza"
+      ],
+      "fetchedAt": 0,
+      "topics": [
+        "science",
+        "nature"
+      ],
+      "classification": {
+        "version": 1,
+        "fingerprint": "1:wiki:776412:151910394:787b874e",
+        "provider": "local",
+        "confidence": 0.5294117647058824
+      },
+      "readable": true,
+      "eligible": true
+    },
+    {
+      "requestedBy": [
+        "history"
+      ],
+      "id": "wiki:2754202",
+      "title": "Stele di Rosetta",
+      "category": "history",
+      "paragraphs": [
+        "La stele di Rosetta è una stele egizia di granodiorite che riporta un'iscrizione divisa in tre registri, per tre differenti grafie: geroglifici, demotico e greco antico. L'iscrizione è il testo di un decreto tolemaico emesso nel 196 a.C. in onore del faraone Tolomeo V Epifane, al tempo tredicenne, in occasione del primo anniversario della sua incoronazione.",
+        "Poiché si tratta del medesimo testo, la stele ha offerto, grazie alla parte in greco, una chiave decisiva per la comprensione della lingua egizia.",
+        "Il nome deriva da Rosetta, latinizzazione di Rashid, antica e ricca città sul delta del Nilo, nel governatorato di Buhayra, dove fu scoperta nel 1799 da Pierre-François Bouchard, capitano nella campagna d'Egitto di Napoleone Bonaparte. A lungo oggetto di contesa tra Francia e Inghilterra, dal 1802 è conservata al British Museum di Londra, del quale è il reperto più popolare insieme alle mummie.",
+        "Demotico e geroglifici non rappresentano due lingue diverse, ma due differenti grafie della lingua egizia: i geroglifici erano la scrittura monumentale incisa nella pietra o impiegata in atti di particolare rilevanza, mentre il demotico, che derivava da una semplificazione della grafia ieratica a partire circa dalla metà del primo millennio a.C., era usato per documenti ordinari e il suo uso nell'epoca tarda per i testi ufficiali era dovuto al fatto che la conoscenza dei geroglifici era ristretta alla sola classe sacerdotale.",
+        "Il medico inglese Thomas Young intuì che il cartiglio nel testo geroglifico conteneva il nome di un sovrano ed era riportato allo stesso modo nel testo greco nel registro sottostante. Ma il contributo più importante alla comprensione dell'egizio e allo studio della stele di Rosetta fu quello del francese Jean-François Champollion, grazie alla sua conoscenza della lingua copta, una forma tarda della lingua egizia scritta foneticamente usando l'alfabeto greco."
+      ],
+      "preview": [
+        "La stele di Rosetta è una stele egizia di granodiorite che riporta un'iscrizione divisa in tre registri, per tre differenti grafie: geroglifici, demotico e greco antico. L'iscrizione è il testo di un decreto tolemaico emesso nel 196 a.C. in onore del faraone Tolomeo V Epifane, al tempo tredicenne, in occasione del primo anniversario della sua incoronazione.",
+        "Poiché si tratta del medesimo testo, la stele ha offerto, grazie alla parte in greco, una chiave decisiva per la comprensione della lingua egizia.",
+        "Il nome deriva da Rosetta, latinizzazione di Rashid, antica e ricca città sul delta del Nilo, nel governatorato di Buhayra, dove fu scoperta nel 1799 da Pierre-François Bouchard, capitano nella campagna d'Egitto di Napoleone Bonaparte. A lungo oggetto di contesa tra Francia e Inghilterra, dal 1802 è conservata al British Museum di Londra, del quale è il reperto più popolare insieme alle mummie."
+      ],
+      "source": "https://it.wikipedia.org/wiki/Stele_di_Rosetta",
+      "revision": 152706919,
+      "sourceCategories": [
+        "Categoria:Decifrazione di lingue",
+        "Categoria:Epigrafi plurilingui",
+        "Categoria:Opere nel British Museum",
+        "Categoria:Rosetta",
+        "Categoria:Stele tolemaiche"
+      ],
+      "fetchedAt": 0,
+      "topics": [],
+      "classification": {
+        "version": 1,
+        "fingerprint": "1:wiki:2754202:152706919:eef60aae",
+        "provider": "local",
+        "confidence": 0.7058823529411765
+      },
+      "readable": true,
+      "eligible": true
+    },
+    {
+      "requestedBy": [
+        "technology"
+      ],
+      "id": "wiki:2969308",
+      "title": "Stampa 3D",
+      "category": "technology",
+      "paragraphs": [
+        "La stampa 3D è un processo di produzione che consente di realizzare oggetti tridimensionali a partire da un modello digitale attraverso una stampante tridimensionale. È una tecnologia di tipo additivo, nella quale il componente viene costruito mediante la deposizione progressiva di materiale, strato dopo strato, utilizzando diversi metodi e materiali a seconda dell’applicazione.",
+        "La stampa 3D è utilizzata in una vasta gamma di settori e le sue applicazioni sono in continua espansione, di pari passo le tecnologie e i materiali impiegati si stanno evolvendo, consentendo la realizzazione di oggetti sempre più complessi e personalizzati."
+      ],
+      "preview": [
+        "La stampa 3D è un processo di produzione che consente di realizzare oggetti tridimensionali a partire da un modello digitale attraverso una stampante tridimensionale. È una tecnologia di tipo additivo, nella quale il componente viene costruito mediante la deposizione progressiva di materiale, strato dopo strato, utilizzando diversi metodi e materiali a seconda dell’applicazione.",
+        "La stampa 3D è utilizzata in una vasta gamma di settori e le sue applicazioni sono in continua espansione, di pari passo le tecnologie e i materiali impiegati si stanno evolvendo, consentendo la realizzazione di oggetti sempre più complessi e personalizzati."
+      ],
+      "source": "https://it.wikipedia.org/wiki/Stampa_3D",
+      "revision": 152797259,
+      "sourceCategories": [
+        "Categoria:Stampa 3D"
+      ],
+      "fetchedAt": 0,
+      "topics": [],
+      "classification": {
+        "version": 1,
+        "fingerprint": "1:wiki:2969308:152797259:e179d466",
+        "provider": "local",
+        "confidence": 0.875
+      },
+      "readable": true,
+      "eligible": true
+    },
+    {
+      "requestedBy": [
+        "arts"
+      ],
+      "id": "wiki:1238",
+      "title": "Camera oscura",
+      "category": "science",
+      "paragraphs": [
+        "La camera oscura, anche detta camera ottica o fotocamera stenopeica (la fotocamera più semplice), è un dispositivo ottico composto da una scatola oscurata (a prova di luce), solitamente con un obiettivo stenopeico sul fronte ed un piano di proiezione per l'immagine sul retro (ovvero, la «fotografia» della realtà); in alcuni casi, viene usato uno specchio piano per dirigere l'immagine in una posizione migliore.",
+        "La camera oscura è alla base della fotografia e della fotocamera, per questo motivo gli apparecchi fotografici vengono ancora oggi chiamati “camere”: le prime camere oscure erano infatti delle vere stanze al cui interno i pittori e gli scienziati lavoravano e studiavano."
+      ],
+      "preview": [
+        "La camera oscura, anche detta camera ottica o fotocamera stenopeica (la fotocamera più semplice), è un dispositivo ottico composto da una scatola oscurata (a prova di luce), solitamente con un obiettivo stenopeico sul fronte ed un piano di proiezione per l'immagine sul retro (ovvero, la «fotografia» della realtà); in alcuni casi, viene usato uno specchio piano per dirigere l'immagine in una posizione migliore.",
+        "La camera oscura è alla base della fotografia e della fotocamera, per questo motivo gli apparecchi fotografici vengono ancora oggi chiamati “camere”: le prime camere oscure erano infatti delle vere stanze al cui interno i pittori e gli scienziati lavoravano e studiavano."
+      ],
+      "source": "https://it.wikipedia.org/wiki/Camera_oscura",
+      "revision": 152560465,
+      "sourceCategories": [
+        "Categoria:Apparecchiature fotografiche",
+        "Categoria:Strumenti ottici"
+      ],
+      "fetchedAt": 0,
+      "topics": [],
+      "classification": {
+        "version": 1,
+        "fingerprint": "1:wiki:1238:152560465:59e592e9",
+        "provider": "local",
+        "confidence": 0.85
+      },
+      "readable": true,
+      "eligible": true
+    },
+    {
+      "requestedBy": [
+        "food"
+      ],
+      "id": "wiki:21072",
+      "title": "Fermentazione",
+      "category": "food",
+      "paragraphs": [
+        "La fermentazione è una via metabolica che permette agli esseri viventi di ricavare energia da particolari molecole organiche (carboidrati o raramente amminoacidi) in assenza di ossigeno. Parte dell'energia liberata dalla trasformazione chimica viene immagazzinata in ATP (adenosina trifosfato); tuttavia la resa energetica delle fermentazioni, in cui il prodotto finale non viene completamente ossidato, è molto inferiore rispetto all'ossidazione aerobica completa dello stesso substrato.",
+        "Dal punto di vista strettamente chimico, la fermentazione è una disproporzione, ovvero un'ossidoriduzione in cui la stessa molecola viene in parte ossidata ed in parte ridotta. I carboidrati sono le principali molecole fermentabili.In assenza di ossigeno sono possibili altri processi, oltre alla fermentazione: alcuni batteri usano anche la respirazione anaerobica, in cui l'accettore finale di elettroni è una sostanza inorganica diversa dall'ossigeno (ione solfato, ione nitrato, ecc.).",
+        "Data la grande importanza che le fermentazioni svolgono nella preparazione di parecchi alimenti e anche nella loro degradazione, il termine fermentazione è stato ampiamente usato per indicare una qualsiasi trasformazione catalizzata da un microrganismo. Talvolta il termine è ancora usato in questo senso."
+      ],
+      "preview": [
+        "La fermentazione è una via metabolica che permette agli esseri viventi di ricavare energia da particolari molecole organiche (carboidrati o raramente amminoacidi) in assenza di ossigeno. Parte dell'energia liberata dalla trasformazione chimica viene immagazzinata in ATP (adenosina trifosfato); tuttavia la resa energetica delle fermentazioni, in cui il prodotto finale non viene completamente ossidato, è molto inferiore rispetto all'ossidazione aerobica completa dello stesso substrato.",
+        "Dal punto di vista strettamente chimico, la fermentazione è una disproporzione, ovvero un'ossidoriduzione in cui la stessa molecola viene in parte ossidata ed in parte ridotta. I carboidrati sono le principali molecole fermentabili.In assenza di ossigeno sono possibili altri processi, oltre alla fermentazione: alcuni batteri usano anche la respirazione anaerobica, in cui l'accettore finale di elettroni è una sostanza inorganica diversa dall'ossigeno (ione solfato, ione nitrato, ecc.)."
+      ],
+      "source": "https://it.wikipedia.org/wiki/Fermentazione",
+      "revision": 144243561,
+      "sourceCategories": [
+        "Categoria:Fermentazione",
+        "Categoria:Microbiologia"
+      ],
+      "fetchedAt": 0,
+      "topics": [
+        "science"
+      ],
+      "classification": {
+        "version": 1,
+        "fingerprint": "1:wiki:21072:144243561:17dd3c3d",
+        "provider": "local",
+        "confidence": 0.5714285714285714
+      },
+      "readable": true,
+      "eligible": true
+    },
+    {
+      "requestedBy": [
+        "arts"
+      ],
+      "id": "wiki:27120",
+      "title": "Origami",
+      "category": "arts",
+      "paragraphs": [
+        "Con il termine origami (折り紙?) (dal giapponese, oru piegare e kami carta) si intende l'arte di piegare la carta e, sostantivato, l'oggetto che ne deriva. Il termine è di origine giapponese, ma esistono tradizioni della piegatura della carta anche in Cina (折纸S, Zhe ZhiP), nella Penisola araba e in Occidente.",
+        "La tecnica moderna dell'origami usa pochi tipi di piegature combinate in un'infinita varietà di modi per creare modelli anche estremamente complessi. In genere, questi modelli cominciano da un foglio quadrato, le cui facce possono essere di colore differente, e continua senza fare tagli alla carta, ma l'origami tradizionale era molto meno rigido e faceva frequente uso di tagli, oltre a partire da basi non necessariamente quadrate. Alla base dei principi che regolano l'origami, vi sono senz'altro i principi shintoisti del ciclo vitale e dell'accettazione della morte come parte di un tutto: la forma di carta, nella sua complessità e fragilità, è simbolo del tempio shintoista che viene ricostruito sempre uguale ogni vent'anni, e la sua bellezza non risiede nel foglio di carta. Alla morte del supporto, la forma viene ricreata e così rinasce, in un eterno ciclo vitale che il rispetto delle tradizioni mantiene vivo."
+      ],
+      "preview": [
+        "Con il termine origami (折り紙?) (dal giapponese, oru piegare e kami carta) si intende l'arte di piegare la carta e, sostantivato, l'oggetto che ne deriva. Il termine è di origine giapponese, ma esistono tradizioni della piegatura della carta anche in Cina (折纸S, Zhe ZhiP), nella Penisola araba e in Occidente.",
+        "La tecnica moderna dell'origami usa pochi tipi di piegature combinate in un'infinita varietà di modi per creare modelli anche estremamente complessi. In genere, questi modelli cominciano da un foglio quadrato, le cui facce possono essere di colore differente, e continua senza fare tagli alla carta, ma l'origami tradizionale era molto meno rigido e faceva frequente uso di tagli, oltre a partire da basi non necessariamente quadrate."
+      ],
+      "source": "https://it.wikipedia.org/wiki/Origami",
+      "revision": 152677139,
+      "sourceCategories": [
+        "Categoria:Arti plastiche",
+        "Categoria:Origami"
+      ],
+      "fetchedAt": 0,
+      "topics": [],
+      "classification": {
+        "version": 1,
+        "fingerprint": "1:wiki:27120:152677139:759cdeb8",
+        "provider": "local",
+        "confidence": 0.8666666666666667
+      },
+      "readable": true,
+      "eligible": true
+    },
+    {
+      "requestedBy": [
+        "entertainment"
+      ],
+      "id": "wiki:60403",
+      "title": "Colonna sonora",
+      "category": "cinema",
+      "paragraphs": [
+        "La colonna sonora è la parte audio di un film, composta dal dialogo, dagli effetti sonori e dalla musica, miscelati insieme, ed inserita come traccia (mono, stereo o multicanale) sincronizzata alle immagini (fotogrammi), impressionando una parte della pellicola cinematografica (colonna), ricreando la forma dei segnali audio che verranno letti da un apposito dispositivo del proiettore, trasformandosi poi in suoni da diffondere nella sala cinematografica, durante la proiezione del film. Per ciò che riguarda il lato tecnico, è l'impronta del sonoro, posizionata in una delle colonne disponibili nella pellicola.",
+        "Più in generale, la colonna sonora è la parte artistica sonora del film o di un'opera audiovisiva, ed è strutturata in modo che abbia un nesso logico con le immagini che si susseguono nei film, o potrebbe anche solamente ispirarsi al tipo di musica che viene girata nel territorio in cui è registrato il film, oppure potrebbe anche non avere un nesso logico, ma essere comunque presente.",
+        "In un'accezione più ristretta e impropria, la colonna sonora è vista soltanto come \"la musica\" di un'opera composta da immagini e suoni: in questo senso è talvolta indicata con la sigla inglese OST (original soundtrack, \"traccia sonora originale\", dove \"originale\" indica che è stata composta espressamente per una determinata opera, ma non è sempre così). Le sole musiche di un film (che siano originali o meno) in gergo tecnico cinematografico vengono dette anche \"colonna musicale\", a differenza delle colonne per i dialoghi e gli effetti sonori."
+      ],
+      "preview": [
+        "La colonna sonora è la parte audio di un film, composta dal dialogo, dagli effetti sonori e dalla musica, miscelati insieme, ed inserita come traccia (mono, stereo o multicanale) sincronizzata alle immagini (fotogrammi), impressionando una parte della pellicola cinematografica (colonna), ricreando la forma dei segnali audio che verranno letti da un apposito dispositivo del proiettore, trasformandosi poi in suoni da diffondere nella sala cinematografica, durante la proiezione del film. Per ciò che riguarda il lato tecnico, è l'impronta del sonoro, posizionata in una delle colonne disponibili nella pellicola.",
+        "Più in generale, la colonna sonora è la parte artistica sonora del film o di un'opera audiovisiva, ed è strutturata in modo che abbia un nesso logico con le immagini che si susseguono nei film, o potrebbe anche solamente ispirarsi al tipo di musica che viene girata nel territorio in cui è registrato il film, oppure potrebbe anche non avere un nesso logico, ma essere comunque presente."
+      ],
+      "source": "https://it.wikipedia.org/wiki/Colonna_sonora",
+      "revision": 148875675,
+      "sourceCategories": [
+        "Categoria:Colonne sonore",
+        "Categoria:Produzione cinematografica",
+        "Categoria:Terminologia cinematografica"
+      ],
+      "fetchedAt": 0,
+      "topics": [
+        "music"
+      ],
+      "classification": {
+        "version": 1,
+        "fingerprint": "1:wiki:60403:148875675:c9e5ef5e",
+        "provider": "local",
+        "confidence": 0.631578947368421
+      },
+      "readable": true,
+      "eligible": true
+    },
+    {
+      "requestedBy": [
+        "psychology"
+      ],
+      "id": "wiki:71142",
+      "title": "Serendipità",
+      "category": "general",
+      "paragraphs": [
+        "La serendipità è la fortuna di fare scoperte fortuite e inattese, nonché la possibilità di trovare qualcosa di non cercato e imprevisto mentre si stava ricercando altro.",
+        "Il termine fu coniato in inglese (serendipity) da Horace Walpole nel XVIII secolo e rientra pertanto nel novero delle parole d'autore. La serendipità viene spesso concettualizzata dagli studiosi come una particolare forma di fortuna che emerge dalla combinazione di ricerca intenzionale, contingenza e conoscenze pregresse. Sebbene il concetto di serendipità sia indissolubilmente legato a quello di incertezza, esso richiede una sintesi equilibrata di preparazione e apertura verso il nuovo attraverso meccanismi di dubbio generativo."
+      ],
+      "preview": [
+        "La serendipità è la fortuna di fare scoperte fortuite e inattese, nonché la possibilità di trovare qualcosa di non cercato e imprevisto mentre si stava ricercando altro.",
+        "Il termine fu coniato in inglese (serendipity) da Horace Walpole nel XVIII secolo e rientra pertanto nel novero delle parole d'autore. La serendipità viene spesso concettualizzata dagli studiosi come una particolare forma di fortuna che emerge dalla combinazione di ricerca intenzionale, contingenza e conoscenze pregresse. Sebbene il concetto di serendipità sia indissolubilmente legato a quello di incertezza, esso richiede una sintesi equilibrata di preparazione e apertura verso il nuovo attraverso meccanismi di dubbio generativo."
+      ],
+      "source": "https://it.wikipedia.org/wiki/Serendipit%C3%A0",
+      "revision": 152587055,
+      "sourceCategories": [
+        "Categoria:Epistemologia",
+        "Categoria:Parole d'autore",
+        "Categoria:Sociologia della conoscenza"
+      ],
+      "fetchedAt": 0,
+      "topics": [],
+      "classification": {
+        "version": 1,
+        "fingerprint": "1:wiki:71142:152587055:bd6a438d",
+        "provider": "local",
+        "confidence": 0
+      },
+      "readable": true,
+      "eligible": true
+    },
+    {
+      "requestedBy": [
+        "philosophy"
+      ],
+      "id": "wiki:633349",
+      "title": "Mito della caverna",
+      "category": "philosophy",
+      "paragraphs": [
+        "Il mito della caverna di Platone è una delle allegorie più conosciute tra quelle del filosofo ateniese, e riguarda la possibilità limitata dell'uomo di conoscere la realtà. Il mito è raccontato all'inizio del libro settimo de La Repubblica (514 b – 520 a).",
+        "Si tratta di uno dei testi universalmente riconosciuti come fondamentali per la storia del pensiero e della cultura occidentale."
+      ],
+      "preview": [
+        "Il mito della caverna di Platone è una delle allegorie più conosciute tra quelle del filosofo ateniese, e riguarda la possibilità limitata dell'uomo di conoscere la realtà. Il mito è raccontato all'inizio del libro settimo de La Repubblica (514 b – 520 a).",
+        "Si tratta di uno dei testi universalmente riconosciuti come fondamentali per la storia del pensiero e della cultura occidentale."
+      ],
+      "source": "https://it.wikipedia.org/wiki/Mito_della_caverna",
+      "revision": 152141947,
+      "sourceCategories": [
+        "Categoria:Epistemologia",
+        "Categoria:Miti platonici"
+      ],
+      "fetchedAt": 0,
+      "topics": [],
+      "classification": {
+        "version": 1,
+        "fingerprint": "1:wiki:633349:152141947:517865a6",
+        "provider": "local",
+        "confidence": 0.7
+      },
+      "readable": true,
+      "eligible": true
+    },
+    {
+      "requestedBy": [],
+      "id": "wiki:720431",
+      "title": "Passo uno",
+      "category": "cinema",
+      "paragraphs": [
+        "La tecnica del passo uno, chiamata anche ripresa (o animazione) a passo uno (in inglese stop-motion o anche frame by frame) è una tecnica di ripresa cinematografica e di animazione. Con l'espressione si può intendere sia la tecnica impiegata sia il prodotto ottenuto con la stessa."
+      ],
+      "preview": [
+        "La tecnica del passo uno, chiamata anche ripresa (o animazione) a passo uno (in inglese stop-motion o anche frame by frame) è una tecnica di ripresa cinematografica e di animazione. Con l'espressione si può intendere sia la tecnica impiegata sia il prodotto ottenuto con la stessa."
+      ],
+      "source": "https://it.wikipedia.org/wiki/Passo_uno",
+      "revision": 152223896,
+      "sourceCategories": [
+        "Categoria:Animazione",
+        "Categoria:Effetti speciali",
+        "Categoria:Tecnica cinematografica"
+      ],
+      "fetchedAt": 0,
+      "topics": [],
+      "classification": {
+        "version": 1,
+        "fingerprint": "1:wiki:720431:152223896:3a1053d0",
+        "provider": "local",
+        "confidence": 0.8571428571428571
+      },
+      "readable": true,
+      "eligible": true
+    },
+    {
+      "requestedBy": [
+        "food"
+      ],
+      "id": "wiki:864210",
+      "title": "Reazione di Maillard",
+      "category": "food",
+      "paragraphs": [
+        "La reazione di Maillard è una reazione chimica tra amminoacidi e zuccheri riducenti che crea melanoidine, i composti che conferiscono al cibo dorato il suo sapore caratteristico. Bistecche rosolate, ravioli fritti, biscotti, pane, marshmallow tostati, falafel e molti altri alimenti subiscono questa reazione. Prende il nome dal chimico francese Louis Camille Maillard, che la descrisse per primo nel 1912 mentre tentava di riprodurre la sintesi proteica biologica. La reazione è una forma di imbrunimento non enzimatico che in genere procede rapidamente da circa 140 °C fino a 165 °C. Molte ricette richiedono una temperatura del forno sufficientemente alta da garantire che si verifichi una reazione di Maillard. A temperature più elevate, la caramellizzazione (l'imbrunimento degli zuccheri, un processo distinto) e successivamente la pirolisi (la rottura finale che porta alla combustione e allo sviluppo di sapori acri) diventano più pronunciate.",
+        "Il gruppo carbonilico reattivo dello zucchero reagisce con il gruppo amminico nucleofilo dell'amminoacido e forma una miscela complessa di molecole poco caratterizzate, responsabili di una gamma di aromi e sapori. Questo processo è accelerato in un ambiente alcalino (ad esempio usando la liscivia applicata per scurire i brezel), poiché i gruppi amminici (RNH+3 → RNH2) sono deprotonati e quindi hanno una nucleofilia aumentata. Questa reazione è alla base di molte ricette utilizzate nell'industria degli aromi. Ad alte temperature si può formare un probabile cancerogeno chiamato acrilammide. Ciò può essere scoraggiato utilizzando a una temperatura più bassa, aggiungendo asparaginasi o iniettando anidride carbonica.",
+        "Durante la cottura, le reazioni di Maillard possono produrre centinaia di composti aromatici diversi, a seconda dei costituenti chimici presenti negli alimenti, della temperatura, del tempo di cottura e della presenza di aria. Questi composti, a loro volta, spesso si decompongono formando altri composti aromatici. Nel corso degli anni gli scienziati hanno utilizzato la reazione di Maillard per creare aromi artificiali e la maggior parte dei brevetti riguarda la produzione di aromi simili a quelli della carne."
+      ],
+      "preview": [
+        "La reazione di Maillard è una reazione chimica tra amminoacidi e zuccheri riducenti che crea melanoidine, i composti che conferiscono al cibo dorato il suo sapore caratteristico. Bistecche rosolate, ravioli fritti, biscotti, pane, marshmallow tostati, falafel e molti altri alimenti subiscono questa reazione. Prende il nome dal chimico francese Louis Camille Maillard, che la descrisse per primo nel 1912 mentre tentava di riprodurre la sintesi proteica biologica. La reazione è una forma di imbrunimento non enzimatico che in genere procede rapidamente da circa 140 °C fino a 165 °C. Molte ricette richiedono una temperatura del forno sufficientemente alta da garantire che si verifichi una reazione di Maillard. A temperature più elevate, la caramellizzazione (l'imbrunimento degli zuccheri, un processo distinto) e successivamente la pirolisi (la rottura finale che porta alla combustione e allo sviluppo di sapori acri) diventano più pronunciate."
+      ],
+      "source": "https://it.wikipedia.org/wiki/Reazione_di_Maillard",
+      "revision": 151243487,
+      "sourceCategories": [
+        "Categoria:Chimica degli alimenti",
+        "Categoria:Reazioni chimiche per scopritore"
+      ],
+      "fetchedAt": 0,
+      "topics": [
+        "science"
+      ],
+      "classification": {
+        "version": 1,
+        "fingerprint": "1:wiki:864210:151243487:48a22b4f",
+        "provider": "local",
+        "confidence": 0.6
+      },
+      "readable": true,
+      "eligible": true
+    },
+    {
+      "requestedBy": [
+        "sport"
+      ],
+      "id": "wiki:876847",
+      "title": "Scacchi",
+      "category": "sport",
+      "paragraphs": [
+        "Gli scacchi (dal provenzale e catalano antico escac, che a sua volta discende dal persiano شاه shāh, \"re\") sono un gioco di strategia che si svolge su una tavola quadrata detta scacchiera, formata da 64 case di due colori alternati, sulla quale ogni giocatore dispone di 16 pezzi (bianchi o neri; per traslato, \"il Bianco\" e \"il Nero\" designano i due sfidanti): un re, una Donna (per evitare la confusione tra R (re) e R (regina) nella notazione scacchistica), due alfieri, due cavalli, due torri e otto pedoni; ogni casella può essere occupata da un solo pezzo, che può catturare o \"mangiare\" il pezzo avversario andando a occuparne la casella; obbiettivo del gioco è dare scacco matto, ovvero minacciare la cattura del re avversario in modo tale che l'altro giocatore non possa eseguire mosse legali.",
+        "Nati in India intorno al VI secolo d.C., gli scacchi giunsero in Europa verso l'anno 1000, con ogni probabilità grazie alla mediazione degli Arabi; diffusisi nell'intero continente, raggiunsero una forma pressoché moderna nel XV secolo in Italia e in Spagna, seppure per arrivare al regolamento completo attuale si debba attendere il XIX secolo. Successivamente, a partire dalla metà dell'Ottocento, per merito di Paul Morphy e Wilhelm Steinitz iniziarono a codificarsi i fondamenti strategici del gioco; nel 1886 lo stesso Steinitz, dopo una sfida contro Johannes Zukertort, si proclamò primo campione del mondo.",
+        "Fra i giochi più popolari al mondo, ci si può giocare ovunque (a livello ricreativo o agonistico): in casa, all'aperto, nei circoli dedicati, via internet tramite i server di scacchi dedicati e talora per corrispondenza. Le maggiori competizioni ufficiali sono organizzate sotto l'egida della FIDE (la \"Federazione Internazionale degli Scacchi\"). Il gioco degli scacchi è alquanto complesso: si stima che il numero di combinazioni legalmente ammesse dei 32 pezzi sulle 64 case della scacchiera sia compreso fra 1043 e 1050, e che la dimensione dell'albero delle mosse sia pressappoco di 10123; il numero di possibili partite diverse è circa 101050.."
+      ],
+      "preview": [
+        "Gli scacchi (dal provenzale e catalano antico escac, che a sua volta discende dal persiano شاه shāh, \"re\") sono un gioco di strategia che si svolge su una tavola quadrata detta scacchiera, formata da 64 case di due colori alternati, sulla quale ogni giocatore dispone di 16 pezzi (bianchi o neri; per traslato, \"il Bianco\" e \"il Nero\" designano i due sfidanti): un re, una Donna (per evitare la confusione tra R (re) e R (regina) nella notazione scacchistica), due alfieri, due cavalli, due torri e otto pedoni; ogni casella può essere occupata da un solo pezzo, che può catturare o \"mangiare\" il pezzo avversario andando a occuparne la casella; obbiettivo del gioco è dare scacco matto, ovvero minacciare la cattura del re avversario in modo tale che l'altro giocatore non possa eseguire mosse legali."
+      ],
+      "source": "https://it.wikipedia.org/wiki/Scacchi",
+      "revision": 152656469,
+      "sourceCategories": [
+        "Categoria:Giochi astratti",
+        "Categoria:Scacchi"
+      ],
+      "fetchedAt": 0,
+      "topics": [],
+      "classification": {
+        "version": 1,
+        "fingerprint": "1:wiki:876847:152656469:f8076d64",
+        "provider": "local",
+        "confidence": 0.8571428571428571
+      },
+      "readable": true,
+      "eligible": true
+    },
+    {
+      "requestedBy": [
+        "psychology"
+      ],
+      "id": "wiki:4467152",
+      "title": "Effetto Dunning-Kruger",
+      "category": "psychology",
+      "paragraphs": [
+        "L'effetto Dunning-Kruger (EDK) è una distorsione cognitiva nella quale individui poco competenti in un campo tendono a sovrastimare la propria preparazione giudicandola, a torto, superiore alla media."
+      ],
+      "preview": [
+        "L'effetto Dunning-Kruger (EDK) è una distorsione cognitiva nella quale individui poco competenti in un campo tendono a sovrastimare la propria preparazione giudicandola, a torto, superiore alla media."
+      ],
+      "source": "https://it.wikipedia.org/wiki/Effetto_Dunning-Kruger",
+      "revision": 152395178,
+      "sourceCategories": [
+        "Categoria:Bias cognitivi",
+        "Categoria:Fenomeni psicologici"
+      ],
+      "fetchedAt": 0,
+      "topics": [],
+      "classification": {
+        "version": 1,
+        "fingerprint": "1:wiki:4467152:152395178:b80add8c",
+        "provider": "local",
+        "confidence": 0.9130434782608695
+      },
+      "readable": true,
+      "eligible": true
+    },
+    {
+      "requestedBy": [
+        "society"
+      ],
+      "id": "wiki:1207",
+      "title": "Calendario gregoriano",
+      "category": "society",
+      "paragraphs": [
+        "Il calendario gregoriano è il calendario solare ufficiale adottato da quasi tutti i paesi del mondo. Fu introdotto da papa Gregorio XIII nel 1582 come correzione del precedente calendario giuliano (di epoca romana)."
+      ],
+      "preview": [
+        "Il calendario gregoriano è il calendario solare ufficiale adottato da quasi tutti i paesi del mondo. Fu introdotto da papa Gregorio XIII nel 1582 come correzione del precedente calendario giuliano (di epoca romana)."
+      ],
+      "source": "https://it.wikipedia.org/wiki/Calendario_gregoriano",
+      "revision": 152841846,
+      "sourceCategories": [
+        "Categoria:Calendario gregoriano"
+      ],
+      "fetchedAt": 0,
+      "topics": [],
+      "classification": {
+        "version": 1,
+        "fingerprint": "1:wiki:1207:152841846:b91ca58c",
+        "provider": "local",
+        "confidence": 0.8571428571428571
+      },
+      "readable": true,
+      "eligible": true
+    },
+    {
+      "requestedBy": [
+        "society"
+      ],
+      "id": "wiki:1695",
+      "title": "Esperanto",
+      "category": "society",
+      "paragraphs": [
+        "L'esperanto è una lingua pianificata iniziata tra il 1872 e il 1887 da Ludwik Lejzer Zamenhof. È la più conosciuta e utilizzata tra le lingue ausiliarie internazionali (LAI). Presentata nell'Unua libro (lett. \"primo libro\", Varsavia, 1887) come Lingvo Internacia (lett. \"lingua internazionale\"), prese in seguito il nome esperanto (lett. \"colui che spera\", \"sperante\") dallo pseudonimo «Doktoro Esperanto» usato dal suo inventore.",
+        "L'esperanto si prefigge lo scopo di fornire uno strumento accessibile e semplice, ma espressivo, per il dialogo internazionale, che possa garantire comprensione e pace tramite una seconda lingua appartenente all'umanità e non a una particolare nazione. Ponendo enfasi sulla valorizzazione del multilinguismo e sui diritti linguistici, si fa promotore dell'insegnamento delle lingue.",
+        "Le regole della grammatica dell'esperanto, scelte da Zamenhof tra le varie lingue studiate affinché fossero semplici da imparare, minimizzano le eccezioni. I vocaboli e la semantica derivano in maniera preponderante dalle lingue indoeuropee parlate in Europa e in particolare dalle lingue romanze (francese e italiano), ma anche da lingue germaniche (tedesco e inglese) e slave (russo e polacco), oltre che dal greco e dal latino. La lingua è fortemente agglutinante e isolante, con prefissi e suffissi che possono essere liberamente ricombinati con altre radici per generare nuove parole, rendendo possibile comunicare anche con un vocabolario ristretto. La logica serrata della lingua minimizza l'ambiguità, offrendo applicazioni in linguistica computazionale per il processamento automatico del linguaggio.",
+        "Vari studi hanno suggerito che le forme regolari dell'esperanto ne permettono l'apprendimento anche da autodidatti e in età adulta; altre indagini dimostrano come dei ragazzi che hanno studiato l'esperanto, ad esempio tramite il metodo Paderborn, apprendano più facilmente un'altra lingua straniera.",
+        "L'espressività dell'esperanto è attestata dalla traduzione di opere letterarie e dalla produzione originale in lingua che spazia in tutte le arti: dalla poesia alla prosa, dalla musica alla drammaturgia; per la letteratura, dal 1993 è attiva una sezione esperantofona al PEN International.",
+        "Esperantujo è il termine che denota i luoghi ove si parla esperanto e l'Associazione universale esperanto (UEA), con sede a Rotterdam e in relazioni ufficiali con l'ONU e l'UNESCO, è la principale associazione di parlanti. L'Akademio de Esperanto è la principale istituzione dedita allo studio della lingua, mentre il principale convegno annuale è il Congresso universale (UK). Il finvenkismo e il raumismo rappresentano le due principali correnti ideologiche che animano il movimento esperantista per la promozione della lingua.",
+        "La tradizione dell'esperanto in Polonia e in Croazia è stata dichiarata patrimonio culturale immateriale Proposto come lingua franca per l'Unione europea, l'esperanto ha ricevuto nel corso del XX secolo l'avallo delle Nazioni Unite, ad esempio nella Conferenza di Montevideo (1954)."
+      ],
+      "preview": [
+        "L'esperanto è una lingua pianificata iniziata tra il 1872 e il 1887 da Ludwik Lejzer Zamenhof. È la più conosciuta e utilizzata tra le lingue ausiliarie internazionali (LAI). Presentata nell'Unua libro (lett. \"primo libro\", Varsavia, 1887) come Lingvo Internacia (lett. \"lingua internazionale\"), prese in seguito il nome esperanto (lett. \"colui che spera\", \"sperante\") dallo pseudonimo «Doktoro Esperanto» usato dal suo inventore.",
+        "L'esperanto si prefigge lo scopo di fornire uno strumento accessibile e semplice, ma espressivo, per il dialogo internazionale, che possa garantire comprensione e pace tramite una seconda lingua appartenente all'umanità e non a una particolare nazione. Ponendo enfasi sulla valorizzazione del multilinguismo e sui diritti linguistici, si fa promotore dell'insegnamento delle lingue.",
+        "Le regole della grammatica dell'esperanto, scelte da Zamenhof tra le varie lingue studiate affinché fossero semplici da imparare, minimizzano le eccezioni."
+      ],
+      "source": "https://it.wikipedia.org/wiki/Esperanto",
+      "revision": 152758317,
+      "sourceCategories": [
+        "Categoria:Esperanto",
+        "Categoria:Lingue SVO"
+      ],
+      "fetchedAt": 0,
+      "topics": [],
+      "classification": {
+        "version": 1,
+        "fingerprint": "1:wiki:1695:152758317:a760432d",
+        "provider": "local",
+        "confidence": 0.9090909090909091
+      },
+      "readable": true,
+      "eligible": true
+    },
+    {
+      "requestedBy": [
+        "politics"
+      ],
+      "id": "wiki:3208",
+      "title": "Parlamento",
+      "category": "politics",
+      "paragraphs": [
+        "Il parlamento (chiamato anche dieta, congresso, assemblea nazionale, assemblea federale) è l'organo deputato alla rappresentanza politica di uno Stato. La sua funzione principale, sebbene non l'unica, è l'esercizio del potere legislativo, ovvero l'emanazione delle leggi secondo i dettami fissati dalla relativa Costituzione. Il parlamento è quindi un'assemblea legislativa statale, solitamente costituito da uno o più organi collegiali detti camere, che riveste un ruolo fondamentale nelle democrazie rappresentative."
+      ],
+      "preview": [
+        "Il parlamento (chiamato anche dieta, congresso, assemblea nazionale, assemblea federale) è l'organo deputato alla rappresentanza politica di uno Stato. La sua funzione principale, sebbene non l'unica, è l'esercizio del potere legislativo, ovvero l'emanazione delle leggi secondo i dettami fissati dalla relativa Costituzione. Il parlamento è quindi un'assemblea legislativa statale, solitamente costituito da uno o più organi collegiali detti camere, che riveste un ruolo fondamentale nelle democrazie rappresentative."
+      ],
+      "source": "https://it.wikipedia.org/wiki/Parlamento",
+      "revision": 152751767,
+      "sourceCategories": [
+        "Categoria:Diritto parlamentare",
+        "Categoria:Parlamenti",
+        "Categoria:Stato"
+      ],
+      "fetchedAt": 0,
+      "topics": [],
+      "classification": {
+        "version": 1,
+        "fingerprint": "1:wiki:3208:152751767:d6001db6",
+        "provider": "local",
+        "confidence": 0.9090909090909091
+      },
+      "readable": true,
+      "eligible": true
+    },
+    {
+      "requestedBy": [
+        "music"
+      ],
+      "id": "wiki:15829",
+      "title": "Jazz",
+      "category": "music",
+      "paragraphs": [
+        "Il jazz è un genere musicale nato agli inizi del XX secolo negli Stati Uniti, frutto della sintesi tra musiche occidentali e il retaggio culturale degli schiavi afroamericani.",
+        "Fin dalle origini, il jazz è una musica in costante trasformazione. A partire dal jazz di New Orleans, risalente agli inizi del ventesimo secolo, la sua storia è articolata in diversi periodi, ognuno caratterizzato da stili e correnti artistiche differenti. Secondo la tradizione storiografica consolidata, gli anni venti e trenta furono il periodo delle orchestre di swing, gli anni quaranta furono segnati dal bebop, tra gli anni quaranta e cinquanta nacquero le correnti dette cool jazz, hard bop e jazz modale per poi arrivare al free jazz negli anni sessanta e alla fusion negli anni settanta. Dagli anni ottanta in poi è difficile segmentare dei periodi in modo altrettanto preciso, a causa dell'estrema frammentazione stilistica a cui il jazz è andato incontro (favorita anche dalla globalizzazione, che ha moltiplicato il numero di artisti e scene locali attivi nella creazione di nuovi stili).",
+        "Considerata la quantità di generi, stili e correnti che compongono la tradizione jazzistica, non è possibile formulare una definizione di jazz che li racchiuda tutti. Alcuni elementi importanti nel jazz sono il ritmo sincopato, la pronuncia swing e l'improvvisazione. Tuttavia, i tentativi fatti in passato di definire il jazz sulla base di questi elementi sono risultati riduttivi, in quanto esistono forme di jazz in cui sincopi, swing e improvvisazione sono assenti. Una caratteristica che distingue il jazz dagli altri generi musicali (e in particolare dalla musica eurocolta) riguarda il ruolo del musicista. Il musicista di jazz è infatti interamente responsabile del processo creativo, non è un semplice esecutore o interprete di una composizione prestabilita."
+      ],
+      "preview": [
+        "Il jazz è un genere musicale nato agli inizi del XX secolo negli Stati Uniti, frutto della sintesi tra musiche occidentali e il retaggio culturale degli schiavi afroamericani.",
+        "Fin dalle origini, il jazz è una musica in costante trasformazione. A partire dal jazz di New Orleans, risalente agli inizi del ventesimo secolo, la sua storia è articolata in diversi periodi, ognuno caratterizzato da stili e correnti artistiche differenti. Secondo la tradizione storiografica consolidata, gli anni venti e trenta furono il periodo delle orchestre di swing, gli anni quaranta furono segnati dal bebop, tra gli anni quaranta e cinquanta nacquero le correnti dette cool jazz, hard bop e jazz modale per poi arrivare al free jazz negli anni sessanta e alla fusion negli anni settanta."
+      ],
+      "source": "https://it.wikipedia.org/wiki/Jazz",
+      "revision": 152776327,
+      "sourceCategories": [
+        "Categoria:Jazz"
+      ],
+      "fetchedAt": 0,
+      "topics": [
+        "society"
+      ],
+      "classification": {
+        "version": 1,
+        "fingerprint": "1:wiki:15829:152776327:61d7069",
+        "provider": "local",
+        "confidence": 0.7586206896551724
+      },
+      "readable": true,
+      "eligible": true
+    },
+    {
+      "requestedBy": [],
+      "id": "wiki:96428",
+      "title": "Cinema d'animazione",
+      "category": "cinema",
+      "paragraphs": [
+        "Il cinema d'animazione deve la sua nascita a Charles-Émile Reynaud, l'inventore del Théâtre optique, una macchina che proiettava su telo, grazie a un gioco di specchi, figure disegnate su un rullo di carta, mentre gli sfondi sui quali si muovevano le immagini venivano creati grazie a una lanterna magica.",
+        "La prima proiezione avvenne nel 1892, tre anni prima della presentazione al pubblico dell'invenzione dei fratelli Lumière. Dapprima le animazioni riguardarono il movimento di oggetti inanimati, come i film di trucchi di Georges Méliès, poi utilizzando il procedimento fotogramma per fotogramma (o fotogramma singolo) si approdò a una forma più moderna di cinema d'animazione."
+      ],
+      "preview": [
+        "Il cinema d'animazione deve la sua nascita a Charles-Émile Reynaud, l'inventore del Théâtre optique, una macchina che proiettava su telo, grazie a un gioco di specchi, figure disegnate su un rullo di carta, mentre gli sfondi sui quali si muovevano le immagini venivano creati grazie a una lanterna magica.",
+        "La prima proiezione avvenne nel 1892, tre anni prima della presentazione al pubblico dell'invenzione dei fratelli Lumière. Dapprima le animazioni riguardarono il movimento di oggetti inanimati, come i film di trucchi di Georges Méliès, poi utilizzando il procedimento fotogramma per fotogramma (o fotogramma singolo) si approdò a una forma più moderna di cinema d'animazione."
+      ],
+      "source": "https://it.wikipedia.org/wiki/Cinema_d%27animazione",
+      "revision": 152320433,
+      "sourceCategories": [
+        "Categoria:Animazione",
+        "Categoria:Generi cinematografici"
+      ],
+      "fetchedAt": 0,
+      "topics": [],
+      "classification": {
+        "version": 1,
+        "fingerprint": "1:wiki:96428:152320433:1e7d1b65",
+        "provider": "local",
+        "confidence": 0.8125
+      },
+      "readable": true,
+      "eligible": true
+    },
+    {
+      "requestedBy": [
+        "music"
+      ],
+      "id": "wiki:134950",
+      "title": "Sinfonia",
+      "category": "music",
+      "paragraphs": [
+        "Il termine sinfonia (dal greco συμφωνία, «suono») ha avuto, nella storia della musica, vari significati; in particolare ha indicato diverse forme musicali.",
+        "L'accezione più comune della parola deriva dall'uso tardo settecentesco del classicismo viennese e della scuola di Mannheim, secondo il quale la Sinfonia è un brano orchestrale composto di più movimenti, di proporzioni abbastanza ampie e articolati secondo procedimenti ben precisi. Si basa sulla cosiddetta forma-sonata, per cui la sinfonia può essere definita la «sonata per orchestra»."
+      ],
+      "preview": [
+        "Il termine sinfonia (dal greco συμφωνία, «suono») ha avuto, nella storia della musica, vari significati; in particolare ha indicato diverse forme musicali.",
+        "L'accezione più comune della parola deriva dall'uso tardo settecentesco del classicismo viennese e della scuola di Mannheim, secondo il quale la Sinfonia è un brano orchestrale composto di più movimenti, di proporzioni abbastanza ampie e articolati secondo procedimenti ben precisi. Si basa sulla cosiddetta forma-sonata, per cui la sinfonia può essere definita la «sonata per orchestra»."
+      ],
+      "source": "https://it.wikipedia.org/wiki/Sinfonia",
+      "revision": 150301032,
+      "sourceCategories": [
+        "Categoria:Generi di composizione musicale",
+        "Categoria:Musica sinfonica",
+        "Categoria:Sinfonie"
+      ],
+      "fetchedAt": 0,
+      "topics": [
+        "history"
+      ],
+      "classification": {
+        "version": 1,
+        "fingerprint": "1:wiki:134950:150301032:8066e2f7",
+        "provider": "local",
+        "confidence": 0.7878787878787878
+      },
+      "readable": true,
+      "eligible": true
+    },
+    {
+      "requestedBy": [
+        "economics"
+      ],
+      "id": "wiki:395290",
+      "title": "Inflazione",
+      "category": "economics",
+      "paragraphs": [
+        "Con inflazione (dal latino inflatio «enfiamento, gonfiatura», derivato da inflāre «gonfiare»), in economia, si indica l'aumento del livello generale dei prezzi di beni e servizi in un determinato periodo di tempo.",
+        "L'aumento dei prezzi riduce il potere d'acquisto della moneta: con lo stesso importo monetario si potranno cioè acquistare meno beni e servizi. L'inflazione, perciò, è anche un'erosione del potere di acquisto dei consumatori (a parità di altre condizioni, in particolare del livello dei redditi)."
+      ],
+      "preview": [
+        "Con inflazione (dal latino inflatio «enfiamento, gonfiatura», derivato da inflāre «gonfiare»), in economia, si indica l'aumento del livello generale dei prezzi di beni e servizi in un determinato periodo di tempo.",
+        "L'aumento dei prezzi riduce il potere d'acquisto della moneta: con lo stesso importo monetario si potranno cioè acquistare meno beni e servizi. L'inflazione, perciò, è anche un'erosione del potere di acquisto dei consumatori (a parità di altre condizioni, in particolare del livello dei redditi)."
+      ],
+      "source": "https://it.wikipedia.org/wiki/Inflazione",
+      "revision": 152754604,
+      "sourceCategories": [
+        "Categoria:Inflazione"
+      ],
+      "fetchedAt": 0,
+      "topics": [],
+      "classification": {
+        "version": 1,
+        "fingerprint": "1:wiki:395290:152754604:2389bc12",
+        "provider": "local",
+        "confidence": 0.9
+      },
+      "readable": true,
+      "eligible": true
+    },
+    {
+      "requestedBy": [
+        "biology"
+      ],
+      "id": "wiki:2270912",
+      "title": "Cellula",
+      "category": "biology",
+      "paragraphs": [
+        "La cellula è l'unità morfologico-funzionale degli organismi viventi, nonché la più piccola struttura a essere classificabile come vivente (escludendo secondo l'opinione prevalente i virus).",
+        "Esistono organismi costituiti da una singola cellula (unicellulari), come ad esempio i batteri o i protozoi, e organismi pluricellulari, che appartengono tipicamente ai regni animale, vegetale e dei funghi (l'organismo umano è formato da circa 100.000 miliardi di cellule). Con l'aumentare del numero di cellule di un organismo, queste si differenziano in forma, grandezza, rapporti e funzioni, fino alla costituzione dei tessuti e degli organi."
+      ],
+      "preview": [
+        "La cellula è l'unità morfologico-funzionale degli organismi viventi, nonché la più piccola struttura a essere classificabile come vivente (escludendo secondo l'opinione prevalente i virus).",
+        "Esistono organismi costituiti da una singola cellula (unicellulari), come ad esempio i batteri o i protozoi, e organismi pluricellulari, che appartengono tipicamente ai regni animale, vegetale e dei funghi (l'organismo umano è formato da circa 100.000 miliardi di cellule). Con l'aumentare del numero di cellule di un organismo, queste si differenziano in forma, grandezza, rapporti e funzioni, fino alla costituzione dei tessuti e degli organi."
+      ],
+      "source": "https://it.wikipedia.org/wiki/Cellula",
+      "revision": 151692578,
+      "sourceCategories": [
+        "Categoria:Citologia"
+      ],
+      "fetchedAt": 0,
+      "topics": [],
+      "classification": {
+        "version": 1,
+        "fingerprint": "1:wiki:2270912:151692578:f29c406d",
+        "provider": "local",
+        "confidence": 0.8421052631578947
+      },
+      "readable": true,
+      "eligible": true
+    },
+    {
+      "requestedBy": [
+        "politics"
+      ],
+      "id": "wiki:2593818",
+      "title": "Democrazia",
+      "category": "politics",
+      "paragraphs": [
+        "La democrazia (dal greco antico δῆμος?, démos, \"popolo\" e κράτος, krátos, \"potere\" significa etimologicamente \"governo del popolo\") è una forma di governo e un insieme di principi normativi (libertà, eguaglianza, dignità umana, pluralismo), in cui la sovranità è esercitata, direttamente o indirettamente, dal popolo, generalmente identificato con l'insieme dei cittadini che ricorrono a strumenti di consultazione popolare quali votazioni, deliberazioni e altre forme di partecipazione democratica.",
+        "La democrazia è un sistema politico fondato sul principio della sovranità popolare: il potere appartiene al popolo, che lo esercita attraverso forme di partecipazione diretta o indiretta. In un sistema democratico, i cittadini godono della libertà di scegliere i propri rappresentanti e di influenzare le decisioni politiche che li riguardano. Tuttavia, il concetto di democrazia è molto articolato e comprende numerosi aspetti che vanno oltre la semplice elezione dei governanti.",
+        "Dal punto di vista storico, il concetto di democrazia non si è cristallizzato in un'unica versione univoca né in una sola concreta traduzione istituzionale, ma ha trovato espressione evolvendosi in diverse manifestazioni. Tutte queste forme, pur nella loro varietà, sono accomunate dalla ricerca di una modalità che conferisca al popolo la potestà effettiva di governare.",
+        "Sebbene l'idea di democrazia sia generalmente associata a una specifica forma di Stato, la democrazia può riguardare qualsiasi comunità di persone e il modo in cui vengono prese le decisioni al suo interno. Ad esempio, il Papa viene eletto da un collegio ristretto (il Collegio cardinalizio), e analogamente lo furono i primi quattro Califfi, detti \"califfi ben guidati\". Questi esempi rappresentano forme di monarchia assoluta elettiva teocratica, configurandosi come tipologie di democrazia illiberale teocratica."
+      ],
+      "preview": [
+        "La democrazia (dal greco antico δῆμος?, démos, \"popolo\" e κράτος, krátos, \"potere\" significa etimologicamente \"governo del popolo\") è una forma di governo e un insieme di principi normativi (libertà, eguaglianza, dignità umana, pluralismo), in cui la sovranità è esercitata, direttamente o indirettamente, dal popolo, generalmente identificato con l'insieme dei cittadini che ricorrono a strumenti di consultazione popolare quali votazioni, deliberazioni e altre forme di partecipazione democratica.",
+        "La democrazia è un sistema politico fondato sul principio della sovranità popolare: il potere appartiene al popolo, che lo esercita attraverso forme di partecipazione diretta o indiretta. In un sistema democratico, i cittadini godono della libertà di scegliere i propri rappresentanti e di influenzare le decisioni politiche che li riguardano. Tuttavia, il concetto di democrazia è molto articolato e comprende numerosi aspetti che vanno oltre la semplice elezione dei governanti."
+      ],
+      "source": "https://it.wikipedia.org/wiki/Democrazia",
+      "revision": 151741633,
+      "sourceCategories": [
+        "Categoria:Democrazia",
+        "Categoria:Forme di sovranità",
+        "Categoria:Teorie politiche"
+      ],
+      "fetchedAt": 0,
+      "topics": [],
+      "classification": {
+        "version": 1,
+        "fingerprint": "1:wiki:2593818:151741633:8ec9b9fb",
+        "provider": "local",
+        "confidence": 0.8888888888888888
+      },
+      "readable": true,
+      "eligible": true
+    },
+    {
+      "requestedBy": [
+        "biology"
+      ],
+      "id": "wiki:2895727",
+      "title": "DNA",
+      "category": "biology",
+      "paragraphs": [
+        "L'acido desossiribonucleico o deossiribonucleico (sigla DNA, dall'inglese DeoxyriboNucleic Acid) è l'acido nucleico che contiene le informazioni genetiche per lo sviluppo, l'omeostasi e la riproduzione di tutti gli esseri viventi conosciuti. Costituisce inoltre la molecola base del funzionamento di una piccola minoranza dei virus.",
+        "Dal punto di vista chimico, il DNA è un polimero organico a doppia catena i cui monomeri sono chiamati nucleotidi (desossiribonucleotidi). I nucleotidi sono costituiti da tre componenti fondamentali: un gruppo fosfato, uno zucchero (il deossiribosio) e una base azotata, legata al glucide con un legame N-glicosidico. Le basi azotate che entrano nella formazione dei nucleotidi sono quattro: adenina, timina, citosina e guanina (nell'RNA al posto della timina è presente l'uracile). La doppia catena polinucleotidica del DNA ha struttura antiparallela, spiralizzata e complementare poiché le basi azotate di una catena si accoppiano con l'altra con legami idrogeno secondo lo schema: A-T e G-C.",
+        "La sequenza dei nucleotidi costituisce il codice genetico, che è tradotto negli amminoacidi corrispondenti. La sequenza amminoacidica prodotta forma le proteine. Il processo della sintesi proteica avviene tramite la sintesi di una molecola intermedia di RNA (RNA messaggero), che è formata per complementarità con le quattro basi dei nucleotidi del DNA in un processo noto come trascrizione. Il DNA non genera solo filamenti di RNA destinati alla traduzione in aminoacidi, ma anche frammenti in grado di svolgere svariate funzioni biologiche, ad esempio all'interno dei ribosomi, dove l'RNA ha una funzione strutturale.",
+        "Negli eucarioti, il DNA si complessa all'interno del nucleo in strutture chiamate cromosomi. Negli altri organismi, privi di nucleo, esso può essere organizzato in cromosomi o meno (nei batteri è presente un'unica molecola di DNA circolare a doppia catena). All'interno dei cromosomi, le proteine della cromatina come gli istoni, le coesine e le condensine organizzano il DNA e lo avvolgono in strutture ordinate. Queste strutture guidano l'interazione tra il codice genetico e le proteine responsabili della trascrizione, contribuendo al controllo della trascrizione genica. Nel corso della mitosi avviene la replicazione del DNA, con la quale l'informazione genica è trasmessa integralmente nel passaggio tra diverse generazioni cellulari."
+      ],
+      "preview": [
+        "L'acido desossiribonucleico o deossiribonucleico (sigla DNA, dall'inglese DeoxyriboNucleic Acid) è l'acido nucleico che contiene le informazioni genetiche per lo sviluppo, l'omeostasi e la riproduzione di tutti gli esseri viventi conosciuti. Costituisce inoltre la molecola base del funzionamento di una piccola minoranza dei virus.",
+        "Dal punto di vista chimico, il DNA è un polimero organico a doppia catena i cui monomeri sono chiamati nucleotidi (desossiribonucleotidi). I nucleotidi sono costituiti da tre componenti fondamentali: un gruppo fosfato, uno zucchero (il deossiribosio) e una base azotata, legata al glucide con un legame N-glicosidico. Le basi azotate che entrano nella formazione dei nucleotidi sono quattro: adenina, timina, citosina e guanina (nell'RNA al posto della timina è presente l'uracile). La doppia catena polinucleotidica del DNA ha struttura antiparallela, spiralizzata e complementare poiché le basi azotate di una catena si accoppiano con l'altra con legami idrogeno secondo lo schema: A-T e G-C."
+      ],
+      "source": "https://it.wikipedia.org/wiki/DNA",
+      "revision": 152804660,
+      "sourceCategories": [
+        "Categoria:DNA",
+        "Categoria:Identificazione personale"
+      ],
+      "fetchedAt": 0,
+      "topics": [],
+      "classification": {
+        "version": 1,
+        "fingerprint": "1:wiki:2895727:152804660:96a61703",
+        "provider": "local",
+        "confidence": 0.85
+      },
+      "readable": true,
+      "eligible": true
+    },
+    {
+      "requestedBy": [
+        "economics"
+      ],
+      "id": "wiki:2925170",
+      "title": "Moneta",
+      "category": "economics",
+      "paragraphs": [],
+      "preview": [],
+      "source": "https://it.wikipedia.org/wiki/Moneta",
+      "revision": 152780280,
+      "sourceCategories": [
+        "Categoria:Economia monetaria",
+        "Categoria:Monete"
+      ],
+      "fetchedAt": 0,
+      "topics": [],
+      "classification": {
+        "version": 1,
+        "fingerprint": "1:wiki:2925170:152780280:86be7dc3",
+        "provider": "local",
+        "confidence": 0.8181818181818182
+      },
+      "readable": false,
+      "eligible": false
+    },
+    {
+      "requestedBy": [
+        "mathematics"
+      ],
+      "id": "wiki:3262",
+      "title": "Probabilità",
+      "category": "mathematics",
+      "paragraphs": [
+        "Il concetto di probabilità, utilizzato a partire dal XVII secolo, è diventato con il passare del tempo la base di diverse discipline scientifiche rimanendo tuttavia non univoco. In particolare su di esso si basa una branca della statistica (la statistica inferenziale), cui fanno ricorso numerose scienze sia naturali che sociali."
+      ],
+      "preview": [
+        "Il concetto di probabilità, utilizzato a partire dal XVII secolo, è diventato con il passare del tempo la base di diverse discipline scientifiche rimanendo tuttavia non univoco. In particolare su di esso si basa una branca della statistica (la statistica inferenziale), cui fanno ricorso numerose scienze sia naturali che sociali."
+      ],
+      "source": "https://it.wikipedia.org/wiki/Probabilit%C3%A0",
+      "revision": 151512540,
+      "sourceCategories": [
+        "Categoria:Teoria della probabilità"
+      ],
+      "fetchedAt": 0,
+      "topics": [
+        "science"
+      ],
+      "classification": {
+        "version": 1,
+        "fingerprint": "1:wiki:3262:151512540:b94d069a",
+        "provider": "local",
+        "confidence": 0.65
+      },
+      "readable": true,
+      "eligible": true
+    },
+    {
+      "requestedBy": [
+        "literature"
+      ],
+      "id": "wiki:16460",
+      "title": "Romanzo",
+      "category": "literature",
+      "paragraphs": [
+        "Il romanzo è un genere della narrativa scritto in prosa. Origini e caratteristiche fondanti del romanzo sono argomento di dibattito tra gli studiosi. Certamente si può affermare che una premessa importante del romanzo moderno è da individuare nella prima produzione in lingua d'oïl (XI secolo): le narrazioni in versi di questa tradizione, sia che recuperassero temi greco-romani sia che rielaborassero temi cavallereschi (ciclo bretone e ciclo carolingio), venivano indicate già allora con il termine roman.",
+        "Il principale carattere di novità rispetto alle tradizioni narrative immediatamente precedenti (e al genere epico in particolare, con le sue imprese militari collettive) è il modo diverso di porsi in rapporto col tempo. Fa parte dell'arte moderna (nominata contemporanea alla nascita del Romanzo) e necessariamente deve contenere quel modo di narrare nuovo e di contrasto con l'arte del passato.",
+        "La Teoria dell'Estetica di Theodor Adorno si sofferma sull'incompiutezza dell'opera, ossia il suo essere sempre in formazione: mentre gli altri generi epici tendono a fermare il Tempo partendo da un inizio e arrivando a una fine, il Romanzo non ha un fine, non mette il punto. Altre caratteristiche stilistiche come il progressivo focalizzarsi dell'attenzione sul singolo individuo o su piccoli gruppi di cavalieri, immersi in vicende che hanno un misto di storico e di \"meraviglioso\".",
+        "L'\"esperienza assoluta\" del cavaliere, irretito nella sua aventure (termine che in francese antico indicava inizialmente solo il destino o il caso e che finisce per indicare il complesso delle peripezie e il perfezionamento etico di chi le attraversa), sviluppa negli scrittori l'esigenza di una narrazione meno ingessata, \"capace di rappresentare un mondo complesso e variamente articolato\". Il romanzo è dunque costruito da una struttura della storia più o meno complessa e da una varietà di personaggi più o meno ampia. Questa profonda articolazione ha dato vita a numerosi sottogeneri: si passa dal genere storico al fantastico, dal giallo al romanzo epistolare."
+      ],
+      "preview": [
+        "Il romanzo è un genere della narrativa scritto in prosa. Origini e caratteristiche fondanti del romanzo sono argomento di dibattito tra gli studiosi. Certamente si può affermare che una premessa importante del romanzo moderno è da individuare nella prima produzione in lingua d'oïl (XI secolo): le narrazioni in versi di questa tradizione, sia che recuperassero temi greco-romani sia che rielaborassero temi cavallereschi (ciclo bretone e ciclo carolingio), venivano indicate già allora con il termine roman.",
+        "Il principale carattere di novità rispetto alle tradizioni narrative immediatamente precedenti (e al genere epico in particolare, con le sue imprese militari collettive) è il modo diverso di porsi in rapporto col tempo. Fa parte dell'arte moderna (nominata contemporanea alla nascita del Romanzo) e necessariamente deve contenere quel modo di narrare nuovo e di contrasto con l'arte del passato."
+      ],
+      "source": "https://it.wikipedia.org/wiki/Romanzo",
+      "revision": 152037320,
+      "sourceCategories": [
+        "Categoria:Narrativa",
+        "Categoria:Romanzi"
+      ],
+      "fetchedAt": 0,
+      "topics": [],
+      "classification": {
+        "version": 1,
+        "fingerprint": "1:wiki:16460:152037320:263ce064",
+        "provider": "local",
+        "confidence": 0.8
+      },
+      "readable": true,
+      "eligible": true
+    },
+    {
+      "requestedBy": [
+        "literature"
+      ],
+      "id": "wiki:33776",
+      "title": "Poesia",
+      "category": "literature",
+      "paragraphs": [
+        "La poesia (dal greco antico ποιεῖν, produrre, creare) è una forma d'arte che crea, con la scelta e l'accostamento di parole secondo particolari leggi metriche, un componimento fatto di frasi dette versi, in cui il significato semantico si lega al suono musicale dei fonemi. La poesia ha quindi in sé alcune qualità della musica e riesce a trasmettere concetti e stati d'animo in maniera più evocativa e potente di quanto faccia la prosa, in cui le parole non sottostanno alla metrica.",
+        "- Vettore di suoni.",
+        "Per svolgere efficacemente questa duplice funzione, la sintassi e l'ortografia possono subire variazioni rispetto alle norme dell'Italiano neostandard (le cosiddette licenze poetiche) se ciò è funzionale (non solo esteticamente) ai fini della comunicazione del messaggio.",
+        "A questi due aspetti della poesia se ne aggiunge un terzo quando una poesia, anziché essere letta direttamente, è ascoltata: con il proprio linguaggio del corpo e il modo di leggere, il lettore interpreta il testo, aggiungendo la dimensione teatrale della dizione e della recitazione. Nel mondo antico - ed anche in molte culture odierne - poesia e musica sono spesso unite, come accade anche nei Kunstlieder tedeschi, poesie d'autore sotto forma di canzoni accompagnate da musiche appositamente composte.",
+        "Queste strette commistioni fra significato e suono rendono estremamente difficile tradurre una poesia in lingue diverse dall'originale, perché il suono e il ritmo originali vanno irrimediabilmente persi e devono essere sostituiti da un adattamento nella nuova lingua, che in genere è solo un'approssimazione dell'originale. Queste particolari criticità insite nella traduzione poetica determinano spesso un ampliamento del ruolo e delle competenze del traduttore anche in relazione alla progettualità e al lavoro editoriali nell'allestimento di raccolte e collane di poesia tradotta."
+      ],
+      "preview": [
+        "La poesia (dal greco antico ποιεῖν, produrre, creare) è una forma d'arte che crea, con la scelta e l'accostamento di parole secondo particolari leggi metriche, un componimento fatto di frasi dette versi, in cui il significato semantico si lega al suono musicale dei fonemi. La poesia ha quindi in sé alcune qualità della musica e riesce a trasmettere concetti e stati d'animo in maniera più evocativa e potente di quanto faccia la prosa, in cui le parole non sottostanno alla metrica.",
+        "- Vettore di suoni.",
+        "Per svolgere efficacemente questa duplice funzione, la sintassi e l'ortografia possono subire variazioni rispetto alle norme dell'Italiano neostandard (le cosiddette licenze poetiche) se ciò è funzionale (non solo esteticamente) ai fini della comunicazione del messaggio."
+      ],
+      "source": "https://it.wikipedia.org/wiki/Poesia",
+      "revision": 152612010,
+      "sourceCategories": [
+        "Categoria:Poesia"
+      ],
+      "fetchedAt": 0,
+      "topics": [
+        "music",
+        "arts"
+      ],
+      "classification": {
+        "version": 1,
+        "fingerprint": "1:wiki:33776:152612010:76fab529",
+        "provider": "local",
+        "confidence": 0.6
+      },
+      "readable": true,
+      "eligible": true
+    },
+    {
+      "requestedBy": [
+        "medicine"
+      ],
+      "id": "wiki:690402",
+      "title": "Vaccino",
+      "category": "medicine",
+      "paragraphs": [
+        "Il vaccino (dal latino vaccinus, \"proveniente dalle vacche\") è un preparato biologico e un presidio medico preventivo fondamentale, somministrato a un organismo vivente allo scopo di conferire un'immunità acquisita attiva, protettiva e duratura contro una specifica infezione, malattia o, in determinati contesti, contro patologie maligne non infettive come alcuni tumori. Il vaccino consente pertanto al corpo di sviluppare un sistema di difesa contro un determinato microrganismo patogeno ancor prima di venire a contatto con esso.",
+        "La vaccinazione rappresenta il metodo più efficace e sicuro per prevenire le malattie infettive su larga scala. La sua introduzione ha permesso di ridurre drasticamente in modo sicuro ed estremamente rilevante, l'incidenza di malattie gravi e potenzialmente letali che erano diffuse da millenni, la mortalità infantile e varie forme di disabilità nel mondo. L'Organizzazione Mondiale della Sanità (OMS) riferisce che sono attualmente disponibili vaccini approvati per prevenire, controllare o contribuire al contenimento di oltre venti diverse infezioni (tra cui poliomielite, morbillo, tetano, difterite, pertosse, tubercolosi, influenza stagionale, epatite, papillomavirus umano, varicella, febbre gialla, Ebola e COVID-19). Uno dei traguardi più importanti della vaccinologia globale è stato raggiunto nel 1980, quando l'OMS ha dichiarato ufficialmente eradicato il vaiolo umano.",
+        "La pratica della sua somministrazione è denominata vaccinazione o vaccinoprofilassi. Essa ha il fine di sfruttare la memoria immunologica del sistema immunitario e si distingue nettamente dall'immunità artificiale passiva (o sieroprofilassi); quest'ultima è basata sull'utilizzo di sieri, ossia fluidi corporei provenienti da un altro individuo umano (siero omologo) o animale (siero eterologo), contenenti anticorpi specifici. Quest'ultima pratica garantisce infatti una protezione immediata, tuttavia temporanea; generalmente limitata a poche settimane.",
+        "Ad oggi, i vaccini vengono somministrati regolarmente in praticamente tutti i Paesi del mondo. L'OMS e l'UNICEF considerano 195 Stati membri nelle loro stime internazionali sulla copertura vaccinale. Nel 2025, 188 Paesi hanno fornito dati sulla vaccinazione e 185 hanno fornito direttamente dati di copertura; per gli altri sono state utilizzate stime basate sui dati precedenti. Ad esempio il vaccino contro Hib era stato introdotto in 193 paesi, quello contro l'epatite B infantile in 190, e quello contro la rosolia in 179. A livello amministrativo, il vaccino HPV era incluso nei programmi nazionali di 162 Paesi, mentre quello contro il rotavirus in 136.",
+        "Dal punto di vista immunologico, la sostanza attiva di un vaccino è costituita da un agente antigenico in grado di simulare il microrganismo patogeno (o una sua componente) senza poter causare la malattia. L'antigene presenta uno o più epitopi in grado di stimolare i linfociti B e T del sistema immunitario a produrre anticorpi specifici oltre a generare cellule di memoria a lungo termine. In seguito a un eventuale futuro contatto con il patogeno reale (nella sua forma naturale o wild type), l'organismo sarà così in grado di riconoscerlo e debellarlo tempestivamente. La formulazione del vaccino può contenere forme attenuate o inattivate (uccise) del microbo, sue tossine (anatossine), proteine di superficie, oppure molecole di acido nucleico (DNA o RNA messaggero) che codificano per l'antigene stesso. Spesso vengono aggiunti anche degli additivi (adiuvanti) che potenziano l'efficacia e la risposta immunitaria.",
+        "I vaccini profilattici, vengono somministrati per prevenire o mitigare gli effetti di una futura infezione (alcuni di essi sono in grado di indurre un'immunità sterilizzante completa, che previene interamente l'infezione stessa).",
+        "I vaccini terapeutici, vengono impiegati per combattere una malattia già in atto, come i vaccini oncologici per il trattamento del cancro o i protocolli di iposensibilizzazione contro le allergie.",
+        "A seconda della tecnologia di produzione, si distinguono vaccini a virus intero (attenuato o inattivato), a vettore virale geneticamente modificato (replicativo o non replicativo, come gli adenovirus), a subunità ricombinanti o a base di acidi nucleici (DNA e mRNA).",
+        "La storia di questa pratica affonda le radici nella \"vaiolizzazione\", documentata in Cina già a partire dal X secolo e consolidatasi nel XVI secolo; tale usanza fu successivamente introdotta in Gran Bretagna dalla Turchia nel 1721 grazie a Lady Mary Wortley Montagu. La nascita della vaccinologia moderna si deve tuttavia a Edward Jenner, che nel 1798 descrisse l'effetto protettivo del vaiolo bovino contro il vaiolo umano nella sua celebre opera Inquiry into the Variolae vaccinae..., coniando il termine Variolae vaccinae (da cui derivano i termini \"vaccino\" e \"vaccinazione\"). Nel 1881, per onorare il lavoro pionieristico di Jenner, Louis Pasteur propose di estendere questa terminologia a tutte le nuove inoculazioni immunizzanti e protettive sviluppate in quel periodo."
+      ],
+      "preview": [
+        "Il vaccino (dal latino vaccinus, \"proveniente dalle vacche\") è un preparato biologico e un presidio medico preventivo fondamentale, somministrato a un organismo vivente allo scopo di conferire un'immunità acquisita attiva, protettiva e duratura contro una specifica infezione, malattia o, in determinati contesti, contro patologie maligne non infettive come alcuni tumori. Il vaccino consente pertanto al corpo di sviluppare un sistema di difesa contro un determinato microrganismo patogeno ancor prima di venire a contatto con esso.",
+        "La vaccinazione rappresenta il metodo più efficace e sicuro per prevenire le malattie infettive su larga scala. La sua introduzione ha permesso di ridurre drasticamente in modo sicuro ed estremamente rilevante, l'incidenza di malattie gravi e potenzialmente letali che erano diffuse da millenni, la mortalità infantile e varie forme di disabilità nel mondo."
+      ],
+      "source": "https://it.wikipedia.org/wiki/Vaccino",
+      "revision": 152845984,
+      "sourceCategories": [
+        "Categoria:Vaccini"
+      ],
+      "fetchedAt": 0,
+      "topics": [
+        "biology"
+      ],
+      "classification": {
+        "version": 1,
+        "fingerprint": "1:wiki:690402:152845984:bcc322",
+        "provider": "local",
+        "confidence": 0.7142857142857143
+      },
+      "readable": true,
+      "eligible": true
+    },
+    {
+      "requestedBy": [
+        "astronomy"
+      ],
+      "id": "wiki:1330060",
+      "title": "Buco nero",
+      "category": "astronomy",
+      "paragraphs": [
+        "In astrofisica, un buco nero è un corpo celeste con un campo gravitazionale così intenso (ovvero, una regione dello spaziotempo con una curvatura talmente alta) che dal suo interno non può uscire nulla, nemmeno la luce, essendo la velocità di fuga superiore a c.",
+        "Il buco nero è il risultato di implosioni di masse sufficientemente elevate. La gravità domina su qualsiasi altra forza, determinando un collasso gravitazionale che tende a concentrare lo spaziotempo in un punto al centro della regione, dove è teorizzato uno stato della materia di curvatura tendente a infinito e volume tendente a zero chiamato singolarità, con caratteristiche sconosciute ed estranee alle leggi della relatività generale. Il limite del buco nero è definito orizzonte degli eventi, regione che ne delimita in modo peculiare i confini osservabili.",
+        "Per le suddette proprietà, il buco nero non è osservabile direttamente. La sua presenza si rivela solo indirettamente mediante i suoi effetti sullo spazio circostante: le interazioni gravitazionali con altri corpi celesti e le loro emissioni, le irradiazioni principalmente elettromagnetiche della materia catturata dal suo campo di forza.",
+        "Nel corso dei decenni successivi alla pubblicazione della relatività generale, base teorica della loro esistenza, vennero raccolte numerose osservazioni interpretabili, pur non sempre univocamente, come prove della presenza di buchi neri, specialmente in alcune galassie attive e sistemi stellari di binarie X.",
+        "L'esistenza di tali oggetti è oggi definitivamente dimostrata e via via ne vengono individuati di nuovi con massa molto variabile, da valori di circa 5 masse solari fino a miliardi.",
+        "Il termine \"buco nero\" fu coniato dal fisico John Archibald Wheeler, che lo utilizzò a partire dal 1967 in un suo discorso a seguito del suggerimento di uno spettatore mai identificato."
+      ],
+      "preview": [
+        "In astrofisica, un buco nero è un corpo celeste con un campo gravitazionale così intenso (ovvero, una regione dello spaziotempo con una curvatura talmente alta) che dal suo interno non può uscire nulla, nemmeno la luce, essendo la velocità di fuga superiore a c.",
+        "Il buco nero è il risultato di implosioni di masse sufficientemente elevate. La gravità domina su qualsiasi altra forza, determinando un collasso gravitazionale che tende a concentrare lo spaziotempo in un punto al centro della regione, dove è teorizzato uno stato della materia di curvatura tendente a infinito e volume tendente a zero chiamato singolarità, con caratteristiche sconosciute ed estranee alle leggi della relatività generale. Il limite del buco nero è definito orizzonte degli eventi, regione che ne delimita in modo peculiare i confini osservabili.",
+        "Per le suddette proprietà, il buco nero non è osservabile direttamente."
+      ],
+      "source": "https://it.wikipedia.org/wiki/Buco_nero",
+      "revision": 152826827,
+      "sourceCategories": [
+        "Categoria:Buchi neri",
+        "Categoria:Classificazione stellare",
+        "Categoria:Evoluzione stellare"
+      ],
+      "fetchedAt": 0,
+      "topics": [
+        "science"
+      ],
+      "classification": {
+        "version": 1,
+        "fingerprint": "1:wiki:1330060:152826827:13de3395",
+        "provider": "local",
+        "confidence": 0.7037037037037037
+      },
+      "readable": true,
+      "eligible": true
+    },
+    {
+      "requestedBy": [
+        "astronomy"
+      ],
+      "id": "wiki:1349270",
+      "title": "Sistema solare",
+      "category": "astronomy",
+      "paragraphs": [
+        "Il sistema solare è un sistema planetario costituito da una varietà di corpi celesti mantenuti in orbita dalla forza gravitazionale del Sole; ha un diametro di circa 120-130 au - 0,0019 anni luce, inteso come la zona dello spazio che è sottoposta al vento solare, tralasciando l'immensa zona sottoposta alla sola gravità solare. È situato nel braccio di Orione della Via Lattea e orbita attorno al centro galattico a una distanza di circa 26700 anni luce e una velocità di 230 km/s; si stima che il sistema solare impieghi circa 225-250 milioni di anni per completare un giro attorno al centro galattico.",
+        "Il sistema solare è costituito dal Sole, una stella che da sola possiede il 99,86% della massa di tutto il sistema, da otto pianeti (quattro rocciosi interni e quattro giganti gassosi esterni), da cinque pianeti nani, dai rispettivi satelliti naturali, e da moltissimi altri corpi minori; questa categoria comprende gli asteroidi, in gran parte ripartiti fra due cinture asteroidali, chiamate fascia principale e fascia di Kuiper, le comete, prevalentemente situate nell'ipotetica nube di Oort, i meteoroidi e la polvere interplanetaria, che tutti insieme costituiscono il restante 0,14% del sistema.",
+        "In ordine di distanza dal Sole, gli otto pianeti sono: Mercurio, Venere, Terra, Marte, Giove, Saturno, Urano e Nettuno; i cinque pianeti nani sono: Cerere, situato nella Fascia principale degli asteroidi, Plutone, Haumea, Makemake situati nella Fascia di Kuiper ed Eris, che si trova nel disco diffuso. Il vento solare, un flusso di plasma generato dall'espansione continua della corona solare, permea l'intero sistema solare, creando una bolla nel mezzo interstellare conosciuta come eliosfera, che si estende fino oltre alla metà del disco diffuso."
+      ],
+      "preview": [
+        "Il sistema solare è un sistema planetario costituito da una varietà di corpi celesti mantenuti in orbita dalla forza gravitazionale del Sole; ha un diametro di circa 120-130 au - 0,0019 anni luce, inteso come la zona dello spazio che è sottoposta al vento solare, tralasciando l'immensa zona sottoposta alla sola gravità solare. È situato nel braccio di Orione della Via Lattea e orbita attorno al centro galattico a una distanza di circa 26700 anni luce e una velocità di 230 km/s; si stima che il sistema solare impieghi circa 225-250 milioni di anni per completare un giro attorno al centro galattico."
+      ],
+      "source": "https://it.wikipedia.org/wiki/Sistema_solare",
+      "revision": 152814721,
+      "sourceCategories": [
+        "Categoria:Sistema solare",
+        "Categoria:Sistemi planetari con otto pianeti confermati"
+      ],
+      "fetchedAt": 0,
+      "topics": [
+        "science"
+      ],
+      "classification": {
+        "version": 1,
+        "fingerprint": "1:wiki:1349270:152814721:a4b7304f",
+        "provider": "local",
+        "confidence": 0.6842105263157895
+      },
+      "readable": true,
+      "eligible": true
+    },
+    {
+      "requestedBy": [
+        "mathematics"
+      ],
+      "id": "wiki:1369296",
+      "title": "Numero primo",
+      "category": "mathematics",
+      "paragraphs": [
+        "In matematica, un numero primo (in breve anche primo) è un numero intero positivo che abbia esattamente due divisori distinti. In modo equivalente si può definire come un numero naturale maggiore di 1 che sia divisibile solamente per 1 e per sé stesso; al contrario, un numero maggiore di 1 che abbia più di due divisori è detto composto. Ad esempio 2, 3 e 5 sono primi mentre 4 e 6 non lo sono perché sono divisibili rispettivamente anche per 2 e per 2 e 3. L'unico numero primo pari è 2, in quanto tutti gli altri numeri pari sono divisibili per 2.",
+        "La successione dei numeri primi comincia con 2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97, 101, 103, 107, 109, 113, 127, 131, 137, 139...",
+        "Quello di numero primo è uno dei concetti basilari della teoria dei numeri, la parte della matematica che studia i numeri interi: l'importanza sta nella possibilità di costruire con essi, attraverso la moltiplicazione, tutti gli altri numeri interi, nonché l'unicità di tale fattorizzazione. I primi sono inoltre infiniti e la loro distribuzione è tuttora oggetto di molte ricerche.",
+        "I numeri primi sono oggetto di studio fin dall'antichità: i primi risultati risalgono agli antichi Greci, e in particolare agli Elementi di Euclide, scritti attorno al 300 a.C. Ciononostante, numerose congetture che li riguardano non sono state ancora dimostrate; tra le più note vi sono l'ipotesi di Riemann, la congettura di Goldbach e quella dei primi gemelli, indimostrate a più di un secolo dalla loro formulazione.",
+        "Essi sono rilevanti anche in molti altri ambiti della matematica pura, come ad esempio l'algebra o la geometria; recentemente hanno assunto un'importanza cruciale anche nella matematica applicata, e in particolare nella crittografia."
+      ],
+      "preview": [
+        "In matematica, un numero primo (in breve anche primo) è un numero intero positivo che abbia esattamente due divisori distinti. In modo equivalente si può definire come un numero naturale maggiore di 1 che sia divisibile solamente per 1 e per sé stesso; al contrario, un numero maggiore di 1 che abbia più di due divisori è detto composto. Ad esempio 2, 3 e 5 sono primi mentre 4 e 6 non lo sono perché sono divisibili rispettivamente anche per 2 e per 2 e 3. L'unico numero primo pari è 2, in quanto tutti gli altri numeri pari sono divisibili per 2.",
+        "La successione dei numeri primi comincia con 2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97, 101, 103, 107, 109, 113, 127, 131, 137, 139..."
+      ],
+      "source": "https://it.wikipedia.org/wiki/Numero_primo",
+      "revision": 152583620,
+      "sourceCategories": [
+        "Categoria:Matematica di base",
+        "Categoria:Numeri primi",
+        "Categoria:Successioni di interi"
+      ],
+      "fetchedAt": 0,
+      "topics": [],
+      "classification": {
+        "version": 1,
+        "fingerprint": "1:wiki:1369296:152583620:70ffefd5",
+        "provider": "local",
+        "confidence": 0.9090909090909091
+      },
+      "readable": true,
+      "eligible": true
+    },
+    {
+      "requestedBy": [
+        "medicine"
+      ],
+      "id": "wiki:2716344",
+      "title": "Antibiotico",
+      "category": "medicine",
+      "paragraphs": [],
+      "preview": [],
+      "source": "https://it.wikipedia.org/wiki/Antibiotico",
+      "revision": 151641658,
+      "sourceCategories": [
+        "Categoria:Antibiotici",
+        "Categoria:Chimica farmaceutica"
+      ],
+      "fetchedAt": 0,
+      "topics": [],
+      "classification": {
+        "version": 1,
+        "fingerprint": "1:wiki:2716344:151641658:9e62297e",
+        "provider": "local",
+        "confidence": 0.6363636363636364
+      },
+      "readable": false,
+      "eligible": false
+    }
+  ]
+}

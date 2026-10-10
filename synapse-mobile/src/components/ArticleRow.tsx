@@ -4,7 +4,7 @@ import Animated,{Easing,FadeInLeft,LinearTransition,useReducedMotion} from 'reac
 import {TitleWords,type TitleGeometry} from './TitleWords';
 import {Label,Icon} from './Atoms';
 import {SavedSwipe} from './SavedSwipe';
-import {CATEGORIES} from '../content/categories';
+import {categoryLabel} from '../content/categories';
 import type {Article} from '../content/types';
 import type {OpenArticle} from './Feed';
 export type ListViewport={offset:number;height:number};
@@ -14,7 +14,7 @@ export function ArticleRow({article,onOpen,hidden,animateLayout=false,viewport,v
   const animate=animateLayout&&visible&&!(reducedOverride??systemReduced);
   const content=(confirm?:()=>void)=><Animated.View ref={ref} collapsable={false} entering={restored&&!(reducedOverride??systemReduced)?FadeInLeft.duration(260).easing(Easing.out(Easing.cubic)):undefined} onLayout={e=>{box.current=e.nativeEvent.layout}} layout={animate?LinearTransition.duration(140):undefined} style={{opacity:hidden?0:1}}>
     <Pressable disabled={removing} accessibilityRole="button" accessibilityLabel={article.title} accessibilityActions={confirm&&removalEnabled&&!hidden?[{name:'activate',label:'Apri articolo'},{name:'remove_saved',label:'Rimuovi dai salvati'}]:undefined} onAccessibilityAction={e=>{if(e.nativeEvent.actionName==='remove_saved')confirm?.();else if(e.nativeEvent.actionName==='activate')onOpen(article,ref.current,'row',title.current)}} onPress={()=>onOpen(article,ref.current,'row',title.current)} style={{paddingVertical:21,borderBottomWidth:StyleSheet.hairlineWidth,borderBottomColor:'#9c94834a',flexDirection:'row',gap:10,alignItems:'center'}}>
-      <View style={{flex:1}}><Label muted style={{fontSize:12,lineHeight:18,marginBottom:9}}>{CATEGORIES.find(c=>c.id===article.category)?.label||'Wikipedia'}</Label><TitleWords title={article.title} size={25} onGeometry={geometry=>{title.current={...geometry,y:geometry.y+21}}}/></View>
+      <View style={{flex:1}}><Label muted style={{fontSize:12,lineHeight:18,marginBottom:9}}>{categoryLabel(article.category)}</Label><TitleWords title={article.title} size={25} onGeometry={geometry=>{title.current={...geometry,y:geometry.y+21}}}/></View>
       <Icon name="arrow-right" size={20}/>
     </Pressable>
   </Animated.View>;

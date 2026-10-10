@@ -6,6 +6,9 @@ import {mergeArticle} from './content/articleState';
 import {databaseQueue} from './content/databaseQueue';
 import {parseLearning,migrateLearning,type Learning} from './content/recommendations';
 import {parseAIMetrics,type AIMetrics} from './content/aiPreparation';
+import {categoryMigration} from './content/categoryMigration';
+import {parseRegistry,type CategoryRegistry} from './content/categoryRegistry';
+import {parseClassificationCache,type ClassificationCache} from './content/classification';
 type Row={id:string;json:string;saved:number;read_at:number|null;touched:number};
 const decode=(r:Row):Article=>({...JSON.parse(r.json),saved:!!r.saved,readAt:r.read_at||undefined,fetchedAt:r.touched});
 const run=databaseQueue(async()=>{
@@ -59,6 +62,24 @@ export function migrateProfile(articles:Article[],visits:Article[]){return run(a
  });return next;
 })}
 export function putLearning(learning:Learning){return run(db=>db.runAsync('INSERT OR REPLACE INTO preferences(key,value) VALUES(?,?)','learning',JSON.stringify(learning)))}
+export function migrateCategories(){return run(async db=>{
+ const raw=await db.getFirstAsync<{value:string}>('SELECT value FROM preferences WHERE key=?','learning'),profile=parseLearning(raw?.value||null);
+ if(profile.categoryVersion===1)return profile;
+ const rows=await articles(db),visits=await db.getAllAsync<{id:string;json:string}>('SELECT id,json FROM visits'),next=categoryMigration(profile,rows,visits.map(r=>JSON.parse(r.json)));
+ await db.withTransactionAsync(async()=>{
+  await db.runAsync('INSERT OR IGNORE INTO preferences(key,value) VALUES(?,?)','category-pre-v1-backup',JSON.stringify({learning:raw?.value||null,articles:rows,visits}));
+  for(const a of next.articles)await db.runAsync('UPDATE articles SET json=? WHERE id=?',JSON.stringify(a),a.id);
+  for(const a of next.visits)await db.runAsync('UPDATE visits SET json=? WHERE id=?',JSON.stringify(a),a.id);
+  await db.runAsync('INSERT OR REPLACE INTO preferences(key,value) VALUES(?,?)','learning',JSON.stringify(next.profile));
+ });return next.profile;
+})}
+export function putClassifiedArticles(items:Article[],learning:Learning){return run(async db=>{
+ await db.withTransactionAsync(async()=>{for(const a of items){const row=await db.getFirstAsync<Row>('SELECT * FROM articles WHERE id=?',a.id);const merged=mergeArticle(row?decode(row):undefined,a);await db.runAsync('INSERT INTO articles(id,json,touched) VALUES(?,?,?) ON CONFLICT(id) DO UPDATE SET json=excluded.json,touched=excluded.touched',a.id,JSON.stringify(merged),a.fetchedAt)}await db.runAsync('INSERT OR REPLACE INTO preferences(key,value) VALUES(?,?)','learning',JSON.stringify(learning))});
+})}
+export function getCategoryRegistry(){return run(async db=>{const r=await db.getFirstAsync<{value:string}>('SELECT value FROM preferences WHERE key=?','category-registry');return parseRegistry(r?.value||null)})}
+export function putCategoryRegistry(value:CategoryRegistry){return run(db=>db.runAsync('INSERT OR REPLACE INTO preferences(key,value) VALUES(?,?)','category-registry',JSON.stringify(value)))}
+export function getClassificationCache(){return run(async db=>{const r=await db.getFirstAsync<{value:string}>('SELECT value FROM preferences WHERE key=?','category-classifications');return parseClassificationCache(r?.value||null)})}
+export function putClassificationCache(value:ClassificationCache){return run(db=>db.runAsync('INSERT OR REPLACE INTO preferences(key,value) VALUES(?,?)','category-classifications',JSON.stringify(value)))}
 export function getAIMetrics(){return run(async db=>{const r=await db.getFirstAsync<{value:string}>('SELECT value FROM preferences WHERE key=?','ai-metrics');return parseAIMetrics(r?.value||null)})}
 export function putAIMetrics(metrics:AIMetrics){return run(db=>db.runAsync('INSERT OR REPLACE INTO preferences(key,value) VALUES(?,?)','ai-metrics',JSON.stringify(metrics)))}
 export function prune(protect:Set<string>){return run(async db=>{const ids=evictable(await articles(db),protect);await db.withTransactionAsync(async()=>{for(const id of ids)await db.runAsync('DELETE FROM articles WHERE id=? AND saved=0',id)});return ids})}

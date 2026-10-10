@@ -3,13 +3,14 @@ import {Pressable,View,ScrollView,StyleSheet} from 'react-native';
 import Animated,{useAnimatedStyle,useSharedValue,withSpring} from 'react-native-reanimated';
 import {LinearGradient} from 'expo-linear-gradient';
 import {CATEGORIES} from '../content/categories';
+import type {CategoryRailItem} from '../content/categoryRegistry';
 import {Label,useTheme} from './Atoms';
 import {useMotionPreference} from '../useMotionPreference';
-export function CategoryRail({selected,onSelect,order=[],disabled=()=>false}:{selected:string;onSelect:(id:string)=>void;order?:string[];disabled?:(id:string)=>boolean}){
+export function CategoryRail({selected,onSelect,items,order=[],disabled=()=>false,onInteractionStart,onInteractionEnd}:{selected:string;onSelect:(id:string)=>void;items?:CategoryRailItem[];order?:string[];disabled?:(id:string)=>boolean;onInteractionStart?:()=>void;onInteractionEnd?:()=>void}){
   const {palette}=useTheme(),reduced=useMotionPreference(),width=useRef(0),content=useRef(0),[atEnd,setAtEnd]=useState(false);
   return <View style={styles.rail} onLayout={e=>{width.current=e.nativeEvent.layout.width;setAtEnd(content.current<=width.current)}}>
-    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{gap:6,paddingRight:24}} onContentSizeChange={w=>{content.current=w;setAtEnd(w<=width.current)}} onScroll={e=>setAtEnd(e.nativeEvent.contentOffset.x+width.current>=content.current-4)} scrollEventThrottle={32}>
-      {[{id:'all',label:'Per te'},...(order.length?order.flatMap(id=>CATEGORIES.filter(c=>c.id===id)):CATEGORIES)].map(c=><Chip key={c.id} label={c.label} disabled={disabled(c.id)} reduced={reduced} selected={selected===c.id} onPress={()=>onSelect(c.id)}/>)}
+    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{gap:6,paddingRight:24}} onTouchStart={onInteractionStart} onTouchEnd={onInteractionEnd} onTouchCancel={onInteractionEnd} onScrollBeginDrag={onInteractionStart} onMomentumScrollBegin={onInteractionStart} onMomentumScrollEnd={onInteractionEnd} onScrollEndDrag={onInteractionEnd} onContentSizeChange={w=>{content.current=w;setAtEnd(w<=width.current)}} onScroll={e=>setAtEnd(e.nativeEvent.contentOffset.x+width.current>=content.current-4)} scrollEventThrottle={32}>
+      {(items?.filter(c=>c.visible)||[{id:'all',label:'Per Te'},...(order.length?order.flatMap(id=>CATEGORIES.filter(c=>c.id===id)):CATEGORIES)]).map(c=><Chip key={c.id} label={c.label} disabled={'enabled' in c?!c.enabled:disabled(c.id)} reduced={reduced} selected={selected===c.id} onPress={()=>onSelect(c.id)}/>)}
     </ScrollView>
     {!atEnd&&<LinearGradient pointerEvents="none" colors={[palette.paper+'00',palette.paper]} start={{x:0,y:.5}} end={{x:1,y:.5}} style={styles.fade}/>}
   </View>;

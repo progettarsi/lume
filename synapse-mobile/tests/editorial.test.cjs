@@ -43,7 +43,7 @@ test('exclusions and aliases are applied before a small discovery limit',async()
 test('a readable fallback is published before a slower refill, within the same request limit',async()=>{
  let release;const gate=new Promise(resolve=>{release=resolve});let calls=0,published=[];
  const wiki=new Wikipedia(async()=>{calls++;if(calls===2)await gate;return new Response(JSON.stringify({query:{pages:[page(calls===1?a(1,'Tradizioni',weak):a(2))]}}))});
- const pending=wiki.batch('science',new Set(),6,undefined,emptyLearning(),{maxRounds:2,onChunk:rows=>{published.push(...rows)}});
+ const pending=wiki.batch('all',new Set(),6,undefined,emptyLearning(),{maxRounds:2,onChunk:rows=>{published.push(...rows)}});
  await new Promise(resolve=>setImmediate(resolve));assert.equal(calls,2);assert.equal(published.length,1);assert.equal(published[0].id,'wiki:1');
  release();assert.equal((await pending).length,2);assert.equal(calls,2);
 });
@@ -53,6 +53,6 @@ test('search retains explicit umbrella intent, while discovery and offline reser
  assert.equal(reserveArticles([a(1,'Storia',umbrella),a(2)],emptyLearning(),new Set()).length,1);
 });
 test('discovery still has every broad category and one internal switch restores base selection',()=>{
- assert.equal(CATEGORIES.length,13);for(const c of CATEGORIES)assert(c.seeds.length>=6,c.id);
+ assert.equal(CATEGORIES.length,22);for(const c of CATEGORIES)assert(c.seeds.length>=6,c.id);
  const rows=[a(1,'Storia',umbrella),a(2,'Tradizioni',weak)];try{EDITORIAL_TUNING.enabled=false;assert(assessEditorial(rows[0]).eligible);assert.deepEqual(discoveryCandidates(rows),rows);assert.deepEqual(orderEditorial(rows),rows)}finally{EDITORIAL_TUNING.enabled=true}
 });

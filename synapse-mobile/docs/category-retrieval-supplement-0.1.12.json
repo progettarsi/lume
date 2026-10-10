@@ -1,0 +1,333 @@
+{
+  "calls": 1,
+  "topics": [
+    {
+      "id": "science",
+      "matching": []
+    },
+    {
+      "id": "technology",
+      "matching": []
+    },
+    {
+      "id": "history",
+      "matching": []
+    },
+    {
+      "id": "geography",
+      "matching": []
+    },
+    {
+      "id": "nature",
+      "matching": [
+        "Mimetismo",
+        "Vombatidae",
+        "Setonix brachyurus"
+      ]
+    },
+    {
+      "id": "philosophy",
+      "matching": []
+    },
+    {
+      "id": "psychology",
+      "matching": []
+    },
+    {
+      "id": "arts",
+      "matching": []
+    },
+    {
+      "id": "entertainment",
+      "matching": [
+        "Cabaret",
+        "Circo",
+        "Danza",
+        "Illusionismo"
+      ]
+    },
+    {
+      "id": "food",
+      "matching": []
+    },
+    {
+      "id": "sport",
+      "matching": []
+    },
+    {
+      "id": "society",
+      "matching": []
+    },
+    {
+      "id": "politics",
+      "matching": []
+    },
+    {
+      "id": "music",
+      "matching": []
+    },
+    {
+      "id": "cinema",
+      "matching": []
+    },
+    {
+      "id": "biology",
+      "matching": []
+    },
+    {
+      "id": "economics",
+      "matching": []
+    },
+    {
+      "id": "astronomy",
+      "matching": []
+    },
+    {
+      "id": "literature",
+      "matching": []
+    },
+    {
+      "id": "medicine",
+      "matching": []
+    },
+    {
+      "id": "mathematics",
+      "matching": []
+    }
+  ],
+  "sources": [
+    {
+      "requestedBy": [],
+      "id": "wiki:442398",
+      "title": "Mimetismo",
+      "category": "nature",
+      "paragraphs": [
+        "Il mimetismo (formalmente mimetismo fanerico) è la capacità di un organismo di imitarne un altro, allo scopo di trarne vantaggio. Di norma si concretizza nell'imitazione da parte di una potenziale preda di un organismo aposematico, che può essere tossico, disgustoso o comunque indesiderabile. Lo scopo in questo caso è quello di scoraggiare il predatore affinché rinunci alla preda, confondendola con quella indesiderabile. Nei casi più semplici il mimetismo prevede l'esistenza di un organismo modello e di un organismo mimo che ne imita le caratteristiche.",
+        "Il mimetismo può avere scopi diversi da quelli di evasione della predazione, come per esempio l'imitazione da parte di alcune orchidee delle forme della vespa femmina allo scopo di attirare gli impollinatori.",
+        "Il mimetismo può sfruttare somiglianze di forme e colori, ma anche di comportamenti.",
+        "Viene talvolta definito come mimetismo criptico il fenomeno del criptismo, nel quale invece l'organismo si confonde con l'ambiente circostante allo scopo di rendersi invisibile al suo predatore o alla sua preda. Il termine viene usato in opposizione a mimetismo fanerico, o di ostentazione, nel quale l'organismo mimetico è ben visibile, ma si confonde con altri organismi. Per questi motivi il mimetismo fanerico è detto anche vero mimetismo o mimetismo in senso stretto.",
+        "Gli autori di lingua inglese limitano il termine \"mimetismo\" al mimetismo fanerico (in inglese mimicry) mentre il criptismo viene chiamato camouflage o crypsis."
+      ],
+      "preview": [
+        "Il mimetismo (formalmente mimetismo fanerico) è la capacità di un organismo di imitarne un altro, allo scopo di trarne vantaggio. Di norma si concretizza nell'imitazione da parte di una potenziale preda di un organismo aposematico, che può essere tossico, disgustoso o comunque indesiderabile. Lo scopo in questo caso è quello di scoraggiare il predatore affinché rinunci alla preda, confondendola con quella indesiderabile. Nei casi più semplici il mimetismo prevede l'esistenza di un organismo modello e di un organismo mimo che ne imita le caratteristiche.",
+        "Il mimetismo può avere scopi diversi da quelli di evasione della predazione, come per esempio l'imitazione da parte di alcune orchidee delle forme della vespa femmina allo scopo di attirare gli impollinatori.",
+        "Il mimetismo può sfruttare somiglianze di forme e colori, ma anche di comportamenti."
+      ],
+      "source": "https://it.wikipedia.org/wiki/Mimetismo",
+      "revision": 152083655,
+      "sourceCategories": [
+        "Categoria:Biologia evolutiva",
+        "Categoria:Biologia marina",
+        "Categoria:Comportamento degli animali",
+        "Categoria:Ecologia",
+        "Categoria:Etologia",
+        "Categoria:Evoluzione",
+        "Categoria:Processi biologici",
+        "Categoria:Terminologia zoologica",
+        "Categoria:Zoologia"
+      ],
+      "fetchedAt": 0,
+      "topics": [
+        "biology"
+      ],
+      "classification": {
+        "version": 1,
+        "fingerprint": "1:wiki:442398:152083655:73899f4d",
+        "provider": "local",
+        "confidence": 0.5666666666666667
+      },
+      "readable": true,
+      "eligible": true
+    },
+    {
+      "requestedBy": [],
+      "id": "wiki:504078",
+      "title": "Cabaret",
+      "category": "entertainment",
+      "paragraphs": [
+        "Il cabaret (o, meno usato, cabarè) è storicamente una forma di spettacolo che combina teatro, canzone, commedia e danza. Per estensione il termine si riferisce anche al locale dove venivano rappresentati questi spettacoli.",
+        "Nato sul finire del XIX secolo in Francia, si differenzia subito dal café-chantant orientandosi maggiormente verso la sperimentazione di nuovi linguaggi che non sul solo intrattenimento. È infatti all'interno dei primi cabaret che fioriscono le correnti di dadaismo prima, e surrealismo poi, che avrebbero fortemente influenzato tutta l'arte di là da venire.",
+        "Con il cambio delle modalità di spettacolo e con l'avvento della TV, anche la parola \"cabaret\" ha mutato, a livello colloquiale, il proprio significato. In spagnolo, per esempio, connota spettacoli di danza dallo spiccato erotismo. In Italia, invece, il \"cabaret\" viene associato alla recitazione comica, per cui \"cabarettista\" è diventato sinonimo di attore comico che si esibisce in locali."
+      ],
+      "preview": [
+        "Il cabaret (o, meno usato, cabarè) è storicamente una forma di spettacolo che combina teatro, canzone, commedia e danza. Per estensione il termine si riferisce anche al locale dove venivano rappresentati questi spettacoli.",
+        "Nato sul finire del XIX secolo in Francia, si differenzia subito dal café-chantant orientandosi maggiormente verso la sperimentazione di nuovi linguaggi che non sul solo intrattenimento. È infatti all'interno dei primi cabaret che fioriscono le correnti di dadaismo prima, e surrealismo poi, che avrebbero fortemente influenzato tutta l'arte di là da venire.",
+        "Con il cambio delle modalità di spettacolo e con l'avvento della TV, anche la parola \"cabaret\" ha mutato, a livello colloquiale, il proprio significato. In spagnolo, per esempio, connota spettacoli di danza dallo spiccato erotismo. In Italia, invece, il \"cabaret\" viene associato alla recitazione comica, per cui \"cabarettista\" è diventato sinonimo di attore comico che si esibisce in locali."
+      ],
+      "source": "https://it.wikipedia.org/wiki/Cabaret",
+      "revision": 152586928,
+      "sourceCategories": [
+        "Categoria:Cabaret"
+      ],
+      "fetchedAt": 0,
+      "topics": [
+        "music",
+        "history"
+      ],
+      "classification": {
+        "version": 1,
+        "fingerprint": "1:wiki:504078:152586928:2b75a63c",
+        "provider": "local",
+        "confidence": 0.7878787878787878
+      },
+      "readable": true,
+      "eligible": true
+    },
+    {
+      "requestedBy": [
+        "entertainment"
+      ],
+      "id": "wiki:652477",
+      "title": "Circo",
+      "category": "entertainment",
+      "paragraphs": [
+        "Il circo è una costruzione mobile itinerante formata da un tendone e da un'arena smontabile, viaggiante, in cui si svolgono spettacoli di acrobati, equilibristi, pagliacci ed animali ammaestrati.",
+        "Gli spettacoli del circo hanno luogo sotto tendoni, in appositi edifici (circhi stabili), così come all'aperto o in sale teatrali regolari.",
+        "Le esibizioni rispondono a categorie di base (peraltro flessibili e combinabili) quali numeri aerei, acrobazia ed equilibrismo al suolo, giocoleria, comicità eccentrica e arte del clown, addestramento di animali e arte equestre, esibizioni di rischio.",
+        "Nella sua forma tradizionale novecentesca, il circo, definito nella lingua italiana anche circo equestre, si distingue per la caratteristica di comunità itinerante e per l'appartenenza dinastica dei propri componenti. Alla fine del Novecento, con la definizione di nuovo circo si è legittimato il proliferare di numerose compagnie e spettacoli di provenienza e stile estranei a tali tradizioni, di cui la più celebre mondialmente è il canadese Cirque du Soleil."
+      ],
+      "preview": [
+        "Il circo è una costruzione mobile itinerante formata da un tendone e da un'arena smontabile, viaggiante, in cui si svolgono spettacoli di acrobati, equilibristi, pagliacci ed animali ammaestrati.",
+        "Gli spettacoli del circo hanno luogo sotto tendoni, in appositi edifici (circhi stabili), così come all'aperto o in sale teatrali regolari.",
+        "Le esibizioni rispondono a categorie di base (peraltro flessibili e combinabili) quali numeri aerei, acrobazia ed equilibrismo al suolo, giocoleria, comicità eccentrica e arte del clown, addestramento di animali e arte equestre, esibizioni di rischio."
+      ],
+      "source": "https://it.wikipedia.org/wiki/Circo",
+      "revision": 152666913,
+      "sourceCategories": [
+        "Categoria:Animali da lavoro",
+        "Categoria:Circo",
+        "Categoria:Diritti degli animali"
+      ],
+      "fetchedAt": 0,
+      "topics": [
+        "nature"
+      ],
+      "classification": {
+        "version": 1,
+        "fingerprint": "1:wiki:652477:152666913:375b78bb",
+        "provider": "local",
+        "confidence": 0.6666666666666666
+      },
+      "readable": true,
+      "eligible": true
+    },
+    {
+      "requestedBy": [],
+      "id": "wiki:1189146",
+      "title": "Danza",
+      "category": "entertainment",
+      "paragraphs": [
+        "La danza è una forma d'arte, uno sport e una disciplina costituita da sequenze di movimenti del corpo con valore estetico e spesso simbolico, improvvisati o selezionati intenzionalmente. La danza può essere categorizzata e descritta dalla sua coreografia, dal suo repertorio di movimenti o dal suo periodo storico o luogo di origine. La danza è in genere eseguita con accompagnamento musicale e talvolta con il ballerino che usa simultaneamente uno strumento musicale."
+      ],
+      "preview": [
+        "La danza è una forma d'arte, uno sport e una disciplina costituita da sequenze di movimenti del corpo con valore estetico e spesso simbolico, improvvisati o selezionati intenzionalmente. La danza può essere categorizzata e descritta dalla sua coreografia, dal suo repertorio di movimenti o dal suo periodo storico o luogo di origine. La danza è in genere eseguita con accompagnamento musicale e talvolta con il ballerino che usa simultaneamente uno strumento musicale."
+      ],
+      "source": "https://it.wikipedia.org/wiki/Danza",
+      "revision": 152328635,
+      "sourceCategories": [
+        "Categoria:Danza"
+      ],
+      "fetchedAt": 0,
+      "topics": [
+        "sport",
+        "arts"
+      ],
+      "classification": {
+        "version": 1,
+        "fingerprint": "1:wiki:1189146:152328635:c866a798",
+        "provider": "local",
+        "confidence": 0.631578947368421
+      },
+      "readable": true,
+      "eligible": true
+    },
+    {
+      "requestedBy": [],
+      "id": "wiki:1292069",
+      "title": "Vombatidae",
+      "category": "nature",
+      "paragraphs": [
+        "I Vombatidi (Vombatidae Burnett, 1829) sono la famiglia di marsupiali australiani a cui appartengono i vombati, quadrupedi muscolosi dalle zampe corte, lunghi circa 1 m e muniti di una coda molto corta. Abitano nelle foreste, sulle montagne e nelle lande dell'Australia sud-orientale e della Tasmania. Il termine wombat è stato preso in prestito dagli Eora, gli aborigeni che vivevano nell'area di Sydney."
+      ],
+      "preview": [
+        "I Vombatidi (Vombatidae Burnett, 1829) sono la famiglia di marsupiali australiani a cui appartengono i vombati, quadrupedi muscolosi dalle zampe corte, lunghi circa 1 m e muniti di una coda molto corta. Abitano nelle foreste, sulle montagne e nelle lande dell'Australia sud-orientale e della Tasmania. Il termine wombat è stato preso in prestito dagli Eora, gli aborigeni che vivevano nell'area di Sydney."
+      ],
+      "source": "https://it.wikipedia.org/wiki/Vombatidae",
+      "revision": 152105467,
+      "sourceCategories": [
+        "Categoria:Diprotodonti",
+        "Categoria:Taxa descritti nel 1829"
+      ],
+      "fetchedAt": 0,
+      "topics": [],
+      "classification": {
+        "version": 1,
+        "fingerprint": "1:wiki:1292069:152105467:d7fff19d",
+        "provider": "local",
+        "confidence": 0.7
+      },
+      "readable": true,
+      "eligible": true
+    },
+    {
+      "requestedBy": [],
+      "id": "wiki:1523754",
+      "title": "Setonix brachyurus",
+      "category": "nature",
+      "paragraphs": [
+        "Il quokka (Setonix brachyurus Quoy e Gaimard, 1830), unico membro del genere Setonix di Lesson, 1842, è un piccolo Macropodide delle dimensioni di un grosso gatto domestico. Come altri marsupiali della famiglia dei Macropodidi (come i canguri e i wallaby), è erbivoro e generalmente notturno."
+      ],
+      "preview": [
+        "Il quokka (Setonix brachyurus Quoy e Gaimard, 1830), unico membro del genere Setonix di Lesson, 1842, è un piccolo Macropodide delle dimensioni di un grosso gatto domestico. Come altri marsupiali della famiglia dei Macropodidi (come i canguri e i wallaby), è erbivoro e generalmente notturno."
+      ],
+      "source": "https://it.wikipedia.org/wiki/Setonix_brachyurus",
+      "revision": 151785156,
+      "sourceCategories": [
+        "Categoria:Diprotodonti",
+        "Categoria:Fauna endemica dell'Australia",
+        "Categoria:Taxa descritti nel 1830"
+      ],
+      "fetchedAt": 0,
+      "topics": [],
+      "classification": {
+        "version": 1,
+        "fingerprint": "1:wiki:1523754:151785156:76cb2a01",
+        "provider": "local",
+        "confidence": 0.8181818181818182
+      },
+      "readable": true,
+      "eligible": true
+    },
+    {
+      "requestedBy": [
+        "entertainment"
+      ],
+      "id": "wiki:1544937",
+      "title": "Illusionismo",
+      "category": "entertainment",
+      "paragraphs": [
+        "L'illusionismo, detto anche prestidigitazione o prestigiazione, è un'arte performativa eseguita generalmente a scopo di divertimento o intrattenimento di un pubblico, che ha come scopo quello di far apparire come reali fenomeni comunemente ritenuti impossibili. Per ottenere l'effetto desiderato, l'artista (comunemente chiamato illusionista, mago, prestigiatore o, utilizzando un francesismo, prestidigitatore) utilizza metodi più o meno complessi, che combinano principi fisici (meccanici, chimici, idraulici e ottici), tecniche psicologiche (gestione della percezione, dell'attenzione, della memoria e del ragionamento) e abilità manipolative. Ciò significa che l'illusionismo non ha niente a che vedere con il paranormale, ma che ogni effetto magico che viene presentato ha una chiara spiegazione razionale, sebbene essa venga nascosta al pubblico."
+      ],
+      "preview": [
+        "L'illusionismo, detto anche prestidigitazione o prestigiazione, è un'arte performativa eseguita generalmente a scopo di divertimento o intrattenimento di un pubblico, che ha come scopo quello di far apparire come reali fenomeni comunemente ritenuti impossibili. Per ottenere l'effetto desiderato, l'artista (comunemente chiamato illusionista, mago, prestigiatore o, utilizzando un francesismo, prestidigitatore) utilizza metodi più o meno complessi, che combinano principi fisici (meccanici, chimici, idraulici e ottici), tecniche psicologiche (gestione della percezione, dell'attenzione, della memoria e del ragionamento) e abilità manipolative. Ciò significa che l'illusionismo non ha niente a che vedere con il paranormale, ma che ogni effetto magico che viene presentato ha una chiara spiegazione razionale, sebbene essa venga nascosta al pubblico."
+      ],
+      "source": "https://it.wikipedia.org/wiki/Illusionismo",
+      "revision": 152380987,
+      "sourceCategories": [
+        "Categoria:Illusionismo"
+      ],
+      "fetchedAt": 0,
+      "topics": [
+        "arts"
+      ],
+      "classification": {
+        "version": 1,
+        "fingerprint": "1:wiki:1544937:152380987:e44376e8",
+        "provider": "local",
+        "confidence": 0.65
+      },
+      "readable": true,
+      "eligible": true
+    }
+  ]
+}

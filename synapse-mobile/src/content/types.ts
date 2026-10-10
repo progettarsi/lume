@@ -10,7 +10,11 @@ export type Article = {
   textVersion?: number;
   contentIssue?: string;
   contentIssueKind?: 'network'|'limit'|'content'|'offline';
+  topics?: string[];
+  sourceCategories?: string[];
+  retrieval?: {topic?:string;method:string};
+  classification?: {version:number;fingerprint:string;provider:'local'|'gemini';confidence:number};
 };
-export type Category = { id: string; label: string; wiki: string; seeds: string[] };
+export type Category = { id: string; label: string; wiki: string; seeds: string[]; aliases?:string[]; icon?:string; parent?:string };
 export type Settings = { dark: boolean; size: number; categories: string[]; aiEnabled: boolean };
 export const DEFAULT_SETTINGS: Settings = { dark: false, size: 20, categories: [], aiEnabled: false };

@@ -14,7 +14,7 @@ import {TitleWords,type TitleGeometry} from './TitleWords';
 import type {Article} from '../content/types';
 import type {Origin} from './Feed';
 import {readerContinuation,hasRevision} from '../content/text';
-import {CATEGORIES} from '../content/categories';
+import {categoryLabel} from '../content/categories';
 import {LinearGradient} from 'expo-linear-gradient';
 function phase(p:number,start:number,end:number){'worklet';const t=Math.max(0,Math.min(1,(p-start)/(end-start)));return t*t*(3-2*t)}
 export function Reader({article:incomingArticle,origin,open,width,height,top,bottom,size,saved,onClose,onReopen,onClosed,onSave,aiMessage:incomingMessage,aiBusy:incomingBusy,onRetryAI,onRetryArticle,notice:incomingNotice,onReturnNear,returnDetached=false,reducedOverride}:{article:Article;origin:Origin;open:boolean;width:number;height:number;top:number;bottom:number;size:number;saved:boolean;onClose:()=>void;onReopen:()=>void;onClosed:()=>void;onSave:()=>void;aiMessage?:string;aiBusy?:boolean;onRetryAI?:()=>void;onRetryArticle?:()=>void;notice?:ReaderStatus;onReturnNear?:()=>void;returnDetached?:boolean;reducedOverride?:boolean}){
@@ -140,7 +140,7 @@ export function Reader({article:incomingArticle,origin,open,width,height,top,bot
       {!titleLayout&&<View style={{position:'absolute',left:origin.x,top:origin.y+(origin.title?.y??48),width:origin.width-30}}><TitleWords title={article.title} size={25}/></View>}
       <View pointerEvents="none" accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={{position:'absolute',left:24,top:destinationY,width:width-48,opacity:0}}><TitleWords title={article.title} size={40} onGeometry={setTitleLayout}/></View>
       <Animated.View pointerEvents="box-none" style={[{position:'absolute',left:0,right:0,bottom:0,overflow:'hidden'},titleClip,rowHandoff]}><Animated.View pointerEvents="box-none" style={[StyleSheet.absoluteFill,titleScroll]}>{titleLayout?.words.map((box,i)=><MorphWord key={`${article.id}:${i}`} text={article.title.split(/\s+/)[i]} source={origin.title?.words[i]||box} destination={box} origin={origin} destinationY={destinationY} progress={progress} onReopen={()=>{if(!open)onReopen()}}/>)}</Animated.View></Animated.View>
-      <Animated.View pointerEvents="none" style={[{position:'absolute',left:origin.x,top:origin.y+21},metaStyle,rowHandoff]}><Label muted numberOfLines={1} style={{fontSize:12,lineHeight:18}}>{CATEGORIES.find(c=>c.id===article.category)?.label||'Wikipedia'}</Label></Animated.View>
+      <Animated.View pointerEvents="none" style={[{position:'absolute',left:origin.x,top:origin.y+21},metaStyle,rowHandoff]}><Label muted numberOfLines={1} style={{fontSize:12,lineHeight:18}}>{categoryLabel(article.category)}</Label></Animated.View>
     </>}
     <Animated.View pointerEvents={open?'auto':'none'} style={[{position:'absolute',top:0,left:0,right:0,backgroundColor:palette.paper},controls]}><View style={[styles.header,{paddingTop:top}]}><Button label="Chiudi approfondimento" onPress={onClose}><Icon name="arrow-left"/></Button><Label muted style={{flex:1,fontSize:14}}>Articolo</Label><SaveButton saved={saved} onPress={onSave}/></View></Animated.View>
   </View>;

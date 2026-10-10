@@ -5,6 +5,7 @@ import {PERSONALIZATION} from './personalization';
 import {chooseCategory,discoveryAnchor,rankRecommendations,emptyLearning,type Learning} from './recommendations';
 import {paragraphsFromHtml} from './html';
 import {discoveryCandidates} from './editorial';
+import {classifyLocal} from './classification';
 declare const __DEV__:boolean;
 const ENDPOINT='https://it.wikipedia.org/w/api.php';
 type Page={pageid:number;title:string;extract?:string;fullurl?:string;revisions?:{revid:number}[];missing?:boolean;pageprops?:Record<string,string>;categories?:{title:string}[]};
@@ -58,16 +59,10 @@ export class Wikipedia {
   private articles(data:Response,category:string):Article[]{return (data.query?.pages||[]).flatMap(p=>{
     const paragraphs=paragraphsFromExtract(p.extract||'');
     if(p.missing||Object.prototype.hasOwnProperty.call(p.pageprops||{},'disambiguation')||(p.categories||[]).some(c=>/disambiguazione/i.test(c.title))||generalAudienceScore(p.title,paragraphs)<.45)return [];
-    let resolvedCategory=category;
-    if(category==='general'){
-      const tags=(p.categories||[]).map(c=>c.title).join(' ');
-      const patterns:Record<string,RegExp>={geography:/geograf|isole|laghi|fiumi|montagn/i,nature:/animali|piante|mammiferi|uccelli|biologia|ecologia/i,science:/fisica|chimica|astronomia|scienza/i,technology:/tecnolog|informatica|invenzioni/i,history:/storia|storici|archeolog/i,food:/cucina|alimenti|gastronomia/i,arts:/arte|pittura|letteratura/i,psychology:/psicolog/i,philosophy:/filosof/i,sport:/sport/i,entertainment:/cinema|musica|spettacolo/i,society:/societ|lingue|cultura/i};
-      resolvedCategory=Object.keys(patterns).find(id=>patterns[id].test(tags))||'general';
-    }
-    return [{id:`wiki:${p.pageid}`,title:p.title,category:resolvedCategory,paragraphs,preview:makePreview(paragraphs),source:p.fullurl||`https://it.wikipedia.org/wiki/${encodeURIComponent(p.title)}`,revision:p.revisions?.[0]?.revid,fetchedAt:Date.now(),textVersion:3}];
+    return [classifyLocal({id:`wiki:${p.pageid}`,title:p.title,category:'general',paragraphs,preview:makePreview(paragraphs),source:p.fullurl||`https://it.wikipedia.org/wiki/${encodeURIComponent(p.title)}`,revision:p.revisions?.[0]?.revid,fetchedAt:Date.now(),textVersion:3,sourceCategories:(p.categories||[]).map(c=>c.title),retrieval:{topic:category,method:'wikipedia'}})];
   })}
   // TextExtracts permits multiple extracts only in introduction mode.
-  private props={action:'query',prop:'extracts|info|revisions|categories|pageprops',ppprop:'disambiguation',cllimit:'12',explaintext:'1',exsectionformat:'wiki',exlimit:'max',exintro:'1',inprop:'url',rvprop:'ids',redirects:'1'};
+  private props={action:'query',prop:'extracts|info|revisions|categories|pageprops',ppprop:'disambiguation',cllimit:'24',clshow:'!hidden',explaintext:'1',exsectionformat:'wiki',exlimit:'max',exintro:'1',inprop:'url',rvprop:'ids',redirects:'1'};
   async full(article:Article,signal?:AbortSignal):Promise<Article>{
     const identity:Record<string,string>=article.id.startsWith('wiki:')?{pageids:article.id.slice(5)}:{titles:decodeURIComponent(new URL(article.source).pathname.split('/wiki/')[1]).replaceAll('_',' ')};
     const {exintro,...fullProps}=this.props;
@@ -83,7 +78,7 @@ export class Wikipedia {
     const paragraphs=paragraphsFromExtract(page?.extract||'');
     return paragraphs.length&&!page?.missing?{...article,source:page!.fullurl||article.source,paragraphs,preview:article.preview,simplified:undefined,simplifiedVersion:undefined,simplifiedPreview:undefined,simplifiedInput:undefined,simplifiedPrepared:undefined,complete:true,contentIssue:undefined,contentIssueKind:undefined,textVersion:3,revision:page?.revisions?.[0]?.revid||article.revision}:(()=>{throw new WikiError('Testo insufficiente o privo di un’introduzione chiara. Consulta la fonte Wikipedia.','content')})();
   }
-  async batch(categoryId:string,exclude:Set<string>,limit=6,signal?:AbortSignal,learning:Learning=emptyLearning(),options:{maxRounds?:number;requestAttempts?:number;alternative?:boolean;preferInterest?:boolean;onChunk?:(rows:Article[])=>Promise<void>|void}={}):Promise<Article[]>{
+  async batch(categoryId:string,exclude:Set<string>,limit=6,signal?:AbortSignal,learning:Learning=emptyLearning(),options:{maxRounds?:number;requestAttempts?:number;alternative?:boolean;strategyAttempt?:number;preferInterest?:boolean;onChunk?:(rows:Article[])=>Promise<void>|void}={}):Promise<Article[]>{
     const output:Article[]=[];
     const identities=new Set<string>();
     for(let round=0;round<Math.min(5,options.maxRounds??5)&&output.length<limit;round++){
@@ -96,6 +91,7 @@ export class Wikipedia {
       const explore=!anchorSignal&&categoryId==='all'&&round===0&&Math.random()<.3;
       if(anchorSignal){data=await request({...this.props,generator:'search',gsrsearch:anchorSignal.title,gsrnamespace:'0',gsrlimit:'12'})}
       else if(explore){data=await request({...this.props,generator:'random',grnnamespace:'0',grnfilterredir:'nonredirects',grnlimit:'6'})}
+      else if(options.strategyAttempt===3&&categoryId!=='all'){data=await request({...this.props,generator:'search',gsrsearch:category.wiki,gsrnamespace:'0',gsrlimit:'12'})}
       else if(seeds.length&&!options.alternative&&(round%2===0||category.id==='curiosity')){data=await request({...this.props,titles:seeds.join('|')});seeds.forEach(s=>this.usedSeeds.add(s))}
       else{
         // Linked discoveries avoid being trapped in the first alphabetical category members.
@@ -106,7 +102,10 @@ export class Wikipedia {
         if(data.continue)this.cursors.set(category.id,{...data.continue,titles:anchor});else {this.cursors.delete(category.id);this.linkIndex.set(category.id,index+1)}
       }
       const chunkSources=new Set(identities),chunkIds=new Set(output.map(a=>a.id));
-      const available=this.articles(data,anchorSignal?.category||(explore?'general':category.id)).filter(a=>{
+      const method=anchorSignal?'interest-search':explore?'random':options.strategyAttempt===3&&categoryId!=='all'?'topic-search':seeds.length&&!options.alternative?'seeds':'links';
+      const available=this.articles(data,anchorSignal?.category||(explore?'general':category.id)).map(a=>({...a,retrieval:{topic:category.id,method}})).filter(a=>{
+        // Acquisition provenance never substitutes for semantic relevance.
+        if(categoryId!=='all'&&a.category!==categoryId)return false;
         const source=decodeURIComponent(new URL(a.source).pathname).replaceAll('_',' ').toLocaleLowerCase('it');
         if(exclude.has(a.id)||exclude.has(source)||chunkSources.has(source)||chunkIds.has(a.id))return false;
         chunkSources.add(source);chunkIds.add(a.id);return true;

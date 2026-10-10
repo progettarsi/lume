@@ -4,7 +4,7 @@ import {PERSONALIZATION as P} from './personalization';
 import {assessEditorial,repetitionScorer} from './editorial';
 type Signal={id:string;category:string;tokens:string[];title:string;weight:number;order:number;kind:'open'|'save'};
 type Bookmark=Signal&{on:boolean};
-export type Learning={seen:string[];categories:Record<string,number>;topics:Record<string,number>;updatedAt:number;version?:number;bookmarks?:Record<string,Bookmark>;opens?:Record<string,number>;recent?:Signal[];sequence?:number};
+export type Learning={seen:string[];categories:Record<string,number>;topics:Record<string,number>;updatedAt:number;version?:number;categoryVersion?:number;bookmarks?:Record<string,Bookmark>;opens?:Record<string,number>;recent?:Signal[];sequence?:number};
 export const emptyLearning=():Learning=>({seen:[],categories:{},topics:{},updatedAt:Date.now(),version:3,bookmarks:{},opens:{},recent:[],sequence:0});
 export function identity(a:Article):string{try{return decodeURIComponent(new URL(a.source).pathname).replaceAll('_',' ').toLocaleLowerCase('it')}catch{return a.id}}
 export function seenArticle(a:Article,learning:Learning){return !!a.readAt||learning.seen.includes(a.id)||learning.seen.includes(identity(a))}
@@ -12,7 +12,7 @@ const stop=new Set('della delle degli nella nelle dello dallo dalla storia effet
 export function interestTerms(a:Article){
  const words=(s:string)=>(s.toLocaleLowerCase('it').match(/[\p{L}]{5,}/gu)||[]).filter(w=>!stop.has(w));
  const title=words(a.title),counts=new Map<string,number>();for(const w of words(a.preview.join(' ').slice(0,1800)))counts.set(w,(counts.get(w)||0)+1);
- return [...new Set([...title,...[...counts].sort((a,b)=>b[1]-a[1]).map(([w])=>w)])].slice(0,P.maxTerms);
+ return [...new Set([...title,...(a.topics||[]).map(id=>'topic:'+id),...[...counts].sort((a,b)=>b[1]-a[1]).map(([w])=>w)])].slice(0,P.maxTerms);
 }
 function weighted(old:Learning,category:string,terms:string[],weight:number){const categories={...old.categories,[category]:Math.max(0,(old.categories[category]||0)+weight)},topics={...old.topics};for(const w of terms)topics[w]=Math.max(0,(topics[w]||0)+weight);return {...old,categories,topics};}
 function remember(next:Learning,input:Signal){const {id,category,tokens,title,weight,order,kind}=input;const s:Signal={id,category,tokens,title,weight,order,kind};return {...next,recent:[...(next.recent||[]).filter(e=>!(e.id===s.id&&e.kind===s.kind)),s].sort((a,b)=>a.order-b.order).slice(-P.recentLimit)}}
@@ -47,6 +47,18 @@ export function learn(old:Learning,a:Article,event:'open'|'save'|'unsave'|'seen'
  const saved=previous??signal;next=weighted(next,saved.category,saved.tokens,saved.weight);
  next.bookmarks={...old.bookmarks,[id]:{...saved,on:true}};next.sequence=previous?old.sequence:order;
  return saved.order===0?next:remember(next,saved);
+}
+/** Move only independently attributable contributions. Old aggregate opens
+ * outside recent memory cannot be reconstructed: leave those mass values alone.
+ * Off bookmarks are also corrected so undo restores the new category exactly. */
+export function reconcileCategories(old:Learning,rows:Article[]):Learning{
+ const bySource=new Map(rows.filter(a=>a.classification&&a.classification.confidence>=.35).map(a=>[identity(a),a]));
+ if(![...Object.values(old.bookmarks||{}),...(old.recent||[])].some(s=>bySource.has(s.id)&&bySource.get(s.id)!.category!==s.category))return old;
+ let next={...old,categories:{...old.categories},bookmarks:{...old.bookmarks},recent:[...(old.recent||[])]};
+ const move=(from:string,to:string,weight:number)=>{if(from===to)return;next.categories[from]=Math.max(0,(next.categories[from]||0)-weight);next.categories[to]=(next.categories[to]||0)+weight};
+ for(const [id,b] of Object.entries(next.bookmarks)){const a=bySource.get(id);if(!a||b.category===a.category)continue;if(b.on)move(b.category,a.category,b.weight);next.bookmarks[id]={...b,category:a.category}}
+ next.recent=next.recent.map(s=>{const a=bySource.get(s.id);if(!a||s.category===a.category)return s;if(s.kind==='open')move(s.category,a.category,s.weight);return {...s,category:a.category}});
+ return next;
 }
 function recentScores(p:Learning){const categories:Record<string,number>={},topics:Record<string,number>={};let mass=0;
  for(const e of p.recent||[]){const w=e.weight*Math.pow(.5,Math.max(0,(p.sequence||0)-e.order)/P.recentHalfLife);mass+=w;categories[e.category]=(categories[e.category]||0)+w;for(const t of e.tokens)topics[t]=(topics[t]||0)+w}
@@ -84,6 +96,6 @@ export function parseLearning(json:string|null):Learning{
  const scores=(v:unknown):Record<string,number>=>Object.fromEntries(Object.entries(v&&typeof v==='object'?v:{}).filter(([k,n])=>k.length<500&&typeof n==='number'&&Number.isFinite(n)&&n>=0));
  const signal=(v:any):v is Signal=>v&&typeof v.id==='string'&&typeof v.category==='string'&&typeof v.title==='string'&&Array.isArray(v.tokens)&&v.tokens.every((t:unknown)=>typeof t==='string')&&Number.isFinite(v.weight)&&v.weight>=0&&v.weight<=P.saveWeight&&Number.isFinite(v.order)&&v.order>=0&&(v.kind==='save'||v.kind==='open');
  const bookmarks:Record<string,Bookmark>={};for(const [k,v] of Object.entries(x.bookmarks||{}))if(signal(v)&&typeof (v as Bookmark).on==='boolean')bookmarks[k]=v as Bookmark;
- return {seen:x.seen.filter((s:unknown)=>typeof s==='string'),categories:scores(x.categories),topics:scores(x.topics),updatedAt:Number.isFinite(x.updatedAt)?x.updatedAt:Date.now(),version:x.version===3?3:x.version===2?2:1,bookmarks,opens:scores(x.opens),recent:Array.isArray(x.recent)?x.recent.filter(signal).slice(-P.recentLimit):[],sequence:Number.isFinite(x.sequence)?Math.max(0,x.sequence):0};
+ return {seen:x.seen.filter((s:unknown)=>typeof s==='string'),categories:scores(x.categories),topics:scores(x.topics),updatedAt:Number.isFinite(x.updatedAt)?x.updatedAt:Date.now(),version:x.version===3?3:x.version===2?2:1,categoryVersion:x.categoryVersion===1?1:undefined,bookmarks,opens:scores(x.opens),recent:Array.isArray(x.recent)?x.recent.filter(signal).slice(-P.recentLimit):[],sequence:Number.isFinite(x.sequence)?Math.max(0,x.sequence):0};
  }catch{return {...emptyLearning(),version:1}}
 }

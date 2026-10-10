@@ -1,4 +1,5 @@
 import type {Article} from './types';
+import {classificationKey} from './classification';
 
 /** Downloaded text cannot overwrite a user's bookmark or downgrade a complete article. */
 export function mergeArticle(previous:Article|undefined,incoming:Article):Article{
@@ -6,7 +7,8 @@ export function mergeArticle(previous:Article|undefined,incoming:Article):Articl
     ?{paragraphs:previous.paragraphs,preview:previous.preview,complete:true,simplified:previous.simplified,simplifiedVersion:previous.simplifiedVersion,simplifiedPreview:previous.simplifiedPreview,simplifiedInput:previous.simplifiedInput,simplifiedPrepared:previous.simplifiedPrepared,textVersion:previous.textVersion,contentIssue:previous.contentIssue,contentIssueKind:previous.contentIssueKind}:{};
   const simplified=incoming.simplified||(previous?.revision===incoming.revision&&previous?.textVersion===incoming.textVersion?previous?.simplified:undefined);
   const revisionMeta=incoming.simplified?{simplifiedVersion:incoming.simplifiedVersion,simplifiedPreview:incoming.simplifiedPreview,simplifiedInput:incoming.simplifiedInput,simplifiedPrepared:incoming.simplifiedPrepared}:simplified?{simplifiedVersion:previous?.simplifiedVersion,simplifiedPreview:previous?.simplifiedPreview,simplifiedInput:previous?.simplifiedInput,simplifiedPrepared:previous?.simplifiedPrepared}:{};
-  return {...incoming,simplified,...revisionMeta,...content,saved:previous?.saved??false,readAt:previous?.readAt??incoming.readAt};
+  const semantic=previous?.classification?.provider==='gemini'&&previous.classification.fingerprint===classificationKey(incoming)&&incoming.classification?.provider!=='gemini'?{category:previous.category,topics:previous.topics,classification:previous.classification}:{};
+  return {...incoming,simplified,...revisionMeta,...content,...semantic,saved:previous?.saved??false,readAt:previous?.readAt??incoming.readAt};
 }
 
 /** Writes run in invocation order, even when an earlier write fails. */

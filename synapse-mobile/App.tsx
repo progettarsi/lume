@@ -35,7 +35,7 @@ import {articleStatus,aiFailure,type ReaderStatus} from './src/content/readerSta
 import {captureRef,releaseCapture} from './src/captureTheme';
 import {ThemeReveal,type ThemeSnapshot} from './src/components/ThemeReveal';
 import type { Article } from './src/content/types';
-import {serialWrites} from './src/content/articleState';
+import {GeminiIntegration,type GeminiConfigurationState} from './src/content/geminiIntegration';
 type Collection='saved'|'history'|'settings'|null;
 export default function App(){
   const [fonts,error]=useFonts({Newsreader_400Regular,Newsreader_500Medium,SourceSans3_400Regular,SourceSans3_600SemiBold});
@@ -51,7 +51,9 @@ function Synapse(){
   const [route,setRoute]=useState<'home'|'profile'>('home'),[collection,setCollection]=useState<Collection>(null),[searchOpen,setSearchOpen]=useState(false),[category,setCategory]=useState('all'),[index,setIndex]=useState(0);
   const [query,setQuery]=useState(''),[results,setResults]=useState<Article[]>([]),[searchBusy,setSearchBusy]=useState(false),[searchError,setSearchError]=useState(''),[randomBusy,setRandomBusy]=useState(false),[toast,setToast]=useState('');
   const [reader,setReader]=useState<{article:Article;origin:Origin;session:number;context:string}|null>(null),[readerOpen,setReaderOpen]=useState(false),[aiKey,setAIKey]=useState(''),[keyEdited,setKeyEdited]=useState(false);
-  const keyWrites=useRef(serialWrites()),keyRevision=useRef(0);
+  const keyRevision=useRef(0),gemini=useRef<GeminiIntegration|null>(null);
+  const [geminiState,setGeminiState]=useState<GeminiConfigurationState>({status:'loading',configured:false,enabled:false,busy:true,message:'Carichiamo la configurazione…',actions:[]});
+  if(!gemini.current)gemini.current=new GeminiIntegration(getAIKey,putAIKey,(key,enabled)=>lib.configureAI(key,enabled),setGeminiState);
   const [aiStatus,setAIStatus]=useState<{id:string;message:string;busy:boolean;notice?:ReaderStatus}>({id:'',message:'',busy:false}),[feedRevision,setFeedRevision]=useState(0);
   const lastHomeTap=useRef(0);
   const [removedSaved,setRemovedSaved]=useState<{article:Article;token:number}[]>([]),removalToken=useRef(0),removalVersions=useRef(new Map<string,number>());
@@ -70,7 +72,7 @@ function Synapse(){
   const retryAI=()=>{if(!reader||!readerOpen||aiStatus.busy)return;readerRequest.current?.abort();const abort=new AbortController();readerRequest.current=abort;setAIStatus({id:reader.article.id,message:'',busy:true,notice:{kind:'loading',message:'L’anteprima resta leggibile mentre arriva l’approfondimento.'}});void lib.checkConnection().catch(()=>{}).then(()=>{if(!abort.signal.aborted)void loadReader(reader.article,abort,true)})};
   const persistAIKey=async(notify=false)=>{
     const revision=keyRevision.current,value=aiKey;
-    try{await keyWrites.current(()=>putAIKey(value));if(keyRevision.current===revision){setKeyEdited(false);lib.updateSettings({aiEnabled:!!value.trim()});if(notify)setToast('Chiave aggiornata')}}
+    try{await gemini.current!.save(value);if(keyRevision.current===revision){setKeyEdited(false);setAIKey('');lib.updateSettings({aiEnabled:!!value.trim()});if(notify)setToast('Chiave aggiornata')}}
     catch{setToast('Chiave non salvata. Riprova.')}
   };
   const homeHeight=Math.max(0,height-top-132);
@@ -91,8 +93,9 @@ function Synapse(){
   useEffect(()=>{if(lib.online)setOfflineRepeated(false);else if(visibleArticle&&lib.isRepeated(visibleArticle))setOfflineRepeated(true)},[lib.online,visibleArticle?.id,lib.cache]);
   useEffect(()=>{if(feedArticles.length>index+1||feedState.phase==='ready')setEndedCategory('')},[feedArticles.length,index,feedState.phase]);
   useLayoutEffect(()=>{const correction=lib.feedCorrection;if(correction?.category===category){setIndex(correction.position);previousIndex.current=correction.position}},[lib.feedCorrection]);
+  useEffect(()=>{if(category==='all')lib.completeCategoryReturn()},[category]);
   const readerArticle=useMemo(()=>reader?(lib.settings.aiEnabled||!reader.article.simplified?reader.article:{...reader.article,simplified:undefined}):undefined,[reader?.article,lib.settings.aiEnabled]);
-  useEffect(()=>{lib.configureAI(keyEdited?'':aiKey,lib.settings.aiEnabled)},[aiKey,keyEdited,lib.settings.aiEnabled]);
+  useEffect(()=>{gemini.current!.setEnabled(lib.settings.aiEnabled)},[lib.settings.aiEnabled]);
   useEffect(()=>{const eligible=lib.ready&&appActive&&route==='home'&&!reader&&!searchOpen&&!collection&&settledIndex===index;lib.observeAI(eligible?visibleArticle:undefined,`${category}:${feedRevision}`)},[lib.ready,appActive,route,reader,searchOpen,collection,settledIndex,index,category,feedRevision,visibleArticle?.id,aiKey,keyEdited,lib.settings.aiEnabled,lib.online]);
 
   useEffect(()=>{if(lib.ready&&route==='home'&&!reader&&!searchOpen&&!collection&&visibleArticle)void lib.prepare(visibleArticle)},[lib.ready,route,reader,searchOpen,collection,visibleArticle?.id,lib.online]);
@@ -105,7 +108,7 @@ function Synapse(){
   useEffect(()=>{searchP.value=reduced?(searchOpen?1:0):withSpring(searchOpen?1:0,spring);if(searchOpen){const timer=setTimeout(()=>input.current?.focus(),30);return()=>clearTimeout(timer)}},[searchOpen,reduced]);
   const composerLift=useAnimatedStyle(()=>({bottom:Math.max(keyboardLift.value+12,bottom+16)})),searchViewport=useAnimatedStyle(()=>({marginBottom:Math.max(keyboardLift.value,0)+100}));
   useEffect(()=>{const enabled=route==='home'&&!searchOpen&&!collection;lib.setDiscovery(enabled);if(lib.ready&&enabled&&!reader)void lib.load(category,index)},[lib.ready,category,index,lib.online,lib.loading,route,searchOpen,collection,reader]);
-  useEffect(()=>{void getAIKey().then(key=>setAIKey(key||'')).catch(()=>{})},[]);
+  useEffect(()=>{void gemini.current!.load()},[]);
   useEffect(()=>{
     const abort=new AbortController();if(!searchOpen)return()=>abort.abort();
     if(!query.trim()){setResults(lib.cache.filter(a=>!a.readAt).slice(0,8));setSearchBusy(false);setSearchError('');return()=>abort.abort()}
@@ -181,16 +184,16 @@ function Synapse(){
   };
   useEffect(()=>()=>{themeRequest.current++;if(snapshotRef.current)releaseCapture(snapshotRef.current.uri)},[]);
   const dismissSearch=()=>{Keyboard.dismiss();randomRequest.current?.abort();setRandomBusy(false);setSearchOpen(false)};
-  const refreshHome=()=>{setEndedCategory('');chips.value=reduced?0:withSpring(0,spring);void lib.refresh(category)};
+  const refreshHome=()=>{lib.settleCategories();setEndedCategory('');chips.value=reduced?0:withSpring(0,spring);void lib.refresh(category)};
   const navigate=(next:'home'|'profile')=>{
     const now=Date.now();if(next==='home'&&route==='home'&&!readerOpen&&!collection&&!searchOpen){if(now-lastHomeTap.current<350){lastHomeTap.current=0;refreshHome();return}lastHomeTap.current=now}else lastHomeTap.current=0;
-    Keyboard.dismiss();randomRequest.current?.abort();setRandomBusy(false);readerRequest.current?.abort();setSearchOpen(false);setCollection(null);setRoute(next)};
+    if(next==='home'&&route!=='home')lib.settleCategories();Keyboard.dismiss();randomRequest.current?.abort();setRandomBusy(false);readerRequest.current?.abort();setSearchOpen(false);setCollection(null);setRoute(next)};
   const sourceRows=collectionReturn.rows,searchRows=searchReturn.rows;
   return <ThemeContext.Provider value={themeContext}><View style={styles.webFrame}><Animated.View ref={frame} collapsable={false} onLayout={e=>setViewportHeight(e.nativeEvent.layout.height)} style={[{width,flex:1,overflow:Platform.OS==='web'?'clip' as 'hidden':'hidden'},paper]}>
     <StatusBar style={lib.settings.dark?'light':'dark'}/>
     {!lib.ready?<View style={styles.loader}><ActivityIndicator color={palette.accent}/><Label>{lib.error}</Label></View>:<>
       <Animated.View style={[StyleSheet.absoluteFill,paper,homeStyle]} pointerEvents={route==='home'&&!searchOpen&&!collection&&!readerOpen?'auto':'none'} aria-hidden={route!=='home'||searchOpen||!!collection||readerOpen} accessibilityElementsHidden={route!=='home'||searchOpen||!!collection||readerOpen} importantForAccessibility={route!=='home'||searchOpen||!!collection||readerOpen?'no-hide-descendants':'auto'}>
-        <View style={{paddingTop:top+8,paddingHorizontal:24,paddingBottom:10,zIndex:2}}><View style={{flexDirection:'row',alignItems:'center',justifyContent:'space-between'}}><Label style={styles.wordmark}>Synapse</Label></View><View pointerEvents="box-none" style={{height:48,overflow:'hidden'}}><Animated.View style={chipStyle}><CategoryRail selected={category} onSelect={selectCategory} order={lib.categoryIds} disabled={lib.disabledCategory}/></Animated.View></View></View>
+        <View style={{paddingTop:top+8,paddingHorizontal:24,paddingBottom:10,zIndex:2}}><View style={{flexDirection:'row',alignItems:'center',justifyContent:'space-between'}}><Label style={styles.wordmark}>Synapse</Label></View><View pointerEvents="box-none" style={{height:48,overflow:'hidden'}}><Animated.View style={chipStyle}><CategoryRail selected={category} onSelect={selectCategory} items={lib.categoryRail} onInteractionStart={lib.beginCategoryInteraction} onInteractionEnd={lib.endCategoryInteraction}/></Animated.View></View></View>
         <Animated.View style={[{position:'absolute',top:top+84,left:0,right:0,height:homeHeight},feedStyle]}>{homeHeight>0&&!centralFeed&&<Feed key={`${category}:${feedRevision}`} articles={feedArticles} height={homeHeight} size={lib.settings.size} saved={saved} readerOpen={readerOpen} entry={categoryEntry.current} onOpen={open} onSave={save} covered={reader?.origin.kind==='home'?reader.article.id:undefined} position={index} onIndex={next=>setIndex(lib.trimFeed(category,next))} onEndReached={()=>{if(category!=='all'&&feedState.phase==='exhausted')setEndedCategory(category);else lib.retryFeed()}} onVisible={setSettledIndex} onDirection={hidden=>{chips.value=reduced?(hidden?1:0):withSpring(hidden?1:0,spring)}}/>}</Animated.View>
         {!centralFeed&&<LinearGradient pointerEvents="none" colors={[palette.paper+'00',palette.paper,palette.paper]} locations={[0,90/fadeHeight,1]} style={{position:'absolute',bottom:0,left:0,right:0,height:fadeHeight}}/>}
         {lib.loading&&<View pointerEvents="none" style={{position:'absolute',right:24,top:top+19}}><FeedSpinner/></View>}
@@ -211,6 +214,8 @@ function Synapse(){
             <Label muted style={{fontSize:lib.settings.size,lineHeight:lib.settings.size*1.5,marginVertical:24}}>Una piccola scoperta può cambiare il modo in cui guardiamo il mondo.</Label>
             <Pressable accessibilityRole="switch" accessibilityState={{checked:lib.settings.dark}} onPress={()=>void changeTheme()} style={[styles.menu,{borderColor:palette.line}]}><Label strong style={{flex:1,fontSize:19}}>Tema scuro</Label><Icon name={lib.settings.dark?'toggle-switch':'toggle-switch-off-outline'} size={42}/></Pressable>
             <Pressable accessibilityRole="switch" accessibilityState={{checked:lib.settings.aiEnabled}} onPress={()=>lib.updateSettings({aiEnabled:!lib.settings.aiEnabled})} style={[styles.menu,{borderColor:palette.line}]}><Label strong style={{flex:1,fontSize:19}}>Revisione con Gemini</Label><Icon name={lib.settings.aiEnabled?'toggle-switch':'toggle-switch-off-outline'} size={42}/></Pressable>
+            <Label muted accessibilityLiveRegion="polite" style={{fontSize:15,lineHeight:21,marginTop:12}}>{geminiState.message}</Label>
+            {geminiState.configured&&<Button label="Rimuovi chiave Gemini" onPress={()=>{keyRevision.current++;void gemini.current!.remove().then(()=>{setAIKey('');setKeyEdited(false);lib.updateSettings({aiEnabled:false})}).catch(()=>setToast('Chiave non rimossa. Riprova.'))}}><Label>Rimuovi chiave</Label></Button>}
             {lib.settings.aiEnabled&&<View style={{paddingVertical:20,gap:14}}><Label muted style={{fontSize:15,lineHeight:21}}>Facoltativa. Usa una tua chiave Gemini con quota gratuita e fatturazione disattivata. Quando la quota termina, rimane disponibile Wikipedia. I testi vengono inviati a Google; non i tuoi salvataggi o la cronologia.</Label><TextInput accessibilityLabel="Chiave API Gemini" secureTextEntry autoCapitalize="none" autoCorrect={false} value={aiKey} onChangeText={v=>{keyRevision.current++;setAIKey(v);setKeyEdited(true)}} placeholder="Chiave API personale" placeholderTextColor={palette.muted} style={[styles.input,{color:palette.ink,backgroundColor:palette.surface}]} onBlur={()=>{if(keyEdited)void persistAIKey()}}/><Button label="Memorizza chiave AI" onPress={()=>void persistAIKey(true)}><Label>Salva chiave</Label></Button></View>}
           </>
         </ScrollView>:<ArticleList key={displayCollection} removalEnabled={!reader} onRemove={displayCollection==='saved'?removeSaved:undefined} articles={sourceRows} onOpen={open} hiddenId={collectionReturn.released?undefined:reader?.article.id} returnId={reader?.article.id} animate={collectionReturn.animate} bottomPadding={bottom+110} empty={<View style={{paddingTop:42}}><Label style={{fontFamily:heading,fontSize:28}}>{displayCollection==='saved'?'Le tue prossime riletture':'Le tue scoperte, qui'}</Label></View>}/>}
