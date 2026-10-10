@@ -1,0 +1,44 @@
+{
+  "expo": {
+    "name": "Synapse",
+    "slug": "synapse-mobile",
+    "version": "0.1.11",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "scheme": "synapse",
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "app.synapse.reader"
+    },
+    "android": {
+      "package": "app.synapse.reader",
+      "blockedPermissions": [
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.SYSTEM_ALERT_WINDOW",
+        "android.permission.USE_BIOMETRIC",
+        "android.permission.USE_FINGERPRINT"
+      ],
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png",
+        "backgroundColor": "#f7f4ee"
+      },
+      "softwareKeyboardLayoutMode": "resize",
+      "predictiveBackGestureEnabled": true,
+      "versionCode": 14
+    },
+    "plugins": [
+      "expo-sqlite",
+      "expo-font",
+      "expo-secure-store",
+      "./plugins/withLocalSigning"
+    ],
+    "web": {
+      "bundler": "metro",
+      "favicon": "./assets/icon.png"
+    }
+  }
+}
+

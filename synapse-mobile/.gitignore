@@ -1,0 +1,16 @@
+node_modules/
+.expo/
+dist/
+.test-build/
+.credentials/
+*.keystore
+*.p12
+.env*
+android/.gradle/
+android/.cxx/
+android/build/
+android/app/build/
+android/local.properties
+releases/*.apk
+template.tgz
+*.log

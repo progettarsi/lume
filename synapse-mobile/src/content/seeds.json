@@ -1,0 +1,122 @@
+[
+  {
+    "id": "seed:doppler",
+    "title": "Il suono cambia quando ci muoviamo",
+    "category": "science",
+    "paragraphs": [
+      "Quando un’ambulanza si avvicina, la sirena sembra più acuta. Quando si allontana, il suono diventa più grave.",
+      "È l’effetto Doppler: il movimento cambia la frequenza che percepiamo. Lo stesso principio aiuta gli astronomi a studiare il moto delle stelle.",
+      "La sirena emette onde sonore a intervalli regolari. Se la sorgente si muove verso chi ascolta, ogni nuova onda parte da un punto più vicino: le onde arrivano a intervalli più brevi e la frequenza percepita aumenta.",
+      "Quando la sorgente si allontana, gli intervalli si allungano. La sirena non ha cambiato la propria nota: è cambiato il modo in cui le onde raggiungono l’ascoltatore.",
+      "Il fenomeno riguarda anche la luce. Gli astronomi misurano lo spostamento delle righe spettrali per ricavare informazioni sul movimento di una stella lungo la nostra linea di vista."
+    ],
+    "preview": [
+      "Quando un’ambulanza si avvicina, la sirena sembra più acuta. Quando si allontana, il suono diventa più grave.",
+      "È l’effetto Doppler: il movimento cambia la frequenza che percepiamo. Lo stesso principio aiuta gli astronomi a studiare il moto delle stelle.",
+      "La sirena emette onde sonore a intervalli regolari. Se la sorgente si muove verso chi ascolta, ogni nuova onda parte da un punto più vicino: le onde arrivano a intervalli più brevi e la frequenza percepita aumenta."
+    ],
+    "source": "https://it.wikipedia.org/wiki/Effetto_Doppler",
+    "fetchedAt": 1791397563111,
+    "complete": true
+  },
+  {
+    "id": "seed:serendipita",
+    "title": "Il caso favorisce le menti preparate",
+    "category": "arts",
+    "paragraphs": [
+      "Nel 1754 Horace Walpole inventò la parola serendipità, ispirandosi a una fiaba persiana. I suoi protagonisti trovavano indizi preziosi mentre cercavano tutt’altro.",
+      "Una scoperta inattesa diventa utile quando sappiamo riconoscerla. Curiosità e attenzione possono trasformare un dettaglio trascurato in una nuova idea.",
+      "La serendipità descrive la scoperta di qualcosa di interessante mentre si sta cercando altro. Il caso può offrire l’occasione, ma riconoscerne il valore richiede attenzione.",
+      "Il termine nasce da Serendip, un antico nome dello Sri Lanka. Walpole lo usò in una lettera per descrivere il modo in cui i protagonisti della fiaba I tre principi di Serendip facevano scoperte inattese.",
+      "Nella ricerca, una sorpresa non è automaticamente una scoperta. Serve formulare una domanda, controllare le osservazioni e mettere alla prova una spiegazione."
+    ],
+    "preview": [
+      "Nel 1754 Horace Walpole inventò la parola serendipità, ispirandosi a una fiaba persiana. I suoi protagonisti trovavano indizi preziosi mentre cercavano tutt’altro.",
+      "Una scoperta inattesa diventa utile quando sappiamo riconoscerla. Curiosità e attenzione possono trasformare un dettaglio trascurato in una nuova idea.",
+      "La serendipità descrive la scoperta di qualcosa di interessante mentre si sta cercando altro. Il caso può offrire l’occasione, ma riconoscerne il valore richiede attenzione."
+    ],
+    "source": "https://it.wikipedia.org/wiki/Serendipit%C3%A0",
+    "fetchedAt": 1791397563111,
+    "complete": true
+  },
+  {
+    "id": "seed:cielo",
+    "title": "Perché il cielo è blu?",
+    "category": "science",
+    "paragraphs": [
+      "La luce del Sole sembra bianca, ma contiene molti colori. Attraversando l’atmosfera, incontra molecole che la diffondono in tutte le direzioni.",
+      "Le lunghezze d’onda più corte vengono diffuse maggiormente. Per questo, quando guardiamo lontano dal Sole, il cielo ci appare soprattutto blu.",
+      "Questo processo è chiamato diffusione di Rayleigh. Avviene quando la luce incontra particelle molto più piccole della sua lunghezza d’onda.",
+      "Al tramonto la luce percorre un tratto più lungo nell’atmosfera. Gran parte del blu viene diffusa fuori dal percorso diretto, mentre la luce che ci raggiunge appare più rossa.",
+      "Il colore osservato dipende anche dalla sensibilità dei nostri occhi e dallo spettro della luce solare."
+    ],
+    "preview": [
+      "La luce del Sole sembra bianca, ma contiene molti colori. Attraversando l’atmosfera, incontra molecole che la diffondono in tutte le direzioni.",
+      "Le lunghezze d’onda più corte vengono diffuse maggiormente. Per questo, quando guardiamo lontano dal Sole, il cielo ci appare soprattutto blu.",
+      "Questo processo è chiamato diffusione di Rayleigh. Avviene quando la luce incontra particelle molto più piccole della sua lunghezza d’onda."
+    ],
+    "source": "https://it.wikipedia.org/wiki/Diffusione_di_Rayleigh",
+    "fetchedAt": 1791397563111,
+    "complete": true
+  },
+  {
+    "id": "seed:stampa",
+    "title": "Una pagina può cambiare il mondo",
+    "category": "arts",
+    "paragraphs": [
+      "Prima della stampa, copiare un libro richiedeva tempo e lavoro. I caratteri mobili resero possibile comporre una pagina e riprodurla molte volte.",
+      "Nell’Europa del Quattrocento, la stampa contribuì a far circolare testi e idee su una scala nuova. Un cambiamento tecnico diventò anche culturale.",
+      "I singoli caratteri potevano essere disposti in una forma, inchiostrati e premuti contro un foglio. Terminato un lavoro, si potevano riutilizzare per comporre un altro testo.",
+      "La storia della stampa non inizia in Europa: forme di stampa e caratteri mobili erano già state sviluppate in Asia. Gutenberg mise insieme un sistema adatto alla produzione europea.",
+      "La maggiore disponibilità dei testi cambiò il modo di conservare, confrontare e discutere le conoscenze."
+    ],
+    "preview": [
+      "Prima della stampa, copiare un libro richiedeva tempo e lavoro. I caratteri mobili resero possibile comporre una pagina e riprodurla molte volte.",
+      "Nell’Europa del Quattrocento, la stampa contribuì a far circolare testi e idee su una scala nuova. Un cambiamento tecnico diventò anche culturale.",
+      "I singoli caratteri potevano essere disposti in una forma, inchiostrati e premuti contro un foglio. Terminato un lavoro, si potevano riutilizzare per comporre un altro testo."
+    ],
+    "source": "https://it.wikipedia.org/wiki/Stampa_a_caratteri_mobili",
+    "fetchedAt": 1791397563111,
+    "complete": true
+  },
+  {
+    "id": "seed:luna",
+    "title": "La Luna ci mostra sempre lo stesso volto",
+    "category": "science",
+    "paragraphs": [
+      "La Luna ruota su se stessa, anche se dalla Terra vediamo quasi sempre la stessa faccia. Il suo periodo di rotazione coincide con quello della sua orbita.",
+      "Questa rotazione sincrona è il risultato dell’interazione gravitazionale con la Terra. Il lato lontano non è sempre buio: riceve la luce del Sole come quello vicino.",
+      "Per immaginare il fenomeno, cammina intorno a una sedia tenendole sempre rivolto il viso. Dopo un giro avrai anche ruotato su te stesso.",
+      "Nel corso del tempo, le forze di marea hanno modificato la rotazione lunare fino a portarla in una configurazione sincrona.",
+      "Piccole oscillazioni apparenti, chiamate librazioni, ci permettono di osservare un po’ più della metà della superficie lunare nel corso del tempo."
+    ],
+    "preview": [
+      "La Luna ruota su se stessa, anche se dalla Terra vediamo quasi sempre la stessa faccia. Il suo periodo di rotazione coincide con quello della sua orbita.",
+      "Questa rotazione sincrona è il risultato dell’interazione gravitazionale con la Terra. Il lato lontano non è sempre buio: riceve la luce del Sole come quello vicino.",
+      "Per immaginare il fenomeno, cammina intorno a una sedia tenendole sempre rivolto il viso. Dopo un giro avrai anche ruotato su te stesso."
+    ],
+    "source": "https://it.wikipedia.org/wiki/Rotazione_sincrona",
+    "fetchedAt": 1791397563111,
+    "complete": true
+  },
+  {
+    "id": "seed:mappe",
+    "title": "Ogni mappa sceglie cosa raccontare",
+    "category": "arts",
+    "paragraphs": [
+      "La Terra è curva, una mappa è piatta. Trasformare una superficie nell’altra comporta inevitabilmente delle deformazioni.",
+      "Una proiezione può conservare gli angoli oppure le aree, ma non tutte le proprietà insieme. La mappa migliore dipende dalla domanda che vogliamo farle.",
+      "Una proiezione cartografica è un metodo per rappresentare su un piano punti della superficie terrestre. Ogni metodo privilegia alcune proprietà.",
+      "La proiezione di Mercatore conserva gli angoli localmente, ma ingrandisce molto le regioni vicine ai poli. Le proiezioni equivalenti conservano invece i rapporti tra le aree.",
+      "Oltre alla geometria, anche colori, nomi e dettagli selezionati influenzano la lettura."
+    ],
+    "preview": [
+      "La Terra è curva, una mappa è piatta. Trasformare una superficie nell’altra comporta inevitabilmente delle deformazioni.",
+      "Una proiezione può conservare gli angoli oppure le aree, ma non tutte le proprietà insieme. La mappa migliore dipende dalla domanda che vogliamo farle.",
+      "Una proiezione cartografica è un metodo per rappresentare su un piano punti della superficie terrestre. Ogni metodo privilegia alcune proprietà."
+    ],
+    "source": "https://it.wikipedia.org/wiki/Proiezione_cartografica",
+    "fetchedAt": 1791397563111,
+    "complete": true
+  }
+]

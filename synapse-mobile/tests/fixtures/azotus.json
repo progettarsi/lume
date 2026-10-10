@@ -1,0 +1,22 @@
+{
+  "batchcomplete": true,
+  "query": {
+    "pages": [
+      {
+        "pageid": 2447890,
+        "ns": 0,
+        "title": "Azotus",
+        "pageprops": {
+          "disambiguation": ""
+        },
+        "extract": "Azotus (greco Αζωτος), è il nome greco di un'antica città della Filistea, identificata diversamente da vari autori dell'antichità:\n\nGaza, oggi la maggior città della Striscia di Gaza, parte del territorio palestinese amministrato, in base agli Accordi di Oslo, dall'Autorità Nazionale Palestinese (ANP).\nAshdod, oggi una cittadina del Distretto Meridionale dello Stato d'Israele.",
+        "categories": [
+          {
+            "ns": 14,
+            "title": "Categoria:Pagine di disambiguazione"
+          }
+        ]
+      }
+    ]
+  }
+}

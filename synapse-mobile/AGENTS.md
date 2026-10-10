@@ -1,0 +1,12 @@
+# Synapse native app
+
+- React Native / Expo, Android first with iOS-compatible application code. This is separate from the approved `../synapse` browser prototype; do not alter its protected runtime.
+- Warm paper, terracotta, Newsreader headings, Source Sans 3 body. No article illustrations or account.
+- All categories in a horizontally scrolling rail, fading at the right edge; no drag or long-press reordering (removed at user request after device testing). Per te stays first.
+- Feed publishes the first available response quickly, then progressively builds a persistent reserve of 20–30 useful previews during use. Refill ahead of exhaustion; no blocking bulk synchronization at launch. Keep explicit cache/request budgets and protect saved, active and useful reserve articles. Reader requests preempt background downloads. Extended text is offline only when actually downloaded.
+- Wikipedia Italian public APIs directly, with attribution, polite retries, cancellation and no paid backend. Online search ranks relevance, not cache presence. Shuffle online retrieves a new random Wikipedia article; offline uses the cache.
+- General-audience text selection. Optional free-quota AI requires a user key, must fail back to original extracts, never enable billing or embed a key. Personalized ranking is local and implemented: interests from voluntary opens and reversible saves, with interaction-order recent memory and stable future-feed refresh. Never use reading duration, exposure, comprehension estimates or adaptive content length. Preserve versioned profiles, atomic migration backups and bookmark contributions. Technical Gemini preparation timers remain independent.
+- Native gestures and animations must remain interruptible, including reversing reader transitions. No timers locking input. Respect reduced motion and accessibility.
+- Visual polish and coherent, fluid motion are a primary product requirement. Keep text in its final layout during gestures; reveal via clipping, opacity and transforms, never growing text containers or scaling labels. Coordinate insertion/removal with neighbouring rows and verify motion on device, not only static endpoints. Preserve the established row appearance; do not add a visible removal button beside saved articles.
+- Adapt the supplied SVG for launcher/adaptive icons at the end. Preserve its bulb/filament geometry.
+- Typecheck, test feed/network/cache contracts and export Android bundle before handoff. Clearly distinguish these from an actual APK/device verification.

@@ -1,0 +1,46 @@
+// Isolated package: real library, Wikipedia parser, SQLite, Feed and Reader.
+// Controlled transport; no personal data, credentials or phone configuration.
+import React,{useEffect,useRef,useState} from 'react';
+import {View,Text,Pressable,useWindowDimensions} from 'react-native';
+import {registerRootComponent} from 'expo';
+import {GestureHandlerRootView} from 'react-native-gesture-handler';
+import {SafeAreaProvider,useSafeAreaInsets} from 'react-native-safe-area-context';
+import {useFonts} from 'expo-font';
+import {Newsreader_500Medium} from '@expo-google-fonts/newsreader/500Medium';
+import {SourceSans3_400Regular} from '@expo-google-fonts/source-sans-3/400Regular';
+import {SourceSans3_600SemiBold} from '@expo-google-fonts/source-sans-3/600SemiBold';
+import {useSharedValue} from 'react-native-reanimated';
+import {useLibrary} from '../../src/useLibrary';
+import {Wikipedia} from '../../src/content/wikipedia';
+import {articleStatus,aiFailure,type ReaderStatus} from '../../src/content/readerStatus';
+import type {Article} from '../../src/content/types';
+import {Feed,type Origin,type OpenArticle} from '../../src/components/Feed';
+import {Reader} from '../../src/components/Reader';
+import {ThemeContext} from '../../src/components/Atoms';
+import {dark} from '../../src/theme';
+const intro='Le aurore polari sono fenomeni luminosi dell’atmosfera. Le particelle cariche interagiscono con il campo magnetico terrestre e con i gas atmosferici, formando archi di luce che cambiano colore e intensità nel cielo.';
+const tail='Le persone osservano il cielo nelle notti limpide. La luce cambia nel corso della notte, mentre le particelle raggiungono gli strati più alti dell’atmosfera. Lo studio del fenomeno aiuta a comprendere i rapporti tra la Terra e il Sole.';
+function Harness(){const [fonts]=useFonts({Newsreader_500Medium,SourceSans3_400Regular,SourceSans3_600SemiBold});return <GestureHandlerRootView style={{flex:1}}><SafeAreaProvider>{fonts&&<Cases/>}</SafeAreaProvider></GestureHandlerRootView>}
+function Cases(){
+ const w=useWindowDimensions(),insets=useSafeAreaInsets(),paint=useSharedValue(1),frame=useRef<View>(null),transport=useRef({online:false,slow:false,fail:false,next:1000,requests:0,aborted:0,full:0,inflight:0});
+ const [online,setOnline]=useState(false),[slow,setSlow]=useState(false),[tick,setTick]=useState(0),[category,setCategory]=useState('all'),[index,setIndex]=useState(0),[large,setLarge]=useState(false);
+ transport.current.online=online;transport.current.slow=slow;
+ const wiki=useRef<Wikipedia|null>(null);
+ if(!wiki.current)wiki.current=new Wikipedia((async(url,options)=>{
+  const t=transport.current,signal=options?.signal;t.requests++;t.inflight++;
+  const wait=()=>new Promise<void>((resolve,reject)=>{const timer=setTimeout(()=>{signal?.removeEventListener('abort',abort);t.online?resolve():reject(new Error('Disconnected'))},t.slow?1400:180);const abort=()=>{clearTimeout(timer);signal?.removeEventListener('abort',abort);t.aborted++;reject(new Error('Cancelled'))};signal?.addEventListener('abort',abort,{once:true});if(signal?.aborted)abort()});
+  try{await wait();return {ok:true,status:200,headers:{get:()=>null},json:async()=>{try{await wait();const p=new URL(String(url)).searchParams;if(t.fail&&p.get('action')==='parse')throw new Error('Download interrupted');if(p.get('action')==='parse'){t.full++;return {parse:{text:`<p>${intro}</p>${Array.from({length:8},()=>`<p>${tail}</p>`).join('')}`,revid:5}}}const count=Math.min(6,Number(p.get('grnlimit')||p.get('gpllimit'))||p.get('titles')?.split('|').length||2);return {query:{pages:Array.from({length:count},()=>{const id=t.next++;return {pageid:id,title:`Aurora riserva ${id}`,extract:intro,fullurl:`https://it.wikipedia.org/wiki/Aurora_riserva_${id}`,revisions:[{revid:5}]}})}}}finally{t.inflight--}}} as unknown as Response}catch(error){t.inflight--;throw error}
+ }) as typeof fetch);
+ const lib=useLibrary({wikipedia:wiki.current,onlineOverride:online});
+ const [reader,setReader]=useState<{article:Article;origin:Origin;run:number}|null>(null),[open,setOpen]=useState(false),[notice,setNotice]=useState<ReaderStatus|undefined>(),run=useRef(0),request=useRef<AbortController|null>(null),openRef=useRef(false),activeId=useRef('');openRef.current=open;
+ const h=w.height-200,top=insets.top+16,rows=lib.getFeed(category);
+ useEffect(()=>{if(lib.ready){transport.current.next=Math.max(transport.current.next,...lib.cache.map(a=>Number(a.id.split(':')[1])+1||0));lib.setDiscovery(true);if(!reader)void lib.load(category,index)}},[lib.ready,category,index,online,lib.loading,!!reader]);
+ useEffect(()=>{const timer=setInterval(()=>setTick(n=>n+1),400);return()=>clearInterval(timer)},[]);
+ const load=async(a:Article)=>{request.current?.abort();const abort=new AbortController();request.current=abort;setNotice({kind:'loading',message:'Caricamento dell’approfondimento…'});const result=await lib.full(a,abort.signal);if(!abort.signal.aborted&&activeId.current===a.id){setReader(old=>old?{...old,article:result}:old);setNotice(articleStatus(result,transport.current.online))}};
+ const show=(a:Article,origin:Origin)=>{activeId.current=a.id;lib.activate(a);setReader({article:a,origin,run:++run.current});setOpen(true);void lib.read(a);void load(a)};
+ const openArticle:OpenArticle=(a,node,kind,title)=>{if(!frame.current||!node)return;frame.current.measureInWindow((fx,fy)=>node.measureInWindow((x,y,width,height)=>show(a,{x:x-fx,y:y-fy,width,height,kind,title})))};
+ const consume=()=>{let n=index;for(let i=0;i<10;i++){const current=lib.getFeed(category);if(n>=current.length-1){if(current[n])void lib.track(current[n],'seen');break}n=lib.trimFeed(category,n+1)}setIndex(n);void lib.load(category,n)};
+ const button=(label:string,action:()=>void,selected=false)=><Pressable key={label} accessibilityLabel={'Riserva '+label} onPress={action} style={{flex:1,margin:2,paddingVertical:10,backgroundColor:selected?'#82513e':'#474139'}}><Text style={{color:dark.ink,fontSize:12,textAlign:'center'}}>{label}</Text></Pressable>;
+ return <ThemeContext.Provider value={{palette:dark,progress:paint}}><View style={{flex:1,backgroundColor:dark.paper}}><View ref={frame} collapsable={false} style={{height:h,overflow:'hidden'}}><Text style={{color:dark.ink,paddingTop:top,paddingHorizontal:24,fontSize:20,marginBottom:20}}>Riserva QA · {category}</Text><Feed articles={rows} height={h-top-70} size={large?23:20} saved={new Set(lib.cache.filter(a=>a.saved).map(a=>a.id))} readerOpen={open} onOpen={openArticle} onSave={a=>void lib.save(a)} onDirection={()=>{}} position={index} onIndex={n=>setIndex(lib.trimFeed(category,n))} covered={reader?.article.id}/>{reader&&<Reader key={reader.run} article={reader.article} origin={reader.origin} open={open} width={w.width} height={h} top={top} bottom={16} size={large?23:20} saved={false} notice={notice} onRetryArticle={()=>{transport.current.fail=false;void load(reader.article)}} onRetryAI={()=>setNotice(aiFailure('Quota di prova esaurita.'))} onClose={()=>{request.current?.abort();setOpen(false)}} onReopen={()=>setOpen(true)} onClosed={()=>{if(openRef.current)return;activeId.current='';lib.activate();setReader(null)}} onSave={()=>void lib.save(reader.article)}/>}</View><View style={{position:'absolute',bottom:insets.bottom,left:0,right:0,backgroundColor:'#35302c'}}><Text accessibilityLabel="Stato riserva" style={{color:dark.ink,fontSize:12,textAlign:'center'}}>pool {lib.reserveCount}/30 · cache {lib.cache.length} · scheda {index+1}/{rows.length}{'\n'}{online?'online':'offline'} {slow?'lenta':''} · req {transport.current.requests} · abort {transport.current.aborted} · full {transport.current.full} · attive {transport.current.inflight}</Text><Text style={{color:dark.muted,fontSize:11,textAlign:'center'}}>{lib.loading?'Prima richiesta…':lib.error||notice?.kind||'Pronto'}</Text><View style={{flexDirection:'row'}}>{button('Online',()=>setOnline(true),online)}{button('Offline',()=>setOnline(false),!online)}{button('Lenta',()=>setSlow(v=>!v),slow)}{button('Consuma 10',consume)}</View><View style={{flexDirection:'row'}}>{button('Apri',()=>rows[index]&&show(rows[index],{kind:'home',x:24,y:top+60,width:w.width-48,height:450}))}{button('No testo',()=>{transport.current.fail=true;show({id:'wiki:99999',title:'Aurora senza approfondimento',category:'science',source:'https://it.wikipedia.org/wiki/Aurora_QA',preview:[intro],paragraphs:[intro],fetchedAt:1},{kind:'home',x:24,y:top+60,width:w.width-48,height:450})})}{button('AI fallita',()=>setNotice(aiFailure('Quota di prova esaurita.')))}{button('Chiudi',()=>{request.current?.abort();setOpen(false)})}</View><View style={{flexDirection:'row'}}>{button('Riprova',()=>{transport.current.fail=false;if(reader)void load(reader.article);else lib.retryFeed()})}{button('Scienza',()=>{lib.enterCategory('science');setIndex(0);setCategory('science')},category==='science')}{button('Tutte',()=>{lib.enterCategory('all');setIndex(0);setCategory('all')},category==='all')}{button('Grande',()=>setLarge(v=>!v),large)}</View></View></View></ThemeContext.Provider>;
+}
+registerRootComponent(Harness);

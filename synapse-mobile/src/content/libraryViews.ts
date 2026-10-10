@@ -1,0 +1,36 @@
+import type {Article} from './types';
+import type {Learning} from './recommendations';
+import {reserveArticles} from './reserve';
+
+/** Derived views of immutable library snapshots. UI state (keyboard, toast,
+ * navigation, request indicator) cannot invalidate ranking or reader editions.
+ * Consumed IDs have a separate synchronous revision: never wait for disk writes.
+ * At most one current snapshot and 24 category views are retained. */
+export class LibraryViews{
+ private cache?:Article[];private learning?:Learning;private consumed=-1;
+ private reserves=new Map<string,Article[]>();
+ private feeds=new Map<string,{rows:Article[];cache:Article[];ai:boolean;view:Article[];items:Map<string,{source:Article;completed?:Article;view:Article}>}>();
+ private indexed?:Article[];private byId=new Map<string,Article>();
+ constructor(private rank:typeof reserveArticles=reserveArticles){}
+ reserve(cache:Article[],learning:Learning,served:Set<string>,revision:number,category='all'){
+  if(cache!==this.cache||learning!==this.learning||revision!==this.consumed){this.cache=cache;this.learning=learning;this.consumed=revision;this.reserves.clear()}
+  let rows=this.reserves.get(category);
+  if(!rows){rows=this.rank(cache,learning,served,category);if(this.reserves.size>=24)this.reserves.clear();this.reserves.set(category,rows)}
+  return rows;
+ }
+ feed(category:string,rows:Article[],cache:Article[],ai:boolean){
+  const previous=this.feeds.get(category);
+  if(previous?.rows===rows&&previous.cache===cache&&previous.ai===ai)return previous.view;
+  if(this.indexed!==cache){this.indexed=cache;this.byId=new Map(cache.map(a=>[a.id,a]))}
+  const items=new Map<string,{source:Article;completed?:Article;view:Article}>();
+  const view=rows.map(article=>{
+   const completed=this.byId.get(article.id);
+   const old=previous?.items.get(article.id);
+   if(previous?.ai===ai&&old?.source===article&&old.completed===completed){items.set(article.id,old);return old.view}
+   const updated=completed?.complete?{...article,textVersion:completed.textVersion,revision:completed.revision,paragraphs:completed.paragraphs,complete:true,contentIssue:undefined,contentIssueKind:undefined,simplified:completed.simplified,simplifiedVersion:completed.simplifiedVersion,simplifiedPreview:completed.simplifiedPreview,simplifiedInput:completed.simplifiedInput,simplifiedPrepared:completed.simplifiedPrepared}:article;
+   const result=ai||!updated.simplified?updated:{...updated,simplified:undefined};
+   items.set(article.id,{source:article,completed,view:result});return result;
+  });
+  if(this.feeds.size>=24)this.feeds.clear();this.feeds.set(category,{rows,cache,ai,view,items});return view;
+ }
+}
