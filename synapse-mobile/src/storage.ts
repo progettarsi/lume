@@ -9,6 +9,7 @@ import {parseAIMetrics,type AIMetrics} from './content/aiPreparation';
 import {categoryMigration} from './content/categoryMigration';
 import {parseRegistry,type CategoryRegistry} from './content/categoryRegistry';
 import {parseClassificationCache,type ClassificationCache} from './content/classification';
+import {recoverOnboarding,parseOnboarding,setInitialInterests,type OnboardingState} from './content/onboarding';
 type Row={id:string;json:string;saved:number;read_at:number|null;touched:number};
 const decode=(r:Row):Article=>({...JSON.parse(r.json),saved:!!r.saved,readAt:r.read_at||undefined,fetchedAt:r.touched});
 const run=databaseQueue(async()=>{
@@ -20,6 +21,35 @@ const run=databaseQueue(async()=>{
 },db=>db.closeAsync());
 const articles=async(db:SQLite.SQLiteDatabase)=>(await db.getAllAsync<Row>('SELECT * FROM articles ORDER BY touched DESC')).map(decode);
 export function initStorage(){return run(async()=>{})}
+export function initOnboarding(){return run(async db=>{
+ const rows=await db.getAllAsync<{key:string;value:string}>('SELECT key,value FROM preferences');
+ const values=new Map(rows.map(r=>[r.key,r.value]));
+ const count=await db.getFirstAsync<{saved:number;read:number}>('SELECT COALESCE(SUM(saved),0) AS saved,COUNT(read_at) AS read FROM articles');
+ const visits=await db.getFirstAsync<{n:number}>('SELECT COUNT(*) AS n FROM visits');
+ const raw=values.get('onboarding')??null;
+ const state=recoverOnboarding(raw,values.get('onboarding-backup')??null,{preferenceKeys:rows.map(r=>r.key).filter(k=>!k.startsWith('onboarding')),saved:count?.saved??0,read:count?.read??0,visits:visits?.n??0});
+ if(raw!==JSON.stringify(state))await db.withTransactionAsync(async()=>{
+  if(raw)await db.runAsync('INSERT OR REPLACE INTO preferences(key,value) VALUES(?,?)','onboarding-recovery-source',raw);
+  await db.runAsync('INSERT OR REPLACE INTO preferences(key,value) VALUES(?,?)','onboarding',JSON.stringify(state));
+ });
+ return state;
+})}
+export function putOnboarding(next:OnboardingState,applyInterests=false){return run(async db=>{
+ let learning:Learning|undefined;
+ await db.withTransactionAsync(async()=>{
+  const row=await db.getFirstAsync<{value:string}>('SELECT value FROM preferences WHERE key=?','onboarding');
+  const old=parseOnboarding(row?.value??null);
+  if(old&&next.revision<=old.revision){if(JSON.stringify(old)===JSON.stringify(next)){if(applyInterests){const p=await db.getFirstAsync<{value:string}>('SELECT value FROM preferences WHERE key=?','learning');learning=parseLearning(p?.value??null)}return}throw Error('Configurazione modificata: riapri l’app per riprendere.');}
+  parseOnboarding(JSON.stringify(next));
+  if(applyInterests&&next.origin==='fresh'){
+   const p=await db.getFirstAsync<{value:string}>('SELECT value FROM preferences WHERE key=?','learning');
+   learning=setInitialInterests(parseLearning(p?.value??null),next.draft.interests);
+   await db.runAsync('INSERT OR REPLACE INTO preferences(key,value) VALUES(?,?)','learning',JSON.stringify(learning));
+  }
+  if(row)await db.runAsync('INSERT OR REPLACE INTO preferences(key,value) VALUES(?,?)','onboarding-backup',row.value);
+  await db.runAsync('INSERT OR REPLACE INTO preferences(key,value) VALUES(?,?)','onboarding',JSON.stringify(next));
+ });return learning;
+})}
 export function getArticles(){return run(articles)}
 // Transactions reuse the owned connection; every public operation passes through the same queue.
 export function putArticles(items:Article[]){return run(async db=>{

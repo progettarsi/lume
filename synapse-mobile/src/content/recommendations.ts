@@ -4,7 +4,7 @@ import {PERSONALIZATION as P} from './personalization';
 import {assessEditorial,repetitionScorer} from './editorial';
 type Signal={id:string;category:string;tokens:string[];title:string;weight:number;order:number;kind:'open'|'save'};
 type Bookmark=Signal&{on:boolean};
-export type Learning={seen:string[];categories:Record<string,number>;topics:Record<string,number>;updatedAt:number;version?:number;categoryVersion?:number;bookmarks?:Record<string,Bookmark>;opens?:Record<string,number>;recent?:Signal[];sequence?:number};
+export type Learning={seen:string[];categories:Record<string,number>;topics:Record<string,number>;updatedAt:number;version?:number;categoryVersion?:number;bookmarks?:Record<string,Bookmark>;opens?:Record<string,number>;recent?:Signal[];sequence?:number;initialInterests?:{version:1;ids:string[];sequence:number}};
 export const emptyLearning=():Learning=>({seen:[],categories:{},topics:{},updatedAt:Date.now(),version:3,bookmarks:{},opens:{},recent:[],sequence:0});
 export function identity(a:Article):string{try{return decodeURIComponent(new URL(a.source).pathname).replaceAll('_',' ').toLocaleLowerCase('it')}catch{return a.id}}
 export function seenArticle(a:Article,learning:Learning){return !!a.readAt||learning.seen.includes(a.id)||learning.seen.includes(identity(a))}
@@ -64,14 +64,15 @@ function recentScores(p:Learning){const categories:Record<string,number>={},topi
  for(const e of p.recent||[]){const w=e.weight*Math.pow(.5,Math.max(0,(p.sequence||0)-e.order)/P.recentHalfLife);mass+=w;categories[e.category]=(categories[e.category]||0)+w;for(const t of e.tokens)topics[t]=(topics[t]||0)+w}
  return {categories,topics,mass};
 }
-function affinity(a:Article,p:Learning,r:ReturnType<typeof recentScores>){const terms=interestTerms(a),category=Math.min(3,Math.log1p(p.categories[a.category]||0))*P.categoryWeight;
+export function initialInterestWeight(p:Learning,id:string){return p.initialInterests?.ids.includes(id)?2*Math.pow(.5,Math.max(0,(p.sequence||0)-p.initialInterests.sequence)/24):0}
+function affinity(a:Article,p:Learning,r:ReturnType<typeof recentScores>){const terms=interestTerms(a),category=Math.min(3,Math.log1p((p.categories[a.category]||0)+initialInterestWeight(p,a.category)))*P.categoryWeight;
  const topic=terms.reduce((s,t)=>s+Math.min(3,Math.log1p(p.topics[t]||0)),0)/Math.max(1,terms.length)*P.topicWeight;
  const recent=((r.categories[a.category]||0)+terms.reduce((s,t)=>s+(r.topics[t]||0),0)/Math.max(1,terms.length))/(r.mass+P.confidenceMass)*P.recentWeight;
  return category+topic+recent;
 }
-export function personalizedCategories(p:Learning,fallback:string[]=[]){const r=recentScores(p);return categoryOrder(fallback).sort((a,b)=>((p.categories[b]||0)+2*(r.categories[b]||0))-((p.categories[a]||0)+2*(r.categories[a]||0)))}
+export function personalizedCategories(p:Learning,fallback:string[]=[]){const r=recentScores(p);return categoryOrder(fallback).sort((a,b)=>((p.categories[b]||0)+initialInterestWeight(p,b)+2*(r.categories[b]||0))-((p.categories[a]||0)+initialInterestWeight(p,a)+2*(r.categories[a]||0)))}
 export function chooseCategory(p:Learning,random=Math.random):string{
- const r=recentScores(p),values=CATEGORIES.map(c=>Math.min(3,Math.log1p(p.categories[c.id]||0))+(r.categories[c.id]||0)/(r.mass+P.confidenceMass)*P.recentWeight),total=values.reduce((a,b)=>a+b,0);
+ const r=recentScores(p),values=CATEGORIES.map(c=>Math.min(3,Math.log1p((p.categories[c.id]||0)+initialInterestWeight(p,c.id)))+(r.categories[c.id]||0)/(r.mass+P.confidenceMass)*P.recentWeight),total=values.reduce((a,b)=>a+b,0);
  const weights=values.map(v=>P.exploration/CATEGORIES.length+(1-P.exploration)*(total?v/total:1/CATEGORIES.length));let pick=random();for(let i=0;i<weights.length;i++){pick-=weights[i];if(pick<=0)return CATEGORIES[i].id}return CATEGORIES.at(-1)!.id;
 }
 export function discoveryAnchor(p:Learning,random=Math.random){
@@ -96,6 +97,7 @@ export function parseLearning(json:string|null):Learning{
  const scores=(v:unknown):Record<string,number>=>Object.fromEntries(Object.entries(v&&typeof v==='object'?v:{}).filter(([k,n])=>k.length<500&&typeof n==='number'&&Number.isFinite(n)&&n>=0));
  const signal=(v:any):v is Signal=>v&&typeof v.id==='string'&&typeof v.category==='string'&&typeof v.title==='string'&&Array.isArray(v.tokens)&&v.tokens.every((t:unknown)=>typeof t==='string')&&Number.isFinite(v.weight)&&v.weight>=0&&v.weight<=P.saveWeight&&Number.isFinite(v.order)&&v.order>=0&&(v.kind==='save'||v.kind==='open');
  const bookmarks:Record<string,Bookmark>={};for(const [k,v] of Object.entries(x.bookmarks||{}))if(signal(v)&&typeof (v as Bookmark).on==='boolean')bookmarks[k]=v as Bookmark;
- return {seen:x.seen.filter((s:unknown)=>typeof s==='string'),categories:scores(x.categories),topics:scores(x.topics),updatedAt:Number.isFinite(x.updatedAt)?x.updatedAt:Date.now(),version:x.version===3?3:x.version===2?2:1,categoryVersion:x.categoryVersion===1?1:undefined,bookmarks,opens:scores(x.opens),recent:Array.isArray(x.recent)?x.recent.filter(signal).slice(-P.recentLimit):[],sequence:Number.isFinite(x.sequence)?Math.max(0,x.sequence):0};
+ const initialInterests=x.initialInterests?.version===1&&Array.isArray(x.initialInterests.ids)&&Number.isSafeInteger(x.initialInterests.sequence)&&x.initialInterests.sequence>=0?{version:1 as const,ids:[...new Set<string>(x.initialInterests.ids.filter((id:unknown)=>typeof id==='string'&&CATEGORIES.some(c=>c.id===id)))],sequence:x.initialInterests.sequence}:undefined;
+ return {seen:x.seen.filter((s:unknown)=>typeof s==='string'),categories:scores(x.categories),topics:scores(x.topics),updatedAt:Number.isFinite(x.updatedAt)?x.updatedAt:Date.now(),version:x.version===3?3:x.version===2?2:1,categoryVersion:x.categoryVersion===1?1:undefined,bookmarks,opens:scores(x.opens),recent:Array.isArray(x.recent)?x.recent.filter(signal).slice(-P.recentLimit):[],sequence:Number.isFinite(x.sequence)?Math.max(0,x.sequence):0,initialInterests};
  }catch{return {...emptyLearning(),version:1}}
 }

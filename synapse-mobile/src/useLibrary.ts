@@ -20,10 +20,12 @@ import {continuation} from './content/text';
 import {BookmarkWriter} from './content/bookmark';
 import {LibraryViews} from './content/libraryViews';
 import {recoverFeed,offlineReserve,offlineContinuation,repeatedArticle,categoryDisabled,canRecheck,type FeedState} from './content/feedAvailability';
+import type {OnboardingState} from './content/onboarding';
 
 // Overrides are dependency injection for the isolated native QA, never settings.
 export function useLibrary(options:{wikipedia?:Wikipedia;onlineOverride?:boolean;aiGenerator?:(a:Article,key:string,s:AbortSignal)=>Promise<string[]|undefined>;categoryGenerator?:ClassificationGenerator}={}){
   const [ready,setReady]=useState(false),[settings,setSettings]=useState(DEFAULT_SETTINGS),[cache,setCache]=useState<Article[]>([]),[online,setOnline]=useState(true),[error,setError]=useState('');
+  const [onboarding,setOnboarding]=useState<OnboardingState>(),[onboardingError,setOnboardingError]=useState('');
   const [feeds,setFeeds]=useState<Record<string,Article[]>>({}),[loading,setLoading]=useState(false),[history,setHistory]=useState<Article[]>([]);
   const [availability,setAvailability]=useState<Record<string,FeedState>>({}),availabilityRef=useRef(availability);
   const [feedCorrection,setFeedCorrection]=useState<{category:string;position:number;revision:number}|null>(null);
@@ -137,18 +139,28 @@ export function useLibrary(options:{wikipedia?:Wikipedia;onlineOverride?:boolean
   const reevaluate=()=>{const exhausted=Object.entries(availabilityRef.current).filter(([id,s])=>id!=='all'&&(s.phase==='exhausted'||s.exhausted));if(exhausted.length){const [id]=exhausted[recheckOrder.current++%exhausted.length];stateFor(id,{phase:'idle'});retryAfter.current.delete(id);recheck.current=id}scheduler.current?.reset(false)};
   const connection=(connected:boolean)=>{const changed=onlineRef.current!==connected;onlineRef.current=connected;setOnline(connected);if(!connected){controller.current?.abort();scheduler.current?.interrupt();ai.current?.cancel(true);dwell.current?.clear();pendingAI.current=undefined}else if(changed){for(const [id,state] of Object.entries(availabilityRef.current))if(state.phase!=='exhausted'&&state.phase!=='limit'&&canRecheck(state))stateFor(id,{phase:'idle'});setError('');reevaluate()}};
   useEffect(()=>{connection(options.onlineOverride??(network.isConnected!==false&&network.isInternetReachable!==false))},[network.isConnected,network.isInternetReachable,options.onlineOverride]);
-  useEffect(()=>{let alive=true;(async()=>{
-    await storage.initStorage();let articles=await storage.getArticles();
+  const boot=useRef({alive:true,busy:false});
+  const hydrateLibrary=async()=>{
+    if(boot.current.busy)return;boot.current.busy=true;readyRef.current=false;
+    try{
+    await storage.initStorage();const welcome=await storage.initOnboarding();let articles=await storage.getArticles();
     if(!articles.some(a=>a.preview?.some(p=>p.trim()))){await storage.putArticles(seeds as Article[]);articles=await storage.getArticles()}
     const prefs=await storage.getSettings();prefs.categories=categoryOrder(prefs.categories);
     let visits=await storage.getHistory();await storage.migrateProfile(articles,visits);let profile=await storage.migrateCategories();articles=await storage.getArticles();ai.current!.metrics=await storage.getAIMetrics();classification.current!.cache=await storage.getClassificationCache();const changes:Article[]=[];articles=articles.map(a=>{const next=classification.current!.cached(ensureClassification(a));if(next!==a)changes.push(next);return next});if(changes.length){profile=reconcileCategories(profile,changes);await storage.putClassifiedArticles(changes,profile)}visits=await storage.getHistory();const storedRegistry=await storage.getCategoryRegistry();
-    if(alive){learningRef.current=profile;setLearning(profile);cacheRef.current=articles;setCache(articles);setHistory(visits);setSettings(prefs);commitRegistry(settleRegistry(observeTopics(storedRegistry,articles),profile,articles,{},'all',onlineRef.current));commitFeeds(()=>({all:onlineRef.current?reserveArticles(articles,profile,served.current):offlineReserve(articles,profile,served.current)}));readyRef.current=true;setReady(true);classification.current!.enqueue(articles)}
-  })().catch(()=>{if(alive){const local=(seeds as Article[]).map(ensureClassification);cacheRef.current=local;setCache(local);commitFeeds(()=>({all:offlineReserve(local,learningRef.current,served.current)}));readyRef.current=true;setReady(true);setError('Non è stato possibile aprire la raccolta salvata. Riprova riaprendo l’app.')}});return()=>{alive=false;controller.current?.abort();scheduler.current?.dispose();ai.current?.cancel(true);classification.current?.dispose();dwell.current?.clear()}},[]);
+    if(boot.current.alive){setOnboarding(welcome);setOnboardingError('');setError('');learningRef.current=profile;setLearning(profile);cacheRef.current=articles;setCache(articles);setHistory(visits);setSettings(prefs);commitRegistry(settleRegistry(observeTopics(storedRegistry,articles),profile,articles,{},'all',onlineRef.current));commitFeeds(()=>({all:onlineRef.current?reserveArticles(articles,profile,served.current):offlineReserve(articles,profile,served.current)}));readyRef.current=true;setReady(true);classification.current!.enqueue(articles)}
+    }catch{if(boot.current.alive){setOnboardingError('Non riesco a leggere la configurazione locale. Riprova: i tuoi dati sono conservati.');const local=(seeds as Article[]).map(ensureClassification);cacheRef.current=local;setCache(local);commitFeeds(()=>({all:offlineReserve(local,learningRef.current,served.current)}));setReady(true);setError('Non è stato possibile aprire la raccolta salvata.')}}finally{boot.current.busy=false}
+  };
+  useEffect(()=>{boot.current.alive=true;void hydrateLibrary();return()=>{boot.current.alive=false;controller.current?.abort();scheduler.current?.dispose();ai.current?.cancel(true);classification.current?.dispose();dwell.current?.clear()}},[]);
   const trimFeed=(category:string,position:number)=>{
     consume((feedsRef.current[category]||[]).slice(0,position));
     const remove=feedTrimCount(position);if(remove)commitFeeds(old=>old[category]?{...old,[category]:old[category].slice(remove)}:old);
     positionRef.current=position-remove;scheduler.current?.wake();return position-remove;
   };
+  const persistOnboarding=(next:OnboardingState,interests:boolean)=>profileWrites.current(async()=>{
+    const profile=await storage.putOnboarding(next,interests);setOnboarding(next);
+    if(profile){commitLearning(profile);refreshRevision.current++;scheduler.current?.reset(false);reorderFuture()}
+  });
+  const retryOnboarding=hydrateLibrary;
   const setDiscovery=(enabled:boolean)=>{discovery.current=enabled;if(!enabled){controller.current?.abort();scheduler.current?.interrupt()}};
   const load=async(category:string,position=0,force=false)=>{
     if(categoryRef.current!==category){controller.current?.abort();requestId.current++;busy.current=false;setLoading(false)}
@@ -220,7 +232,7 @@ export function useLibrary(options:{wikipedia?:Wikipedia;onlineOverride?:boolean
   const categoryRail=categoryRailItems(registry,categoryRef.current,online,availability);
   const completeCategoryReturn=()=>{if(categoryRef.current!=='all'||!onlineRef.current)return;const visible=registryRef.current.visible.filter(id=>!availabilityRef.current[id]?.exhausted&&availabilityRef.current[id]?.phase!=='exhausted');if(visible.length!==registryRef.current.visible.length)commitRegistry({...registryRef.current,visible})};
   const endCategoryInteraction=()=>{railInteraction.current=false;if(settlementPending.current)settleCategories();else if(restorationPending.current)restoreCategories()};
-  return {categoryRail,completeCategoryReturn,settleCategories,beginCategoryInteraction:()=>{railInteraction.current=true},endCategoryInteraction,beginAIOpen:()=>ai.current!.beginOpen(),abandonAIOpen:()=>ai.current!.abandonOpen(),configureAI,observeAI,revise,originalReady:()=>ai.current!.originalReady(),finishAIOpen:()=>ai.current!.finishOpen('fallback'),aiMetrics:()=>ai.current!.metrics,availability,feedCorrection,disabledCategory:(id:string)=>categoryDisabled(id,online,availability[id]),isRepeated:(a:Article)=>repeatedArticle(a,learningRef.current,served.current),homeReady:()=>{const local=onlineRef.current?cachedFeed('all'):offlineReserve(cacheRef.current,learningRef.current,served.current);return !!(feedsRef.current.all?.some(a=>a.preview.length&&!repeatedArticle(a,learningRef.current,served.current))||local.length)},ready,settings,updateSettings,cache,history,online,error,loading,load,getFeed,trimFeed,save,setSaved,isSaved:(id:string)=>!!cacheRef.current.find(a=>a.id===id)?.saved,read,search,random,remember,full,prepare,refresh,enterCategory,track,activate,setDiscovery,checkConnection,retryFeed,get reserveCount(){return pool().length},reserveTarget:RESERVE_TARGET,categoryIds};
+  return {onboarding,onboardingError,persistOnboarding,retryOnboarding,registry,categoryRail,completeCategoryReturn,settleCategories,beginCategoryInteraction:()=>{railInteraction.current=true},endCategoryInteraction,beginAIOpen:()=>ai.current!.beginOpen(),abandonAIOpen:()=>ai.current!.abandonOpen(),configureAI,observeAI,revise,originalReady:()=>ai.current!.originalReady(),finishAIOpen:()=>ai.current!.finishOpen('fallback'),aiMetrics:()=>ai.current!.metrics,availability,feedCorrection,disabledCategory:(id:string)=>categoryDisabled(id,online,availability[id]),isRepeated:(a:Article)=>repeatedArticle(a,learningRef.current,served.current),homeReady:()=>{const local=onlineRef.current?cachedFeed('all'):offlineReserve(cacheRef.current,learningRef.current,served.current);return !!(feedsRef.current.all?.some(a=>a.preview.length&&!repeatedArticle(a,learningRef.current,served.current))||local.length)},ready,settings,updateSettings,cache,history,online,error,loading,load,getFeed,trimFeed,save,setSaved,isSaved:(id:string)=>!!cacheRef.current.find(a=>a.id===id)?.saved,read,search,random,remember,full,prepare,refresh,enterCategory,track,activate,setDiscovery,checkConnection,retryFeed,get reserveCount(){return pool().length},reserveTarget:RESERVE_TARGET,categoryIds};
 }
 
 

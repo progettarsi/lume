@@ -13,6 +13,8 @@ import { StatusBar } from 'expo-status-bar';
 import { LinearGradient } from 'expo-linear-gradient';
 import {useMotionPreference} from './src/useMotionPreference';
 import { useLibrary } from './src/useLibrary';
+import {useOnboarding} from './src/useOnboarding';
+import {OnboardingScreen,LocalProfileEditor} from './src/components/OnboardingScreen';
 import { CATEGORIES } from './src/content/categories';
 import { body,heading,light,dark,spring } from './src/theme';
 import { Button,Icon,Label,ThemeContext } from './src/components/Atoms';
@@ -48,6 +50,8 @@ function Synapse(){
   const keyboardLift=useKeyboardLift();
   const width=Math.min(window.width,Platform.OS==='web'?440:window.width),height=viewportHeight,top=insets.top+16,bottom=Math.max(insets.bottom,16),reduced=useMotionPreference();
   const [appActive,setAppActive]=useState(AppState.currentState==='active');
+  const onboarding=useOnboarding(lib,reduced,appActive);
+  const [editIdentity,setEditIdentity]=useState(false);
   const [settledIndex,setSettledIndex]=useState(0);
   const [route,setRoute]=useState<'home'|'profile'>('home'),[collection,setCollection]=useState<Collection>(null),[searchOpen,setSearchOpen]=useState(false),[category,setCategory]=useState('all'),[index,setIndex]=useState(0);
   const [query,setQuery]=useState(''),[results,setResults]=useState<Article[]>([]),[searchBusy,setSearchBusy]=useState(false),[searchError,setSearchError]=useState(''),[randomBusy,setRandomBusy]=useState(false),[toast,setToast]=useState('');
@@ -97,9 +101,9 @@ function Synapse(){
   useEffect(()=>{if(category==='all')lib.completeCategoryReturn()},[category]);
   const readerArticle=useMemo(()=>reader?(lib.settings.aiEnabled||!reader.article.simplified?reader.article:{...reader.article,simplified:undefined}):undefined,[reader?.article,lib.settings.aiEnabled]);
   useEffect(()=>{gemini.current!.setEnabled(lib.settings.aiEnabled)},[lib.settings.aiEnabled]);
-  useEffect(()=>{const eligible=lib.ready&&appActive&&route==='home'&&!reader&&!searchOpen&&!collection&&settledIndex===index;lib.observeAI(eligible?visibleArticle:undefined,`${category}:${feedRevision}`)},[lib.ready,appActive,route,reader,searchOpen,collection,settledIndex,index,category,feedRevision,visibleArticle?.id,aiKey,keyEdited,lib.settings.aiEnabled,lib.online]);
+  useEffect(()=>{const eligible=lib.ready&&!!onboarding.state?.completed&&!onboarding.bootError&&!onboarding.active&&appActive&&route==='home'&&!reader&&!searchOpen&&!collection&&settledIndex===index;lib.observeAI(eligible?visibleArticle:undefined,`${category}:${feedRevision}`)},[lib.ready,onboarding.bootError,onboarding.active,onboarding.state?.completed,appActive,route,reader,searchOpen,collection,settledIndex,index,category,feedRevision,visibleArticle?.id,aiKey,keyEdited,lib.settings.aiEnabled,lib.online]);
 
-  useEffect(()=>{if(lib.ready&&route==='home'&&!reader&&!searchOpen&&!collection&&visibleArticle)void lib.prepare(visibleArticle)},[lib.ready,route,reader,searchOpen,collection,visibleArticle?.id,lib.online]);
+  useEffect(()=>{if(lib.ready&&!!onboarding.state?.completed&&!onboarding.bootError&&!onboarding.active&&route==='home'&&!reader&&!searchOpen&&!collection&&visibleArticle)void lib.prepare(visibleArticle)},[lib.ready,onboarding.bootError,onboarding.active,onboarding.state?.completed,route,reader,searchOpen,collection,visibleArticle?.id,lib.online]);
   useLayoutEffect(()=>{theme.value=lib.settings.dark?1:0},[lib.settings.dark]);
   const themeContext=useMemo(()=>({palette,progress:theme}),[palette,theme]);
   const paper=useMemo(()=>({backgroundColor:palette.paper}),[palette]);
@@ -108,7 +112,7 @@ function Synapse(){
   useEffect(()=>{collectionP.value=reduced?(collection?1:0):withSpring(collection?1:0,spring)},[collection,reduced]);
   useEffect(()=>{searchP.value=reduced?(searchOpen?1:0):withSpring(searchOpen?1:0,spring);if(searchOpen){const timer=setTimeout(()=>input.current?.focus(),30);return()=>clearTimeout(timer)}},[searchOpen,reduced]);
   const composerLift=useAnimatedStyle(()=>({bottom:Math.max(keyboardLift.value+12,bottom+16)})),searchViewport=useAnimatedStyle(()=>({marginBottom:Math.max(keyboardLift.value,0)+100}));
-  useEffect(()=>{const enabled=route==='home'&&!searchOpen&&!collection;lib.setDiscovery(enabled);if(lib.ready&&enabled&&!reader)void lib.load(category,index)},[lib.ready,category,index,lib.online,lib.loading,route,searchOpen,collection,reader]);
+  useEffect(()=>{const enabled=!!onboarding.state&&!onboarding.bootError&&route==='home'&&!searchOpen&&!collection;lib.setDiscovery(enabled);if(lib.ready&&enabled&&!reader)void lib.load(category,index)},[lib.ready,!!onboarding.state,onboarding.bootError,category,index,lib.online,lib.loading,route,searchOpen,collection,reader]);
   useEffect(()=>{void gemini.current!.load()},[]);
   useEffect(()=>{
     const abort=new AbortController();if(!searchOpen)return()=>abort.abort();
@@ -118,8 +122,10 @@ function Synapse(){
     return()=>{clearTimeout(timer);abort.abort()};
   },[query,searchOpen,lib.online]);
   useEffect(()=>{const sub=BackHandler.addEventListener('hardwareBackPress',()=>{
+    if(!onboarding.state||onboarding.bootError)return true;
+    if(onboarding.active){if(Keyboard.isVisible()){Keyboard.dismiss();return true}if(onboarding.busy)return true;if(onboarding.stage==='intro'&&!onboarding.replay)return false;onboarding.navigate('back');return true}
     if(reader){close();return true}if(searchOpen){dismissSearch();return true}if(collection){setCollection(null);return true}if(route==='profile'){setRoute('home');return true}return false;
-  });return()=>sub.remove()},[reader,searchOpen,collection,route]);
+  });return()=>sub.remove()},[reader,searchOpen,collection,route,onboarding.state,onboarding.bootError,onboarding.active,onboarding.stage,onboarding.replay,onboarding.revision,onboarding.busy]);
   useEffect(()=>()=>{randomRequest.current?.abort();readerRequest.current?.abort()},[]);
   const open:OpenArticle=(article,node,kind,title)=>{
     if(activeReader.current?.article.id===article.id&&!activeReaderOpen.current){reopen();return}
@@ -192,7 +198,7 @@ function Synapse(){
   const sourceRows=collectionReturn.rows,searchRows=searchReturn.rows;
   return <ThemeContext.Provider value={themeContext}><View style={styles.webFrame}><Animated.View ref={frame} collapsable={false} onLayout={e=>setViewportHeight(e.nativeEvent.layout.height)} style={[{width,flex:1,overflow:Platform.OS==='web'?'clip' as 'hidden':'hidden'},paper]}>
     <StatusBar style={lib.settings.dark?'light':'dark'}/>
-    {!lib.ready?<View style={styles.loader}><ActivityIndicator color={palette.accent}/><Label>{lib.error}</Label></View>:<>
+    {!lib.ready?<View style={styles.loader}><ActivityIndicator color={palette.accent}/><Label>{lib.error}</Label></View>:!onboarding.state||onboarding.bootError||onboarding.active?<OnboardingScreen key={onboarding.devSandbox?'sandbox':onboarding.replay?'replay':'onboarding'} binding={onboarding}/>:<>
       <Animated.View style={[StyleSheet.absoluteFill,paper,homeStyle]} pointerEvents={route==='home'&&!searchOpen&&!collection&&!readerOpen?'auto':'none'} aria-hidden={route!=='home'||searchOpen||!!collection||readerOpen} accessibilityElementsHidden={route!=='home'||searchOpen||!!collection||readerOpen} importantForAccessibility={route!=='home'||searchOpen||!!collection||readerOpen?'no-hide-descendants':'auto'}>
         <View style={{paddingTop:top+8,paddingHorizontal:24,paddingBottom:10,zIndex:2}}><View style={{flexDirection:'row',alignItems:'center',justifyContent:'space-between'}}><Label style={styles.wordmark}>Synapse</Label></View><View pointerEvents="box-none" style={{height:48,overflow:'hidden'}}><Animated.View style={chipStyle}><CategoryRail selected={category} onSelect={selectCategory} items={lib.categoryRail} onInteractionStart={lib.beginCategoryInteraction} onInteractionEnd={lib.endCategoryInteraction}/></Animated.View></View></View>
         <Animated.View style={[{position:'absolute',top:top+84,left:0,right:0,height:homeHeight},feedStyle]}>{homeHeight>0&&!centralFeed&&<Feed key={`${category}:${feedRevision}`} articles={feedArticles} height={homeHeight} size={lib.settings.size} saved={saved} readerOpen={readerOpen} entry={categoryEntry.current} onOpen={open} onSave={save} covered={reader?.origin.kind==='home'?reader.article.id:undefined} position={index} onIndex={next=>setIndex(lib.trimFeed(category,next))} onEndReached={()=>{if(category!=='all'&&feedState.phase==='exhausted')setEndedCategory(category);else lib.retryFeed()}} onVisible={setSettledIndex} onDirection={hidden=>{chips.value=reduced?(hidden?1:0):withSpring(hidden?1:0,spring)}}/>}</Animated.View>
@@ -204,13 +210,16 @@ function Synapse(){
       </Animated.View>
       <Animated.View style={[StyleSheet.absoluteFill,paper,profileStyle]} pointerEvents={route==='profile'&&!collection&&!searchOpen&&!readerOpen?'auto':'none'} aria-hidden={route!=='profile'||!!collection||searchOpen||readerOpen} accessibilityElementsHidden={route!=='profile'||!!collection||searchOpen||readerOpen} importantForAccessibility={route!=='profile'||!!collection||searchOpen||readerOpen?'no-hide-descendants':'auto'}>
         <Label accessibilityRole="header" style={[styles.pageTitle,{paddingTop:top+12}]}>Profilo</Label>
-        <View style={{paddingHorizontal:24}}>{([{id:'saved',title:'Articoli salvati',icon:'bookmark-outline',count:lib.cache.filter(a=>a.saved).length},{id:'history',title:'Cronologia',icon:'history',count:lib.history.length},{id:'settings',title:'Impostazioni',icon:'tune',count:undefined}] as const).map(row=><Pressable key={row.id} accessibilityRole="button" onPress={()=>setCollection(row.id)} style={[styles.menu,{borderColor:palette.line}]}><Icon name={row.icon}/><Label strong style={{flex:1,fontSize:19}}>{row.title}</Label>{row.count!==undefined&&<Label muted>{row.count}</Label>}<Icon name="chevron-right" size={20}/></Pressable>)}</View>
+        <ScrollView contentContainerStyle={{paddingBottom:bottom+110}}><View style={{paddingHorizontal:24}}><Button label="Modifica nome e foto" onPress={()=>setEditIdentity(v=>!v)}><Label>{onboarding.state?.profile.name||'Modifica nome e foto'}</Label></Button>{editIdentity&&<LocalProfileEditor binding={onboarding}/>}</View>
+        <View style={{paddingHorizontal:24}}>{([{id:'saved',title:'Articoli salvati',icon:'bookmark-outline',count:lib.cache.filter(a=>a.saved).length},{id:'history',title:'Cronologia',icon:'history',count:lib.history.length},{id:'settings',title:'Impostazioni',icon:'tune',count:undefined}] as const).map(row=><Pressable key={row.id} accessibilityRole="button" onPress={()=>setCollection(row.id)} style={[styles.menu,{borderColor:palette.line}]}><Icon name={row.icon}/><Label strong style={{flex:1,fontSize:19}}>{row.title}</Label>{row.count!==undefined&&<Label muted>{row.count}</Label>}<Icon name="chevron-right" size={20}/></Pressable>)}</View></ScrollView>
       </Animated.View>
       <Animated.View style={[StyleSheet.absoluteFill,paper,collectionStyle]} pointerEvents={collection&&!searchOpen&&!readerOpen?'auto':'none'} aria-hidden={!collection||searchOpen||readerOpen} accessibilityElementsHidden={!collection||searchOpen||readerOpen} importantForAccessibility={!collection||searchOpen||readerOpen?'no-hide-descendants':'auto'}>
         <View style={[styles.headingRow,{paddingTop:top}]}><Button label="Torna al profilo" onPress={()=>{Keyboard.dismiss();setCollection(null)}}><Icon name="arrow-left"/></Button><Label accessibilityRole="header" style={styles.collectionTitle}>{displayCollection==='saved'?'Salvati':displayCollection==='history'?'Cronologia':'Impostazioni'}</Label></View>
         {displayCollection==='settings'?<ScrollView key={displayCollection} showsVerticalScrollIndicator={false} contentContainerStyle={{paddingHorizontal:24,paddingBottom:bottom+110}} keyboardShouldPersistTaps="handled">
           <>
             <Label muted style={{fontSize:15,lineHeight:21,marginBottom:24}}>Il feed segue i tuoi interessi: le aperture contano poco, i salvataggi di più. Le preferenze restano sul telefono. Per te resta prima; le altre categorie seguono i tuoi interessi. Aggiorna con due tocchi rapidi su Home.</Label>
+            <Button label="Rivedi il tutorial" onPress={onboarding.replayTutorial}><Label>Rivedi il tutorial</Label></Button>
+            {__DEV__&&<View><Button label="Anteprima primo avvio" onPress={()=>onboarding.developmentPreview()}><Label>Anteprima primo avvio</Label></Button><Button label="Anteprima ripresa dagli interessi" onPress={()=>onboarding.developmentPreview('interests')}><Label>Anteprima ripresa dagli interessi</Label></Button></View>}
             <Label strong style={{fontSize:18,marginBottom:16}}>Dimensione del testo</Label><View style={{flexDirection:'row',gap:6}}>{[18,20,23].map((n,i)=><Button key={n} label={['Testo piccolo','Testo medio','Testo grande'][i]} onPress={()=>lib.updateSettings({size:n})} style={{flex:1,borderRadius:24,backgroundColor:lib.settings.size===n?palette.active:palette.surface}}><Label style={{color:palette.ink}}>{['Piccolo','Medio','Grande'][i]}</Label></Button>)}</View>
             <Label muted style={{fontSize:lib.settings.size,lineHeight:lib.settings.size*1.5,marginVertical:24}}>Una piccola scoperta può cambiare il modo in cui guardiamo il mondo.</Label>
             <Pressable accessibilityRole="switch" accessibilityState={{checked:lib.settings.dark}} onPress={()=>void changeTheme()} style={[styles.menu,{borderColor:palette.line}]}><Label strong style={{flex:1,fontSize:19}}>Tema scuro</Label><Icon name={lib.settings.dark?'toggle-switch':'toggle-switch-off-outline'} size={42}/></Pressable>

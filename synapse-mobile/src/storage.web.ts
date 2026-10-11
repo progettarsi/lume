@@ -8,11 +8,27 @@ import {parseAIMetrics,type AIMetrics} from './content/aiPreparation';
 import {categoryMigration} from './content/categoryMigration';
 import {parseRegistry,type CategoryRegistry} from './content/categoryRegistry';
 import {parseClassificationCache,type ClassificationCache} from './content/classification';
+import {recoverOnboarding,parseOnboarding,setInitialInterests,type OnboardingState} from './content/onboarding';
 let rows:Article[]=[];
 let visits:Article[]=[];
 const write=()=>localStorage.setItem('synapse-native-articles',JSON.stringify(rows));
 export async function initStorage(){try{rows=JSON.parse(localStorage.getItem('synapse-native-articles')||'[]');visits=JSON.parse(localStorage.getItem('synapse-native-visits')||'[]')}catch{rows=[];visits=[]}}
 export async function getArticles(){return [...rows].sort((a,b)=>b.fetchedAt-a.fetchedAt)}
+export async function initOnboarding(){
+ // Recover a multi-key preview write before reading the authoritative state.
+ const journal=localStorage.getItem('synapse-native-onboarding-journal');
+ if(journal){const before=JSON.parse(journal) as [string,string|null][];for(const [key,value] of before)value===null?localStorage.removeItem(key):localStorage.setItem(key,value);localStorage.removeItem('synapse-native-onboarding-journal')}
+ const state=recoverOnboarding(localStorage.getItem('synapse-native-onboarding'),localStorage.getItem('synapse-native-onboarding-backup'),{preferenceKeys:['settings','learning','category-registry','category-classifications','ai-metrics'].filter(k=>localStorage.getItem('synapse-native-'+k)!==null),visits:visits.length,saved:rows.filter(a=>a.saved).length,read:rows.filter(a=>a.readAt).length});
+ localStorage.setItem('synapse-native-onboarding',JSON.stringify(state));return state;
+}
+export async function putOnboarding(next:OnboardingState,applyInterests=false){
+ const keys=['synapse-native-onboarding','synapse-native-onboarding-backup','synapse-native-learning'],before=keys.map(k=>[k,localStorage.getItem(k)] as [string,string|null]);
+ const old=parseOnboarding(before[0][1]);if(old&&next.revision<=old.revision){if(JSON.stringify(old)===JSON.stringify(next))return applyInterests?getLearning():undefined;throw Error('Configurazione modificata: riapri l’app per riprendere.')}
+ parseOnboarding(JSON.stringify(next));const learning=applyInterests&&next.origin==='fresh'?setInitialInterests(await getLearning(),next.draft.interests):undefined;
+ localStorage.setItem('synapse-native-onboarding-journal',JSON.stringify(before));
+ try{if(learning)await putLearning(learning);if(before[0][1])localStorage.setItem(keys[1],before[0][1]);localStorage.setItem(keys[0],JSON.stringify(next));localStorage.removeItem('synapse-native-onboarding-journal');return learning}
+ catch(error){for(const [k,v] of before)v===null?localStorage.removeItem(k):localStorage.setItem(k,v);localStorage.removeItem('synapse-native-onboarding-journal');throw error}
+}
 export async function putArticles(articles:Article[]){for(const a of articles){const old=rows.find(r=>r.id===a.id);rows=rows.filter(r=>r.id!==a.id);rows.push(mergeArticle(old,a))}write()}
 export async function putSavedArticle(article:Article,saved:boolean,learning?:Learning){const before=[...rows],raw=localStorage.getItem('synapse-native-learning');try{if(!rows.some(a=>a.id===article.id))await putArticles([article]);await setSaved(article.id,saved);if(learning)await putLearning(learning)}catch(error){rows=before;write();if(raw!==null)localStorage.setItem('synapse-native-learning',raw);throw error}}
 export async function markRead(id:string){const stamp=Date.now();rows=rows.map(a=>a.id===id?{...a,readAt:stamp}:a);const a=rows.find(r=>r.id===id);if(a){visits=[{...a,paragraphs:[],preview:[],complete:false,simplified:undefined},...visits.filter(v=>v.id!==id)].slice(0,500);localStorage.setItem('synapse-native-visits',JSON.stringify(visits))}write()}
