@@ -13,4 +13,4 @@ export const ONBOARDING_MOTION={
  homeTransition:{duration:220,easing:[.22,1,.36,1]},
 } as const;
 export type MotionEnvironment={reduced:boolean;appActive:boolean;visible:boolean};
-export type OrganicShapeKind='identity-action'|'interests-action'|'preparation'|'flower'|'soft-boom'|'soft-burst'|'puffy';
+export type OrganicShapeKind='round-action'|'identity-action'|'interests-action'|'preparation'|'flower'|'soft-boom'|'soft-burst'|'puffy';

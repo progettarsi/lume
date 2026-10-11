@@ -51,7 +51,7 @@ export function Feed({articles,height,size,saved,onOpen,onSave,onIndex,onDirecti
     {!articles.length&&<View style={{padding:24}}><Label>La prossima scoperta sta arrivando.</Label></View>}
   </Animated.View></View></GestureDetector>;
 }
-const FeedCard=memo(function FeedCard({article,height,size,saved,hidden,hideMeta,reduced,onOpen,onSave}:{article:Article;height:number;size:number;saved:boolean;hidden:boolean;hideMeta:boolean;reduced:boolean;onOpen:OpenArticle;onSave:(a:Article,only?:boolean)=>void}){
+export const FeedCard=memo(function FeedCard({article,height,size,saved,hidden,hideMeta,reduced,onOpen,onSave,natural=false}:{article:Article;height:number;size:number;saved:boolean;hidden:boolean;hideMeta:boolean;reduced:boolean;onOpen:OpenArticle;onSave:(a:Article,only?:boolean)=>void;natural?:boolean}){
   const {palette}=useTheme(),node=useRef<View>(null),feedback=useSharedValue(0),press=useSharedValue(1);
   const [confirmed,setConfirmed]=useState(false);
   useEffect(()=>{if(!confirmed)return;const timer=setTimeout(()=>{feedback.value=reduced?0:withTiming(0,{duration:130});setConfirmed(false)},420);return()=>clearTimeout(timer)},[confirmed,reduced]);
@@ -59,14 +59,14 @@ const FeedCard=memo(function FeedCard({article,height,size,saved,hidden,hideMeta
   const style=useAnimatedStyle(()=>({transform:[{scale:press.value}]})),bookmark=useAnimatedStyle(()=>({transform:[{scale:feedback.value}],opacity:feedback.value>0?1:0}));
   const double=Gesture.Tap().numberOfTaps(2).maxDistance(7).maxDuration(200).maxDelay(280).runOnJS(true).onEnd((_,ok)=>{if(ok){onSave(article,true);setConfirmed(true);feedback.value=reduced?1:withSpring(1,spring);void Haptics.selectionAsync().catch(()=>{})}});
   const single=Gesture.Tap().maxDistance(7).maxDuration(250).runOnJS(true).onBegin(()=>{press.value=reduced?1:withTiming(.985,{duration:80})}).onEnd((_,ok)=>{press.value=reduced?1:withSpring(1,spring);if(ok)onOpen(article,node.current,'home')}).onFinalize(()=>press.value=reduced?1:withSpring(1,spring));
-  return <View style={{height,paddingHorizontal:24,paddingTop:4}}>
+  return <View style={{height:natural?undefined:height,minHeight:natural?height:undefined,paddingHorizontal:24,paddingTop:4}}>
     <View style={[styles.meta,{opacity:hideMeta?0:1}]}><View style={[styles.badge,{backgroundColor:palette.surface}]}><Icon name="tag-outline" size={17}/><Label style={{fontSize:14}}>{categoryLabel(article.category)}</Label></View><View style={{flex:1}}/><SaveButton gestureManaged saved={saved} onPress={()=>onSave(article)}/></View>
-    <GestureDetector gesture={Gesture.Exclusive(double,single)}><Animated.View ref={node} style={[styles.reading,style,{opacity:hidden?0:1}]} accessible accessibilityRole="button" accessibilityLabel={`Approfondisci: ${article.title}`} accessibilityActions={[{name:'activate',label:'Apri articolo'},{name:'longpress',label:'Salva articolo'}]} onAccessibilityAction={e=>e.nativeEvent.actionName==='longpress'?onSave(article,true):onOpen(article,node.current,'home')}>
+    <GestureDetector gesture={Gesture.Exclusive(double,single)}><Animated.View ref={node} style={[natural?styles.naturalReading:styles.reading,style,{opacity:hidden?0:1}]} accessible accessibilityRole="button" accessibilityLabel={`Approfondisci: ${article.title}`} accessibilityActions={[{name:'activate',label:'Apri articolo'},{name:'longpress',label:'Salva articolo'}]} onAccessibilityAction={e=>e.nativeEvent.actionName==='longpress'?onSave(article,true):onOpen(article,node.current,'home')}>
       <Label accessibilityRole="header" style={styles.title}>{article.title}</Label>{article.preview.map((p,i)=><Label key={i} style={{fontSize:size,lineHeight:size*1.47,marginBottom:22}}>{p}</Label>)}
       <Animated.View pointerEvents="none" style={[styles.confirmation,{backgroundColor:palette.active},bookmark]}><Icon name="bookmark" size={36}/></Animated.View>
     </Animated.View></GestureDetector>
   </View>;
 });
-const styles=StyleSheet.create({meta:{flexDirection:'row',gap:7,alignItems:'center',marginBottom:16},badge:{flexDirection:'row',gap:6,alignItems:'center',borderRadius:24,paddingVertical:8,paddingHorizontal:10},reading:{flex:1,overflow:'hidden'},title:{fontFamily:heading,fontSize:40,lineHeight:44,letterSpacing:-.8,marginBottom:22},fade:{position:'absolute',bottom:0,left:0,right:0,height:145},confirmation:{position:'absolute',top:'40%',left:'50%',marginLeft:-32,width:64,height:64,borderRadius:24,alignItems:'center',justifyContent:'center'}});
+const styles=StyleSheet.create({meta:{flexDirection:'row',gap:7,alignItems:'center',marginBottom:16},badge:{flexDirection:'row',gap:6,alignItems:'center',borderRadius:24,paddingVertical:8,paddingHorizontal:10},reading:{flex:1,overflow:'hidden'},naturalReading:{overflow:'visible'},title:{fontFamily:heading,fontSize:40,lineHeight:44,letterSpacing:-.8,marginBottom:22},fade:{position:'absolute',bottom:0,left:0,right:0,height:145},confirmation:{position:'absolute',top:'40%',left:'50%',marginLeft:-32,width:64,height:64,borderRadius:24,alignItems:'center',justifyContent:'center'}});
 
 

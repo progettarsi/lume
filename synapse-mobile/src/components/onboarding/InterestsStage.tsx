@@ -22,38 +22,6 @@ export function InterestsStage({ binding: b, motion }: InterestsStageProps) {
 
   return (
     <View style={styles.container}>
-      {/* Background organic shapes (flower, soft-boom) placed >=65% offscreen, opacity 0.22 */}
-      <View
-        pointerEvents="none"
-        accessible={false}
-        aria-hidden={true}
-        importantForAccessibility="no-hide-descendants"
-        style={styles.decorationsContainer}
-      >
-        <OrganicShapeSlot
-          kind="flower"
-          size={320}
-          motion={motion}
-          style={[
-            styles.decorTopLeft,
-            {
-              opacity: 0.22,
-            },
-          ]}
-        />
-        <OrganicShapeSlot
-          kind="soft-boom"
-          size={320}
-          motion={motion}
-          style={[
-            styles.decorBottomRight,
-            {
-              opacity: 0.22,
-            },
-          ]}
-        />
-      </View>
-
       {/* Subtitle */}
       <Label style={[styles.subtitle, { color: palette.muted }]}>
         Scegli gli argomenti che ti incuriosiscono. Puoi continuare anche senza selezionarne.
@@ -82,16 +50,6 @@ export function InterestsStage({ binding: b, motion }: InterestsStageProps) {
         Gli interessi sono selezionabili anche se il feed non ha ancora articoli per tutti.
       </Label>
 
-      {/* Footer Continua */}
-      <View style={styles.footerRow}>
-        <ActionButton
-          label="Continua"
-          onPress={() => b.navigate('next')}
-          disabled={b.busy}
-          shapeKind="interests-action"
-          motion={motion}
-        />
-      </View>
     </View>
   );
 }

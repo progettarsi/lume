@@ -18,7 +18,7 @@ export const photoPort:PhotoPort={
   const image=await context.renderAsync();let temporary:File|undefined,destination:File|undefined;
   try{const result=await image.saveAsync({format:SaveFormat.JPEG,compress:.8});temporary=new File(result.uri);
    if(!temporary.exists||temporary.size>1024*1024)throw Error('Non riesco a ridurre questa foto. Prova un’altra immagine.');
-   const dir=folder();dir.create({intermediates:true,idempotent:true});destination=new File(dir,`avatar-${Date.now()}-${Math.random().toString(36).slice(2)}.jpg`);temporary.copy(destination);
+   const dir=folder();dir.create({intermediates:true,idempotent:true});destination=new File(dir,`avatar-${Date.now()}-${Math.random().toString(36).slice(2)}.jpg`);await temporary.copy(destination);
    if(!destination.exists||!destination.size)throw Error('Foto non copiata sul telefono.');return destination.uri;
   }catch(error){if(destination?.exists)destination.delete();throw error}finally{if(temporary?.exists)temporary.delete();image.release();context.release()}
  },

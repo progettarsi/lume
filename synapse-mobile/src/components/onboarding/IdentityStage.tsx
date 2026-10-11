@@ -131,30 +131,16 @@ export function IdentityStage({
 
   const handleFocus = () => {
     setIsFocused(true);
-    if (showOverlay) {
-      // Rapid erase of overlay (16ms)
-      const fastErase = () => {
-        setPlaceholderOverlay((prev) => {
-          if (prev.length <= 1) {
-            setShowOverlay(false);
-            stopLoop();
-            return '';
-          }
-          loopTimerRef.current = setTimeout(
-            fastErase,
-            ONBOARDING_MOTION.placeholder.focusEraseInterval
-          );
-          return prev.slice(0, -1);
-        });
-      };
-      fastErase();
-    } else {
-      stopLoop();
-    }
+    stoppedRef.current=true;
+    if(loopTimerRef.current){clearTimeout(loopTimerRef.current);loopTimerRef.current=null}
+    let visible=Array.from(placeholderOverlay);
+    const erase=()=>{if(!visible.length){setShowOverlay(false);loopTimerRef.current=null;return}visible.pop();setPlaceholderOverlay(visible.join(''));loopTimerRef.current=setTimeout(erase,ONBOARDING_MOTION.placeholder.focusEraseInterval)};
+    if(showOverlay)erase();else stopLoop();
   };
 
   const handleBlur = () => {
     setIsFocused(false);
+    stopLoop();
     // On blur with empty field, keep static accessible placeholder, do not restart loop
     if (realValue.length === 0) {
       setShowOverlay(false);
@@ -163,15 +149,16 @@ export function IdentityStage({
 
   const handleChangeText = (text: string) => {
     stopLoop();
-    setRealValue(text);
-    b.updateDraft({ name: text });
+    const value=Array.from(text).slice(0,48).join('');
+    setRealValue(value);
+    b.updateDraft({ name: value });
   };
 
   // Responsive adaptions:
   // Under 700dp usable height or fontScale >= 1.3: avatar 112, gap 20
   const isCompact = usableHeight < 700 || fontScale >= 1.3;
   const avatarSize = isCompact ? 112 : 140;
-  const sectionGap = isCompact ? 20 : 32;
+  const sectionGap = isCompact ? 32 : 80;
 
   const isLight = palette.paper === '#f7f4ee';
 
@@ -194,11 +181,13 @@ export function IdentityStage({
           onPress={() => void b.pickPhoto()}
           style={[
             styles.avatarCircle,
+            {borderWidth:1},
             {
               width: avatarSize,
               height: avatarSize,
               borderRadius: avatarSize / 2,
               backgroundColor: palette.surface,
+              borderColor:palette.line,
             },
           ]}
         >
@@ -275,13 +264,15 @@ export function IdentityStage({
             onBlur={handleBlur}
             placeholder={showOverlay ? '' : 'Il tuo nome, facoltativo'}
             placeholderTextColor={palette.muted}
-            maxLength={48}
+            maxLength={96}
             autoCapitalize="words"
             style={[
               styles.input,
+              {borderWidth:1},
               {
                 backgroundColor: palette.surface,
                 color: palette.ink,
+                borderColor:palette.line,
               },
             ]}
           />
@@ -309,30 +300,6 @@ export function IdentityStage({
         </View>
       </View>
 
-      {/* Footer controls: Back in top-left is handled by Screen header,
-          Footer has Continua + Salta */}
-      <View style={styles.footerRow}>
-        <ActionButton
-          label="Continua"
-          onPress={() => b.navigate('next')}
-          disabled={b.busy}
-          shapeKind="identity-action"
-          motion={motion}
-        />
-        <Button
-          label="Salta nome e foto"
-          disabled={b.busy}
-          onPress={() => b.navigate('skip')}
-          style={[
-            styles.skipPill,
-            {
-              backgroundColor: palette.surface,
-            },
-          ]}
-        >
-          <Label style={{ color: palette.ink }}>Salta</Label>
-        </Button>
-      </View>
     </View>
   );
 }
@@ -344,7 +311,7 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: 17,
     lineHeight: 25,
-    marginBottom: 8,
+    marginBottom: 0,
   },
   avatarSection: {
     alignItems: 'center',

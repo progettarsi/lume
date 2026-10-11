@@ -225,3 +225,9 @@ In C, dopo B: riesaminare diff/contratti indipendentemente; prove su telefono di
 ## Questioni aperte e limiti
 
 Nessuna decisione di design lasciata ad Antigravity. Restano assegnati a C la normalizzazione/interpolazione organica, regia delle scene e gesto/hint tutorial. La fase A conserva endpoint statici ed è intenzionalmente una presentazione minima. I servizi remoti e il picker del telefono non sono stati verificati fisicamente in A; i test dei gateway non provano permessi/Activity/codec reali. Il limite di dieci riguarda anteprime, con fallback esplicito quando la rete non lo consente. La scelta legacy conservativa e il caso di perdita totale delle tracce sono i limiti di migrazione descritti sopra. Nessuna build/installazione0.1.13 o modifica Figma/prototipo è stata eseguita.
+
+## Chiusura C — 11 ottobre 2026
+
+La fase C implementa gli slot e corregge le discrepanze visive/funzionali. La nuova richiesta dell'utente rende il tutorial fedele ai componenti effettivi dell'app: il layout a card/rail/dock simulati della consegna B è sostituito dal riuso di FeedCard, CategoryRail, Reader, SaveButton, Dock, ArticleRow, ShuffleButton, menu e composer ricerca, con callback locali. SVG canonici al posto dei PNG, palette dinamica, titoli senza riga residua nel ritorno e tastiera/font ingranditi. La riserva del titolo segue la destinazione finale, con overlay uscente tagliato; la scala organica resta1–1.02. Sono adattamenti C motivati, che aggiornano i parametri indicati sopra. Le fondamenta non sono delegate né riscritte.
+
+214 test superati; errore della copia foto asincrona corretto e provato nativamente. Revisione, differenze dai riferimenti, animazioni, evidenze Android, versione/build e limiti correnti: [ONBOARDING-0.1.13-REVIEW.md](ONBOARDING-0.1.13-REVIEW.md). Il lavoro precedente in nove file resta separato dal commit C. Le dichiarazioni A relative a effetti/build non eseguiti si riferiscono esclusivamente alla chiusura A.

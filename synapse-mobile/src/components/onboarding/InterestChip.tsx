@@ -43,7 +43,8 @@ export function InterestChip({
   const progress = useSharedValue(selected ? 1 : 0);
 
   React.useEffect(() => {
-    if (motion.reduced) {
+    if (motion.reduced || !motion.appActive || !motion.visible) {
+      cancelAnimation(progress);
       progress.value = selected ? 1 : 0;
       return;
     }
@@ -52,7 +53,8 @@ export function InterestChip({
       duration: 120,
       easing: easeOut,
     });
-  }, [selected, motion.reduced]);
+    return()=>cancelAnimation(progress);
+  }, [selected, motion.reduced, motion.appActive, motion.visible]);
 
   const animatedChipStyle = useAnimatedStyle(() => {
     const backgroundColor = interpolateColor(
@@ -67,7 +69,7 @@ export function InterestChip({
 
   const animatedCheckStyle = useAnimatedStyle(() => ({
     opacity: progress.value,
-    width: progress.value > 0 ? undefined : 0,
+
   }));
 
   return (
@@ -104,6 +106,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   checkWrapper: {
+    width:22,
     overflow: 'hidden',
   },
   checkText: {

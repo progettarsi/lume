@@ -54,16 +54,19 @@ test('onboarding screen verifies stage requirements and accessibility props', ()
   // Check that real input doesn't use the fake names directly
   assert.ok(identityContent.includes('placeholderOverlay'));
   assert.ok(identityContent.includes('accessibilityLabel="Il tuo nome, facoltativo"'));
-  assert.ok(identityContent.includes('maxLength={48}'));
+  // Android counts UTF-16 units; the input handler/storage cap at 48 codepoints.
+  assert.ok(identityContent.includes('maxLength={96}'));
 
   const interestsContent = fs.readFileSync('src/components/onboarding/InterestsStage.tsx', 'utf8');
   assert.ok(interestsContent.includes('b.draft?.interests'));
-  assert.ok(interestsContent.includes('flower'));
-  assert.ok(interestsContent.includes('soft-boom'));
+  // Decorations are screen-level, behind title/body/footer and never scroll
+  // inside the chip list. Their motion still uses the same environment.
+  assert.ok(screenContent.includes("?'flower':'soft-burst'"));
+  assert.ok(screenContent.includes("?'soft-boom':'puffy'"));
 
   const prepContent = fs.readFileSync('src/components/onboarding/PreparationStage.tsx', 'utf8');
-  assert.ok(prepContent.includes('Sto preparando') && prepContent.includes('tutto per te…'));
+  assert.ok(screenContent.includes('Sto preparando') && screenContent.includes('tutto per te…'));
   assert.ok(prepContent.includes('kind="preparation"'));
-  assert.ok(prepContent.includes('compass.png'));
+  assert.ok(prepContent.includes('onboardingVector("compass"'));
   assert.ok(prepContent.includes('prep.message'));
 });

@@ -1,7 +1,8 @@
 import React from 'react';
 import { View, Image, StyleSheet, useWindowDimensions } from 'react-native';
 import { Label, Button, Icon, useTheme } from '../Atoms';
-import { heading } from '../../theme';
+import { SvgXml } from 'react-native-svg';
+import { onboardingVector } from '../../content/onboardingVectors';
 import { OrganicShapeSlot } from '../OnboardingMotionSlots';
 import { ActionButton } from './ActionButton';
 import type { MotionEnvironment } from '../../content/onboardingPresentation';
@@ -26,56 +27,6 @@ export function PreparationStage({ binding: b, motion }: PreparationStageProps) 
 
   return (
     <View style={styles.container}>
-      {/* Background decorations: soft-burst top-right, puffy bottom-left (opacity 0.22) */}
-      <View
-        pointerEvents="none"
-        accessible={false}
-        aria-hidden={true}
-        importantForAccessibility="no-hide-descendants"
-        style={styles.decorationsContainer}
-      >
-        <OrganicShapeSlot
-          kind="soft-burst"
-          size={320}
-          motion={motion}
-          style={[
-            styles.decorTopRight,
-            {
-              opacity: 0.22,
-            },
-          ]}
-        />
-        <OrganicShapeSlot
-          kind="puffy"
-          size={320}
-          motion={motion}
-          style={[
-            styles.decorBottomLeft,
-            {
-              opacity: 0.22,
-            },
-          ]}
-        />
-      </View>
-
-      {/* Exact title on two lines */}
-      <View style={styles.titleWrapper}>
-        <Label
-          accessibilityRole="header"
-          style={[
-            styles.title,
-            {
-              fontFamily: heading,
-              fontSize: titleSize,
-              lineHeight: titleLine,
-              color: palette.ink,
-            },
-          ]}
-        >
-          {'Sto preparando\ntutto per te…'}
-        </Label>
-      </View>
-
       {/* Central Group: cookie 132.211 and compass 52 */}
       <View style={styles.centralGroup}>
         <View
@@ -88,12 +39,7 @@ export function PreparationStage({ binding: b, motion }: PreparationStageProps) 
             motion={motion}
             style={styles.cookieShape}
           />
-          <Image
-            source={require('../../../assets/onboarding/compass.png')}
-            style={styles.compassImage}
-            resizeMode="contain"
-            accessible={false}
-          />
+          <SvgXml xml={onboardingVector("compass",palette.ink,palette.paper,palette.active)} width={52} height={52} accessible={false}/>
         </View>
 
         {/* Real status text from controller - never a synthetic timer */}
@@ -122,30 +68,6 @@ export function PreparationStage({ binding: b, motion }: PreparationStageProps) 
         )}
       </View>
 
-      {/* Footer controls: Back always accessible, ActionButton Entra (enabled only when canEnter) */}
-      <View style={styles.footerRow}>
-        <Button
-          label="Indietro"
-          disabled={b.busy}
-          onPress={() => b.navigate('back')}
-          style={[
-            styles.backButton,
-            {
-              backgroundColor: palette.surface,
-            },
-          ]}
-        >
-          <Icon name="arrow-left" size={24} />
-        </Button>
-
-        {/* Enter button is active only when ready or in fallback (partial/error/offline) */}
-        <ActionButton
-          label={canEnter ? 'Entra nella Home' : 'Caricamento in corso…'}
-          onPress={() => b.navigate('enter')}
-          disabled={b.busy || !canEnter}
-          motion={motion}
-        />
-      </View>
     </View>
   );
 }
@@ -178,6 +100,7 @@ const styles = StyleSheet.create({
     textAlign: 'left',
   },
   centralGroup: {
+    flex:1,
     alignItems: 'center',
     justifyContent: 'center',
     marginVertical: 40,

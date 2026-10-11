@@ -1,3 +1,5 @@
+import {ProfileMenuRow} from './src/components/ProfileMenuRow';
+import {SearchComposer} from './src/components/SearchComposer';
 import 'react-native-gesture-handler';
 import React,{useEffect,useLayoutEffect,useRef,useState,useMemo,useCallback} from 'react';
 import { ActivityIndicator,AppState,BackHandler,Keyboard,KeyboardAvoidingView,Platform,Pressable,ScrollView,StyleSheet,TextInput,View,useWindowDimensions } from 'react-native';
@@ -14,6 +16,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import {useMotionPreference} from './src/useMotionPreference';
 import { useLibrary } from './src/useLibrary';
 import {useOnboarding} from './src/useOnboarding';
+import {useOnboardingExit} from './src/components/OnboardingMotionSlots';
 import {OnboardingScreen,LocalProfileEditor} from './src/components/OnboardingScreen';
 import { CATEGORIES } from './src/content/categories';
 import { body,heading,light,dark,spring } from './src/theme';
@@ -51,6 +54,7 @@ function Synapse(){
   const width=Math.min(window.width,Platform.OS==='web'?440:window.width),height=viewportHeight,top=insets.top+16,bottom=Math.max(insets.bottom,16),reduced=useMotionPreference();
   const [appActive,setAppActive]=useState(AppState.currentState==='active');
   const onboarding=useOnboarding(lib,reduced,appActive);
+  const onboardingEntry=useOnboardingExit(onboarding.active,reduced,appActive);
   const [editIdentity,setEditIdentity]=useState(false);
   const [settledIndex,setSettledIndex]=useState(0);
   const [route,setRoute]=useState<'home'|'profile'>('home'),[collection,setCollection]=useState<Collection>(null),[searchOpen,setSearchOpen]=useState(false),[category,setCategory]=useState('all'),[index,setIndex]=useState(0);
@@ -196,7 +200,7 @@ function Synapse(){
     const now=Date.now();if(next==='home'&&route==='home'&&!readerOpen&&!collection&&!searchOpen){if(now-lastHomeTap.current<350){lastHomeTap.current=0;refreshHome();return}lastHomeTap.current=now}else lastHomeTap.current=0;
     if(next==='home'&&route!=='home')lib.settleCategories();Keyboard.dismiss();randomRequest.current?.abort();setRandomBusy(false);readerRequest.current?.abort();setSearchOpen(false);setCollection(null);setRoute(next)};
   const sourceRows=collectionReturn.rows,searchRows=searchReturn.rows;
-  return <ThemeContext.Provider value={themeContext}><View style={styles.webFrame}><Animated.View ref={frame} collapsable={false} onLayout={e=>setViewportHeight(e.nativeEvent.layout.height)} style={[{width,flex:1,overflow:Platform.OS==='web'?'clip' as 'hidden':'hidden'},paper]}>
+  return <ThemeContext.Provider value={themeContext}><View style={styles.webFrame}><Animated.View ref={frame} collapsable={false} onLayout={e=>setViewportHeight(e.nativeEvent.layout.height)} style={[{width,flex:1,overflow:Platform.OS==='web'?'clip' as 'hidden':'hidden'},paper,onboardingEntry]}>
     <StatusBar style={lib.settings.dark?'light':'dark'}/>
     {!lib.ready?<View style={styles.loader}><ActivityIndicator color={palette.accent}/><Label>{lib.error}</Label></View>:!onboarding.state||onboarding.bootError||onboarding.active?<OnboardingScreen key={onboarding.devSandbox?'sandbox':onboarding.replay?'replay':'onboarding'} binding={onboarding}/>:<>
       <Animated.View style={[StyleSheet.absoluteFill,paper,homeStyle]} pointerEvents={route==='home'&&!searchOpen&&!collection&&!readerOpen?'auto':'none'} aria-hidden={route!=='home'||searchOpen||!!collection||readerOpen} accessibilityElementsHidden={route!=='home'||searchOpen||!!collection||readerOpen} importantForAccessibility={route!=='home'||searchOpen||!!collection||readerOpen?'no-hide-descendants':'auto'}>
@@ -211,7 +215,7 @@ function Synapse(){
       <Animated.View style={[StyleSheet.absoluteFill,paper,profileStyle]} pointerEvents={route==='profile'&&!collection&&!searchOpen&&!readerOpen?'auto':'none'} aria-hidden={route!=='profile'||!!collection||searchOpen||readerOpen} accessibilityElementsHidden={route!=='profile'||!!collection||searchOpen||readerOpen} importantForAccessibility={route!=='profile'||!!collection||searchOpen||readerOpen?'no-hide-descendants':'auto'}>
         <Label accessibilityRole="header" style={[styles.pageTitle,{paddingTop:top+12}]}>Profilo</Label>
         <ScrollView contentContainerStyle={{paddingBottom:bottom+110}}><View style={{paddingHorizontal:24}}><Button label="Modifica nome e foto" onPress={()=>setEditIdentity(v=>!v)}><Label>{onboarding.state?.profile.name||'Modifica nome e foto'}</Label></Button>{editIdentity&&<LocalProfileEditor binding={onboarding}/>}</View>
-        <View style={{paddingHorizontal:24}}>{([{id:'saved',title:'Articoli salvati',icon:'bookmark-outline',count:lib.cache.filter(a=>a.saved).length},{id:'history',title:'Cronologia',icon:'history',count:lib.history.length},{id:'settings',title:'Impostazioni',icon:'tune',count:undefined}] as const).map(row=><Pressable key={row.id} accessibilityRole="button" onPress={()=>setCollection(row.id)} style={[styles.menu,{borderColor:palette.line}]}><Icon name={row.icon}/><Label strong style={{flex:1,fontSize:19}}>{row.title}</Label>{row.count!==undefined&&<Label muted>{row.count}</Label>}<Icon name="chevron-right" size={20}/></Pressable>)}</View></ScrollView>
+        <View style={{paddingHorizontal:24}}>{([{id:'saved',title:'Articoli salvati',icon:'bookmark-outline',count:lib.cache.filter(a=>a.saved).length},{id:'history',title:'Cronologia',icon:'history',count:lib.history.length},{id:'settings',title:'Impostazioni',icon:'tune',count:undefined}] as const).map(row=><ProfileMenuRow key={row.id} icon={row.icon} title={row.title} count={row.count} onPress={()=>setCollection(row.id)}/>)}</View></ScrollView>
       </Animated.View>
       <Animated.View style={[StyleSheet.absoluteFill,paper,collectionStyle]} pointerEvents={collection&&!searchOpen&&!readerOpen?'auto':'none'} aria-hidden={!collection||searchOpen||readerOpen} accessibilityElementsHidden={!collection||searchOpen||readerOpen} importantForAccessibility={!collection||searchOpen||readerOpen?'no-hide-descendants':'auto'}>
         <View style={[styles.headingRow,{paddingTop:top}]}><Button label="Torna al profilo" onPress={()=>{Keyboard.dismiss();setCollection(null)}}><Icon name="arrow-left"/></Button><Label accessibilityRole="header" style={styles.collectionTitle}>{displayCollection==='saved'?'Salvati':displayCollection==='history'?'Cronologia':'Impostazioni'}</Label></View>
@@ -240,7 +244,7 @@ function Synapse(){
         <Label accessibilityRole="header" style={[styles.pageTitle,{paddingTop:top+12}]}>Cerca</Label>
         <Animated.View style={[{flex:1},searchViewport]}><ArticleList articles={searchRows} onOpen={open} hiddenId={searchReturn.released?undefined:reader?.article.id} returnId={reader?.article.id} animate={searchReturn.animate} bottomPadding={24} footer={<>{searchBusy&&<StatusMessage compact status={{kind:'loading',message:'Cerco gli articoli pertinenti…'}}/>}{!!searchError&&<StatusMessage compact status={{kind:'network',message:searchError}}/>}{!searchBusy&&!searchError&&!!query.trim()&&!searchRows.length&&<Label muted style={{paddingVertical:24}}>Nessun articolo trovato.</Label>}</>}/></Animated.View>
         <Animated.View style={[{position:'absolute',left:0,right:0,backgroundColor:palette.paper,paddingHorizontal:24,paddingTop:12,flexDirection:'row',gap:10},composerLift]}>
-          <View style={[styles.composer,{backgroundColor:palette.surface}]}><Button label="Chiudi ricerca" onPress={dismissSearch}><Icon name="arrow-left" size={21}/></Button><TextInput ref={input} accessibilityLabel="Cerca nella raccolta" placeholder="Cerca un argomento" placeholderTextColor={palette.muted} value={query} onChangeText={setQuery} returnKeyType="search" autoCorrect={false} style={{flex:1,minWidth:0,fontFamily:body,fontSize:18,color:palette.ink,paddingVertical:12}}/>{!!query&&<Button label="Cancella ricerca" onPress={()=>setQuery('')}><Icon name="close" size={19}/></Button>}</View>
+          <SearchComposer inputRef={input} value={query} onChange={setQuery} onClose={dismissSearch}/>
           <View ref={shuffleNode} collapsable={false} style={{width:56,height:56,borderRadius:28,backgroundColor:palette.active}}><ShuffleButton busy={randomBusy} onPress={()=>void random()}/></View>
         </Animated.View>
       </Animated.View>

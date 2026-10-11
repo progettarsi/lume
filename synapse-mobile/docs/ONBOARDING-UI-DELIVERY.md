@@ -94,3 +94,7 @@ Da `useOnboarding.ts` / `content/onboarding.ts`:
 - **Esportazione bundle Android (Hermes)**:
   `expo export --platform android` completato con successo (`index-39f281e370cee66779ad3ec74514e716.hbc`, 17 asset).
 - **Modifiche preesistenti della fase A**: integralmente conservate nel working tree nei 9 file protetti.
+
+## Esito della revisione C — 11 ottobre 2026
+
+Consegna B riesaminata indipendentemente rispetto alle fondamenta, ai riferimenti e al workspace modificato. Slot C completati; corretti SVG/palette dell'intro, spaziatura identità/footer, raster con fondo opaco, tastiera e cancellazione dei timer placeholder. Su richiesta successiva dell'utente, il tutorial ora riusa i componenti reali dell'app, mantenendo gli esempi locali isolati. La versione consegnata da B rimane documentata sopra come evidenza storica; il risultato corrente e le verifiche sono in [ONBOARDING-0.1.13-REVIEW.md](ONBOARDING-0.1.13-REVIEW.md).

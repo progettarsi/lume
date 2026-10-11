@@ -1,5 +1,5 @@
-import React, { useEffect, useRef } from 'react';
-import { View, Image, StyleSheet, useWindowDimensions } from 'react-native';
+import React, { useEffect } from 'react';
+import { View, StyleSheet } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -7,9 +7,12 @@ import Animated, {
   withTiming,
   cancelAnimation,
   Easing,
+  useAnimatedReaction,runOnJS,
 } from 'react-native-reanimated';
 import { Label, useTheme } from '../Atoms';
-import { heading } from '../../theme';
+import { SvgXml } from 'react-native-svg';
+import { onboardingBrand } from '../../content/onboardingBrand';
+import {OnboardingTitleSlot} from '../OnboardingMotionSlots';
 import { ActionButton } from './ActionButton';
 import {
   ONBOARDING_MOTION,
@@ -27,7 +30,7 @@ const easeOut = Easing.bezier(0.22, 1, 0.36, 1);
 
 export function IntroStage({ motion, onNext, busy, bottomInset }: IntroStageProps) {
   const { palette } = useTheme();
-  const { width } = useWindowDimensions();
+  const brand = onboardingBrand(palette.ink, palette.paper);
 
   // Rays animation values
   const raysOpacity = useSharedValue(motion.reduced ? 1 : 0);
@@ -36,7 +39,6 @@ export function IntroStage({ motion, onNext, busy, bottomInset }: IntroStageProp
   // Continue button animation values
   const continueOpacity = useSharedValue(motion.reduced ? 1 : 0);
   const [continueInteractable, setContinueInteractable] = React.useState(motion.reduced);
-  const interactableTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (motion.reduced) {
@@ -51,7 +53,6 @@ export function IntroStage({ motion, onNext, busy, bottomInset }: IntroStageProp
       cancelAnimation(raysOpacity);
       cancelAnimation(raysScale);
       cancelAnimation(continueOpacity);
-      if (interactableTimer.current) clearTimeout(interactableTimer.current);
       return;
     }
 
@@ -77,17 +78,15 @@ export function IntroStage({ motion, onNext, busy, bottomInset }: IntroStageProp
       })
     );
 
-    interactableTimer.current = setTimeout(() => {
-      setContinueInteractable(true);
-    }, ONBOARDING_MOTION.introContinue.delay);
 
     return () => {
       cancelAnimation(raysOpacity);
       cancelAnimation(raysScale);
       cancelAnimation(continueOpacity);
-      if (interactableTimer.current) clearTimeout(interactableTimer.current);
     };
   }, [motion.reduced, motion.visible, motion.appActive]);
+
+  useAnimatedReaction(()=>continueOpacity.value>0,(value,previous)=>{if(value!==previous)runOnJS(setContinueInteractable)(value)});
 
   const animatedRaysStyle = useAnimatedStyle(() => ({
     opacity: raysOpacity.value,
@@ -98,60 +97,17 @@ export function IntroStage({ motion, onNext, busy, bottomInset }: IntroStageProp
     opacity: continueOpacity.value,
   }));
 
-  const isLight = palette.paper === '#f7f4ee';
-  const titleSize = width < 360 ? 32 : 36;
-  const titleLine = width < 360 ? 39 : 43;
-
   return (
     <View style={styles.container}>
       <View style={styles.centerGroup}>
-        {/* Bulb and Rays */}
-        <View style={styles.bulbContainer}>
-          {/* Badge for light theme contrast */}
-          <View
-            testID="onboarding-bulb-slot"
-            style={[
-              styles.bulbBadge,
-              { backgroundColor: isLight ? '#1d1b19' : 'transparent' },
-            ]}
-          >
-            {/* Rays placed with offset -27 relative to center */}
-            <Animated.View
-              pointerEvents="none"
-              accessible={false}
-              style={[styles.raysWrapper, animatedRaysStyle]}
-            >
-              <Image
-                source={require('../../../assets/onboarding/rays.png')}
-                style={styles.raysImage}
-                resizeMode="contain"
-                accessible={false}
-              />
-            </Animated.View>
-            <Image
-              source={require('../../../assets/onboarding/bulb.png')}
-              style={styles.bulbImage}
-              resizeMode="contain"
-              accessible={false}
-            />
-          </View>
+        <View testID="onboarding-bulb-slot" style={styles.bulbContainer} accessible={false}>
+          <Animated.View pointerEvents="none" accessible={false} style={[styles.raysWrapper, animatedRaysStyle]}>
+            <SvgXml xml={brand.rays} width={105} height={89.5} accessible={false}/>
+          </Animated.View>
+          <SvgXml xml={brand.bulb} width={48.8175} height={72.875} accessible={false}/>
         </View>
 
-        {/* Title */}
-        <Label
-          accessibilityRole="header"
-          style={[
-            styles.title,
-            {
-              fontFamily: heading,
-              fontSize: titleSize,
-              lineHeight: titleLine,
-              color: palette.ink,
-            },
-          ]}
-        >
-          Benvenuto!
-        </Label>
+        <View style={{marginBottom:12,width:'100%'}}><OnboardingTitleSlot title="Benvenuto!" titleKey="intro" motion={motion} center/></View>
 
         {/* Subtitle */}
         <Label
@@ -215,31 +171,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: 24,
   },
-  bulbBadge: {
-    width: 128,
-    height: 128,
-    borderRadius: 64,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   raysWrapper: {
     position: 'absolute',
     top: 64 - 44.75 - 27, // center y = 64, half rays height = 44.75, offset -27
     left: 64 - 52.5,
     width: 105,
     height: 89.5,
-  },
-  raysImage: {
-    width: 105,
-    height: 89.5,
-  },
-  bulbImage: {
-    width: 48.8,
-    height: 72.9,
-  },
-  title: {
-    textAlign: 'center',
-    marginBottom: 12,
   },
   subtitle: {
     textAlign: 'center',
