@@ -1,5 +1,5 @@
 const {test}=require('node:test'),assert=require('node:assert/strict');
-const {classifyLocal,ensureClassification,classificationKey,topicalMetadata,ClassificationPreparation,validateClassifications,parseClassificationCache,geminiClassifications}=require('../.test-build/classification');
+const {CLASSIFICATION_VERSION,classifyLocal,ensureClassification,classificationKey,topicalMetadata,ClassificationPreparation,validateClassifications,parseClassificationCache,geminiClassifications}=require('../.test-build/classification');
 const {CATEGORIES,categoryId}=require('../.test-build/categories');
 const {emptyRegistry,observeTopics,settleRegistry,categoryRailItems,parseRegistry}=require('../.test-build/categoryRegistry');
 const {emptyLearning,learn,reconcileCategories,identity}=require('../.test-build/recommendations');
@@ -46,7 +46,14 @@ test('administrative metadata and acquisition topic cannot become semantic evide
 test('fingerprints invalidate changed introduction, source metadata, revision and rules; bookmarks do not',()=>{
  const row=classifyLocal(a('Jazz',samples[1][1])),key=classificationKey(row);assert.equal(classificationKey({...row,saved:true}),key);assert.equal(ensureClassification(row),row);
  for(const patch of [{revision:2},{preview:['Un’altra introduzione completa.']},{sourceCategories:['Categoria:Musica']}])assert.notEqual(classificationKey({...row,...patch}),key);
- assert.equal(ensureClassification({...row,classification:{...row.classification,version:0}}).classification.version,1);
+ assert.equal(ensureClassification({...row,classification:{...row.classification,version:0}}).classification.version,CLASSIFICATION_VERSION);
+});
+test('rapper definition outweighs incidental cinema and invalidates old classification cache',()=>{
+ const row=a('Vegas Jones','Vegas Jones, pseudonimo di Matteo Privitera (Cinisello Balsamo, 28 settembre 1994), è un rapper italiano. Il nome Vegas è dovuto all\'ammirazione dell\'artista per le opere cinematografiche di Quentin Tarantino, in particolare per il personaggio di Vincent Vega, Jones è invece in onore di Nasir Jones, rapper americano.');
+ const oldKey='1:'+row.id+':0:old',cached={...row,category:'general',classification:{version:1,fingerprint:oldKey,provider:'local',confidence:0}};
+ assert.equal(ensureClassification(cached).category,'music');assert.notEqual(classificationKey(row),oldKey);
+ assert.equal(classifyLocal(a('Rapporto e rappresentazione','Questo rapporto descrive una rappresentazione di elementi senza un tema specifico.')).category,'general');
+ assert.deepEqual(parseClassificationCache(JSON.stringify({[oldKey]:{id:row.id,categoryId:'general',topics:[],confidence:.9}})),{});
 });
 const result=(rows,id='music')=>({articles:rows.map(a=>({id:a.id,categoryId:id,topics:['Musicale','music'],confidence:.9,proposal:null}))});
 test('structured classification validates identity, cardinality, confidence, known IDs and separate proposals',()=>{

@@ -1,4 +1,4 @@
-param([ValidateSet('Gemini','ReaderReturn','Dock')][string]$Harness='Gemini',[string]$Folder='final-verification-2026-10-09')
+param([ValidateSet('Gemini','ReaderReturn','Dock','Category')][string]$Harness='Gemini',[string]$Folder='final-verification-2026-10-09')
 $ErrorActionPreference='Stop'
 $taskRoot=(Resolve-Path (Join-Path $PSScriptRoot '../..')).Path
 $taskTools=Join-Path (Split-Path $taskRoot -Parent) '.mobile-tools'

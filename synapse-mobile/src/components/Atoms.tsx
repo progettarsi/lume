@@ -16,8 +16,8 @@ export function Icon({name,size=24,color}:{name:React.ComponentProps<typeof Mate
 }
 export function Button({children,onPress,label,style,disabled=false,reduced}:{children:React.ReactNode;onPress:()=>void;label:string;style?:StyleProp<ViewStyle>;disabled?:boolean;reduced?:boolean}){
   const systemReduced=useMotionPreference(),noMotion=reduced??systemReduced;
-  const scale=useSharedValue(1),animated=useAnimatedStyle(()=>({transform:[{scale:scale.value}]}));
-  React.useEffect(()=>{if(noMotion)scale.value=1},[noMotion]);
-  return <Animated.View style={[{justifyContent:'center'},style,animated]}><Pressable accessibilityRole="button" accessibilityLabel={label} disabled={disabled} onPressIn={()=>scale.value=noMotion?1:withSpring(.94,spring)} onPressOut={()=>scale.value=noMotion?1:withSpring(1,spring)} onPress={onPress} style={styles.hit}>{children}</Pressable></Animated.View>;
+  const opacity=useSharedValue(1),animated=useAnimatedStyle(()=>({opacity:opacity.value}));
+  React.useEffect(()=>{if(noMotion)opacity.value=1},[noMotion]);
+  return <Animated.View style={[{justifyContent:'center'},style,animated]}><Pressable accessibilityRole="button" accessibilityLabel={label} accessibilityState={{disabled}} disabled={disabled} onPressIn={()=>opacity.value=noMotion?1:withSpring(.7,spring)} onPressOut={()=>opacity.value=noMotion?1:withSpring(1,spring)} onPress={onPress} style={styles.hit}>{children}</Pressable></Animated.View>;
 }
 const styles=StyleSheet.create({hit:{minWidth:48,minHeight:48,alignItems:'center',justifyContent:'center'}});

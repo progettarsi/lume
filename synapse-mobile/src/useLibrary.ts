@@ -11,7 +11,7 @@ import {mergeArticle,serialWrites} from './content/articleState';
 import {feedTrimCount} from './content/paging';
 import {emptyLearning,learn,discoveryAnchor,seenArticle,identity,rankRecommendations,reconcileCategories,type Learning} from './content/recommendations';
 import {ClassificationPreparation,ensureClassification,classificationKey,type ClassificationGenerator} from './content/classification';
-import {emptyRegistry,observeTopics,settleRegistry,categoryRailItems} from './content/categoryRegistry';
+import {emptyRegistry,observeTopics,settleRegistry,restoreRegistry,categoryRailItems} from './content/categoryRegistry';
 import {ReserveScheduler,reserveArticles,reserveContext,appendDiscoveries,previewOnly,refreshFuture,REFILL_AHEAD,RESERVE_TARGET,PREVIEW_BYTES} from './content/reserve';
 import {articleBytes} from './content/cache';
 import {AIPreparation,DwellGate} from './content/aiPreparation';
@@ -34,8 +34,10 @@ export function useLibrary(options:{wikipedia?:Wikipedia;onlineOverride?:boolean
   const [registry,setRegistry]=useState(emptyRegistry),registryRef=useRef(registry),registryWrites=useRef(serialWrites());
   const railInteraction=useRef(false),classification=useRef<ClassificationPreparation|null>(null);
   if(!classification.current)classification.current=new ClassificationPreparation(options.categoryGenerator);
-  const commitRegistry=(next:typeof registry)=>{registryRef.current=next;setRegistry(next);void registryWrites.current(()=>storage.putCategoryRegistry(next)).catch(()=>setError('Categorie non salvate'))};
-  const settleCategories=()=>{if(railInteraction.current||active.current)return;commitRegistry(settleRegistry(registryRef.current,learningRef.current,cacheRef.current,availabilityRef.current,categoryRef.current,onlineRef.current))};
+  const settlementPending=useRef(false),restorationPending=useRef(false);
+  const commitRegistry=(next:typeof registry)=>{if(JSON.stringify(next)===JSON.stringify(registryRef.current))return;registryRef.current=next;setRegistry(next);void registryWrites.current(()=>storage.putCategoryRegistry(next)).catch(()=>setError('Categorie non salvate'))};
+  const settleCategories=()=>{if(railInteraction.current||active.current){settlementPending.current=true;return}settlementPending.current=false;restorationPending.current=false;commitRegistry(settleRegistry(registryRef.current,learningRef.current,cacheRef.current,availabilityRef.current,categoryRef.current,onlineRef.current))};
+  const restoreCategories=()=>{if(railInteraction.current||active.current){restorationPending.current=true;return}restorationPending.current=false;commitRegistry(restoreRegistry(registryRef.current,learningRef.current,cacheRef.current,availabilityRef.current,categoryRef.current,onlineRef.current))};
   const views=useRef(new LibraryViews()),consumedRevision=useRef(0);
   const wiki=useRef(options.wikipedia??new Wikipedia()),cacheRef=useRef(cache),feedsRef=useRef(feeds),readyRef=useRef(ready),onlineRef=useRef(online);
   const bookmarkWrites=useRef(new BookmarkWriter()),retryAfter=useRef(new Map<string,number>());
@@ -69,6 +71,8 @@ export function useLibrary(options:{wikipedia?:Wikipedia;onlineOverride?:boolean
     await profileWrites.current(async()=>{const next=reconcileCategories(learningRef.current,classified);await storage.putClassifiedArticles(classified,next);commitLearning(next);
       commitCache(old=>{const map=new Map(old.map(a=>[a.id,a]));for(const a of classified)map.set(a.id,mergeArticle(map.get(a.id),a));return [...map.values()]});});
     commitRegistry(observeTopics(registryRef.current,classified));classification.current!.enqueue(classified);
+    for(const id of new Set(classified.filter(a=>!a.readAt&&!seenArticle(a,learningRef.current)&&a.preview.length).map(a=>a.category)))if(availabilityRef.current[id]?.exhausted){stateFor(id,{phase:'ready'});retryAfter.current.delete(id);if(recheck.current===id)recheck.current=null}
+    restoreCategories();
     const removed=new Set(await storage.prune(protections(protect)));
     if(removed.size)commitCache(old=>old.filter(a=>!removed.has(a.id)||a.saved));
   };
@@ -92,7 +96,7 @@ export function useLibrary(options:{wikipedia?:Wikipedia;onlineOverride?:boolean
     // A global discovery can revive a depleted category immediately; do not
     // leave it disabled until the next app lifecycle event.
     for(const id of new Set(candidates.map(a=>a.category)))if(availabilityRef.current[id]?.exhausted){stateFor(id,{phase:'ready'});retryAfter.current.delete(id);if(recheck.current===id)recheck.current=null}
-    await remember(candidates);
+    await remember(candidates);restoreCategories();
     if(!signal.aborted)reorderFuture();
     return added;
   };
@@ -170,7 +174,7 @@ export function useLibrary(options:{wikipedia?:Wikipedia;onlineOverride?:boolean
   };
   const refresh=async(category:string)=>{if(availabilityRef.current[category]?.phase==='limit'&&!canRecheck(availabilityRef.current[category]))return;controller.current?.abort();requestId.current++;busy.current=false;setLoading(false);retryAfter.current.delete(category);stateFor(category,{phase:'idle'});reevaluate();await load(category,positionRef.current,true)};
   const enterCategory=(category:string)=>{scheduler.current?.interrupt();controller.current?.abort();requestId.current++;busy.current=false;categoryRef.current=category;positionRef.current=0;setLoading(false);commitFeeds(old=>({...old,[category]:!onlineRef.current&&category==='all'?offlineReserve(cacheRef.current,learningRef.current,served.current):appendDiscoveries((old[category]||[]).filter(a=>!seenArticle(a,learningRef.current)),cachedFeed(category),learningRef.current,served.current)}))};
-  const activate=(article?:Article)=>{active.current=article;if(article){ai.current?.claim(article.id);ai.current?.beginOpen();dwell.current?.clear();pendingAI.current=undefined;controller.current?.abort();scheduler.current?.interrupt()}else{ai.current?.cancel(true);scheduler.current?.wake()}};
+  const activate=(article?:Article)=>{active.current=article;if(article){ai.current?.claim(article.id);ai.current?.beginOpen();dwell.current?.clear();pendingAI.current=undefined;controller.current?.abort();scheduler.current?.interrupt()}else{ai.current?.cancel(true);settleCategories();scheduler.current?.wake()}};
   const interactive=async<T,>(work:()=>Promise<T>)=>{foreground.current++;scheduler.current?.interrupt();try{return await work()}finally{foreground.current--;scheduler.current?.wake()}};
   const full=async(article:Article,signal:AbortSignal)=>interactive(async()=>{
     const current=cacheRef.current.find(a=>a.id===article.id);const preparation=ai.current!.fullInFlight(current?.complete?{...current,preview:article.preview}:article);if(preparation){const cancel=()=>ai.current!.cancel(true);signal.addEventListener('abort',cancel,{once:true});try{return {...await preparation,preview:article.preview}}catch{if(signal.aborted)return article}finally{signal.removeEventListener('abort',cancel)}}
@@ -181,7 +185,7 @@ export function useLibrary(options:{wikipedia?:Wikipedia;onlineOverride?:boolean
     if(!job){job=wiki.current.full(article,signal).then(async complete=>{if(!signal.aborted)await remember([complete],new Set([article.id]));return complete}).finally(()=>{if(fullJobs.current.get(article.id)?.promise===job)fullJobs.current.delete(article.id)});fullJobs.current.set(article.id,{promise:job,signal})}
     try{const complete=await job;return signal.aborted?article:{...complete,preview:article.preview}}
     catch(error){return {...(current?mergeArticle(current,article):article),contentIssue:error instanceof Error?error.message:'Testo non disponibile',contentIssueKind:!onlineRef.current?'offline' as const:error instanceof WikiError?error.kind:'network' as const}}
-  });
+  }).then(full=>({...full,preview:article.preview,category:article.category,topics:article.topics,classification:article.classification}));
   const prepare=async(article:Article)=>{
     if(!onlineRef.current||(article.complete&&article.textVersion===3))return;
     // One visible preparation plus at most eight saved articles; previews first.
@@ -215,7 +219,8 @@ export function useLibrary(options:{wikipedia?:Wikipedia;onlineOverride?:boolean
   const categoryIds=registry.visible;
   const categoryRail=categoryRailItems(registry,categoryRef.current,online,availability);
   const completeCategoryReturn=()=>{if(categoryRef.current!=='all'||!onlineRef.current)return;const visible=registryRef.current.visible.filter(id=>!availabilityRef.current[id]?.exhausted&&availabilityRef.current[id]?.phase!=='exhausted');if(visible.length!==registryRef.current.visible.length)commitRegistry({...registryRef.current,visible})};
-  return {categoryRail,completeCategoryReturn,settleCategories,beginCategoryInteraction:()=>{railInteraction.current=true},endCategoryInteraction:()=>{railInteraction.current=false},beginAIOpen:()=>ai.current!.beginOpen(),abandonAIOpen:()=>ai.current!.abandonOpen(),configureAI,observeAI,revise,originalReady:()=>ai.current!.originalReady(),finishAIOpen:()=>ai.current!.finishOpen('fallback'),aiMetrics:()=>ai.current!.metrics,availability,feedCorrection,disabledCategory:(id:string)=>categoryDisabled(id,online,availability[id]),isRepeated:(a:Article)=>repeatedArticle(a,learningRef.current,served.current),homeReady:()=>{const local=onlineRef.current?cachedFeed('all'):offlineReserve(cacheRef.current,learningRef.current,served.current);return !!(feedsRef.current.all?.some(a=>a.preview.length&&!repeatedArticle(a,learningRef.current,served.current))||local.length)},ready,settings,updateSettings,cache,history,online,error,loading,load,getFeed,trimFeed,save,setSaved,isSaved:(id:string)=>!!cacheRef.current.find(a=>a.id===id)?.saved,read,search,random,remember,full,prepare,refresh,enterCategory,track,activate,setDiscovery,checkConnection,retryFeed,get reserveCount(){return pool().length},reserveTarget:RESERVE_TARGET,categoryIds};
+  const endCategoryInteraction=()=>{railInteraction.current=false;if(settlementPending.current)settleCategories();else if(restorationPending.current)restoreCategories()};
+  return {categoryRail,completeCategoryReturn,settleCategories,beginCategoryInteraction:()=>{railInteraction.current=true},endCategoryInteraction,beginAIOpen:()=>ai.current!.beginOpen(),abandonAIOpen:()=>ai.current!.abandonOpen(),configureAI,observeAI,revise,originalReady:()=>ai.current!.originalReady(),finishAIOpen:()=>ai.current!.finishOpen('fallback'),aiMetrics:()=>ai.current!.metrics,availability,feedCorrection,disabledCategory:(id:string)=>categoryDisabled(id,online,availability[id]),isRepeated:(a:Article)=>repeatedArticle(a,learningRef.current,served.current),homeReady:()=>{const local=onlineRef.current?cachedFeed('all'):offlineReserve(cacheRef.current,learningRef.current,served.current);return !!(feedsRef.current.all?.some(a=>a.preview.length&&!repeatedArticle(a,learningRef.current,served.current))||local.length)},ready,settings,updateSettings,cache,history,online,error,loading,load,getFeed,trimFeed,save,setSaved,isSaved:(id:string)=>!!cacheRef.current.find(a=>a.id===id)?.saved,read,search,random,remember,full,prepare,refresh,enterCategory,track,activate,setDiscovery,checkConnection,retryFeed,get reserveCount(){return pool().length},reserveTarget:RESERVE_TARGET,categoryIds};
 }
 
 

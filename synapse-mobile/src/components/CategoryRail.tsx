@@ -1,4 +1,4 @@
-import {useEffect,useRef,useState,useMemo} from 'react';
+import {useEffect,useLayoutEffect,useRef,useState,useMemo} from 'react';
 import {Pressable,View,ScrollView,StyleSheet} from 'react-native';
 import Animated,{
   useAnimatedStyle,
@@ -6,7 +6,8 @@ import Animated,{
   withSpring,
   LinearTransition,
   FadeIn,
-  FadeOut,
+  withTiming,
+  runOnJS,
 } from 'react-native-reanimated';
 import {LinearGradient} from 'expo-linear-gradient';
 import {CATEGORIES} from '../content/categories';
@@ -36,6 +37,10 @@ export function CategoryRail({
   const {palette}=useTheme(),systemReduced=useMotionPreference();
   const reduced=reducedOverride??systemReduced;
   const width=useRef(0),content=useRef(0),[atEnd,setAtEnd]=useState(false);
+  const offset=useRef(0),touch=useRef(false),drag=useRef(false),momentum=useRef(false),endFrame=useRef<number|undefined>(undefined);
+  const begin=()=>{if(endFrame.current!==undefined)cancelAnimationFrame(endFrame.current);onInteractionStart?.()};
+  const end=()=>{if(endFrame.current!==undefined)cancelAnimationFrame(endFrame.current);endFrame.current=requestAnimationFrame(()=>{endFrame.current=undefined;if(!touch.current&&!drag.current&&!momentum.current)onInteractionEnd?.()})};
+  useEffect(()=>()=>{if(endFrame.current!==undefined)cancelAnimationFrame(endFrame.current);onInteractionEnd?.()},[]);
 
   // Normalize rail items deriving solely from contracts; fallback for legacy harnesses
   const railItems = useMemo(()=>{
@@ -54,21 +59,31 @@ export function CategoryRail({
       }))
     ];
   },[items,order,selected,disabled]);
+  type Ghost={item:CategoryRailItem;rect:{x:number;y:number;width:number;height:number};token:number};
+  const previous=useRef(railItems),rects=useRef(new Map<string,Ghost['rect']>()),generation=useRef(0),[ghosts,setGhosts]=useState<Ghost[]>([]);
+  const membership=railItems.map(c=>c.id).join(':');
+  useLayoutEffect(()=>{
+    const live=new Set(railItems.map(c=>c.id));
+    const removed=reduced?[]:previous.current.filter(c=>!live.has(c.id)&&rects.current.has(c.id)).map(item=>({item,rect:rects.current.get(item.id)!,token:++generation.current}));
+    setGhosts(old=>[...(reduced?[]:old.filter(g=>!live.has(g.item.id))),...removed]);
+    previous.current=railItems;
+  },[membership,reduced]);
+  const exited=(token:number)=>setGhosts(old=>old.filter(g=>g.token!==token));
 
-  return <View style={styles.rail} onLayout={e=>{width.current=e.nativeEvent.layout.width;setAtEnd(content.current<=width.current)}}>
+  return <View style={styles.rail} onLayout={e=>{width.current=e.nativeEvent.layout.width;setAtEnd(offset.current+width.current>=content.current-4)}}>
     <ScrollView
       horizontal
       showsHorizontalScrollIndicator={false}
       contentContainerStyle={styles.scrollContent}
-      onTouchStart={onInteractionStart}
-      onTouchEnd={onInteractionEnd}
-      onTouchCancel={onInteractionEnd}
-      onScrollBeginDrag={onInteractionStart}
-      onMomentumScrollBegin={onInteractionStart}
-      onMomentumScrollEnd={onInteractionEnd}
-      onScrollEndDrag={onInteractionEnd}
-      onContentSizeChange={w=>{content.current=w;setAtEnd(w<=width.current)}}
-      onScroll={e=>setAtEnd(e.nativeEvent.contentOffset.x+width.current>=content.current-4)}
+      onTouchStart={()=>{touch.current=true;begin()}}
+      onTouchEnd={()=>{touch.current=false;end()}}
+      onTouchCancel={()=>{touch.current=false;end()}}
+      onScrollBeginDrag={()=>{drag.current=true;begin()}}
+      onMomentumScrollBegin={()=>{momentum.current=true;begin()}}
+      onMomentumScrollEnd={()=>{momentum.current=false;end()}}
+      onScrollEndDrag={()=>{drag.current=false;end()}}
+      onContentSizeChange={w=>{content.current=w;setAtEnd(offset.current+width.current>=w-4)}}
+      onScroll={e=>{offset.current=e.nativeEvent.contentOffset.x;setAtEnd(offset.current+width.current>=content.current-4)}}
       scrollEventThrottle={32}
     >
       {railItems.map(c=>(
@@ -82,8 +97,10 @@ export function CategoryRail({
           reduced={reduced}
           selected={selected===c.id}
           onPress={()=>onSelect(c.id)}
+          onLayout={rect=>rects.current.set(c.id,rect)}
         />
       ))}
+      {ghosts.map(g=><RailChip {...g.item} key={`exit:${g.item.id}:${g.token}`} selected={selected===g.item.id} disabled reduced={reduced} onPress={()=>{}} ghost={g.rect} onExited={()=>exited(g.token)}/>)}
     </ScrollView>
     {!atEnd&&<LinearGradient pointerEvents="none" colors={[palette.paper+'00',palette.paper]} start={{x:0,y:.5}} end={{x:1,y:.5}} style={styles.fade}/>}
   </View>;
@@ -98,6 +115,9 @@ function RailChip({
   onPress,
   reduced,
   disabled,
+  onLayout,
+  ghost,
+  onExited,
 }:{
   id:string;
   label:string;
@@ -107,16 +127,21 @@ function RailChip({
   onPress:()=>void;
   reduced:boolean;
   disabled:boolean;
+  onLayout?:(rect:{x:number;y:number;width:number;height:number})=>void;
+  ghost?:{x:number;y:number;width:number;height:number};
+  onExited?:()=>void;
 }){
-  const {palette}=useTheme(),fill=useSharedValue(selected?1:0),press=useSharedValue(1);
+  const {palette}=useTheme(),fill=useSharedValue(selected?1:0),press=useSharedValue(0),opacity=useSharedValue(1);
 
   useEffect(()=>{
     fill.value=reduced?(selected?1:0):withSpring(selected?1:0,{stiffness:550,damping:30,mass:.55});
-    if(reduced)press.value=1;
+    if(reduced)press.value=0;
   },[selected,reduced]);
+  useEffect(()=>{if(ghost)opacity.value=withTiming(0,{duration:reduced?0:140},done=>{if(done&&onExited)runOnJS(onExited)()})},[ghost,reduced]);
 
   const selection=useAnimatedStyle(()=>({transform:[{scale:fill.value}]}));
-  const pulse=useAnimatedStyle(()=>({transform:[{scale:press.value}]}));
+  const pulse=useAnimatedStyle(()=>({opacity:press.value}));
+  const fading=useAnimatedStyle(()=>({opacity:opacity.value}));
 
   // Reanimated layout transitions for entry, exit and neighbor coordination
   const layoutTransition = reduced
@@ -127,10 +152,6 @@ function RailChip({
     ? undefined
     : FadeIn.duration(180);
 
-  const exitingAnim = reduced
-    ? undefined
-    : FadeOut.duration(140);
-
   // Accessible hint and label
   const accessibilityLabel = reason==='offline'
     ? `${label}, non disponibile offline`
@@ -140,20 +161,25 @@ function RailChip({
 
   return (
     <Animated.View
-      layout={layoutTransition}
-      entering={enteringAnim}
-      exiting={exitingAnim}
-      style={pulse}
+      layout={ghost?undefined:layoutTransition}
+      entering={ghost?undefined:enteringAnim}
+      onLayout={ghost?undefined:e=>onLayout?.(e.nativeEvent.layout)}
+      pointerEvents={ghost?'none':'auto'}
+      accessibilityElementsHidden={!!ghost}
+      importantForAccessibility={ghost?'no-hide-descendants':'auto'}
+      style={[ghost?{position:'absolute',left:ghost.x,top:ghost.y,width:ghost.width,height:ghost.height}:undefined,fading]}
     >
       <Pressable
         accessibilityRole="button"
         disabled={disabled}
+        accessible={!ghost}
+        focusable={!ghost&&!disabled}
         accessibilityState={{selected,disabled}}
         accessibilityLabel={accessibilityLabel}
         accessibilityHint={disabled?`Categoria momentaneamente non selezionabile (${reason||'non disponibile'})`:undefined}
-        onPress={onPress}
-        onPressIn={()=>press.value=reduced?1:withSpring(.96,{stiffness:650,damping:32})}
-        onPressOut={()=>press.value=reduced?1:withSpring(1,{stiffness:650,damping:32})}
+        onPress={()=>{if(!ghost&&!disabled)onPress()}}
+        onPressIn={()=>press.value=reduced?0:withTiming(.16,{duration:80})}
+        onPressOut={()=>press.value=withTiming(0,{duration:100})}
         style={[
           styles.chip,
           {
@@ -166,6 +192,7 @@ function RailChip({
           pointerEvents="none"
           style={[StyleSheet.absoluteFill,{borderRadius:24,backgroundColor:palette.active},selection]}
         />
+        <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill,{borderRadius:24,backgroundColor:palette.accent},pulse]}/>
         <View style={styles.chipContent}>
           {!!icon&&(
             <Icon
@@ -174,7 +201,7 @@ function RailChip({
               color={disabled?palette.muted:selected?palette.ink:palette.ink}
             />
           )}
-          <Label strong style={{fontSize:15}}>{label}</Label>
+          <Label strong numberOfLines={1} style={{fontSize:15}}>{label}</Label>
         </View>
       </Pressable>
     </Animated.View>

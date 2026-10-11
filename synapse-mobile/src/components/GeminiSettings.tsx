@@ -1,6 +1,6 @@
 import React,{useState} from 'react';
-import {View,Pressable,TextInput,StyleSheet,Linking,Platform} from 'react-native';
-import Animated,{FadeIn,FadeOut,LinearTransition} from 'react-native-reanimated';
+import {View,Pressable,TextInput,StyleSheet,Linking} from 'react-native';
+import Animated,{FadeIn} from 'react-native-reanimated';
 import {Label,Icon,Button,useTheme} from './Atoms';
 import {useMotionPreference} from '../useMotionPreference';
 import type {GeminiConfigurationState} from '../content/geminiIntegration';
@@ -31,13 +31,15 @@ export function GeminiSettings({
 }){
   const {palette}=useTheme(),systemReduced=useMotionPreference(),noMotion=reducedOverride??systemReduced;
   const [guideOpen,setGuideOpen]=useState(false);
+  const [linkError,setLinkError]=useState('');
+  const openLink=(url:string)=>{setLinkError('');void Linking.openURL(url).catch(()=>setLinkError('Impossibile aprire il collegamento. Riprova con un browser disponibile.'))};
 
   const openAiStudio=()=>{
-    void Linking.openURL(AI_STUDIO_URL).catch(()=>{});
+    openLink(AI_STUDIO_URL);
   };
 
   const openDocs=()=>{
-    void Linking.openURL(DOCS_URL).catch(()=>{});
+    openLink(DOCS_URL);
   };
 
   // State badge presentation
@@ -58,6 +60,7 @@ export function GeminiSettings({
       <Label muted style={styles.sectionSubtitle}>
         Usa Gemini per rielaborare i testi e migliorare la classificazione degli articoli. Richiede una chiave API personale.
       </Label>
+      <Label muted style={styles.sectionSubtitle}>Facoltativa: usa un progetto con quota gratuita e fatturazione disattivata. Synapse non verifica il piano del progetto e non attiva la fatturazione. Senza chiave o quota resta disponibile Wikipedia.</Label>
     </View>
 
     {/* Status Card */}
@@ -94,6 +97,8 @@ export function GeminiSettings({
       <TextInput
         accessibilityLabel="Chiave API Gemini personale"
         secureTextEntry
+        autoComplete="off"
+        textContentType="none"
         autoCapitalize="none"
         autoCorrect={false}
         value={aiKey}
@@ -145,6 +150,7 @@ export function GeminiSettings({
 
       <Pressable
         accessibilityRole="button"
+        accessibilityState={{expanded:guideOpen}}
         accessibilityLabel="Mostra o nascondi la guida alla configurazione"
         onPress={()=>setGuideOpen(!guideOpen)}
         style={styles.linkItem}
@@ -155,13 +161,12 @@ export function GeminiSettings({
         </Label>
       </Pressable>
     </View>
+    {!!linkError&&<Label muted accessibilityLiveRegion="polite" style={styles.statusMessage}>{linkError}</Label>}
 
     {/* Guide Accordion */}
     {guideOpen&&(
       <Animated.View
         entering={noMotion?undefined:FadeIn.duration(200)}
-        exiting={noMotion?undefined:FadeOut.duration(150)}
-        layout={noMotion?undefined:LinearTransition.duration(200)}
         style={[styles.guideBox,{backgroundColor:palette.surface,borderColor:palette.line}]}
       >
         <Label strong style={{fontSize:16,marginBottom:8}}>Guida rapida alla configurazione</Label>
@@ -176,7 +181,7 @@ export function GeminiSettings({
         <View style={styles.guideStep}>
           <Label strong style={{color:palette.accent,fontSize:14}}>2.</Label>
           <Label style={styles.guideStepText}>
-            Seleziona o crea un progetto Google Cloud appropriato e tocca "Create API key" (Crea chiave API).
+            Seleziona o crea un progetto con piano gratuito e fatturazione disattivata, poi tocca "Create API key" (Crea chiave API). Non scegliere "Set up billing" e non collegare un account di fatturazione. Usa una chiave dedicata a Gemini.
           </Label>
         </View>
 
@@ -192,14 +197,14 @@ export function GeminiSettings({
             • <Label strong style={{fontSize:13}}>Facoltativa</Label>: l'integrazione è del tutto opzionale. L'applicazione funziona perfettamente anche senza Gemini consultando Wikipedia.
           </Label>
           <Label muted style={{fontSize:13,lineHeight:18}}>
-            • <Label strong style={{fontSize:13}}>Cosa viene inviato</Label>: vengono inviati a Google solo titolo, estratti e introduzioni degli articoli enciclopedici da rielaborare o classificare. Non vengono mai inviati salvataggi, cronologia di lettura o profilo personale.
+            • <Label strong style={{fontSize:13}}>Cosa viene inviato</Label>: titolo, testo e metadati enciclopedici necessari alla rielaborazione o classificazione. Salvataggi, cronologia di lettura e profilo personale restano sul telefono.
           </Label>
           <Label muted style={{fontSize:13,lineHeight:18}}>
             • <Label strong style={{fontSize:13}}>Limiti e disponibilità</Label>: dipendono esclusivamente dal servizio di Google. Un abbonamento consumer (come Google One) non garantisce quota API per gli sviluppatori, e la quota gratuita non è illimitata.
           </Label>
         </View>
 
-        <Pressable accessibilityRole="link" onPress={openDocs} style={{flexDirection:'row',alignItems:'center',gap:6,marginTop:8}}>
+        <Pressable accessibilityRole="link" accessibilityLabel="Documentazione ufficiale chiavi API Gemini" onPress={openDocs} style={{flexDirection:'row',alignItems:'center',gap:6,marginTop:8,minHeight:48}}>
           <Icon name="open-in-new" size={16} color={palette.muted}/>
           <Label muted style={{fontSize:13,textDecorationLine:'underline'}}>Documentazione ufficiale chiavi API Gemini</Label>
         </Pressable>
@@ -219,10 +224,10 @@ const styles=StyleSheet.create({
   menuRow:{minHeight:64,flexDirection:'row',alignItems:'center',justifyContent:'space-between',borderBottomWidth:StyleSheet.hairlineWidth,paddingVertical:8},
   inputSection:{gap:8,marginTop:8},
   input:{fontFamily:'SourceSans3_400Regular',fontSize:16,paddingHorizontal:16,paddingVertical:14,borderRadius:16,borderWidth:StyleSheet.hairlineWidth},
-  actionRow:{flexDirection:'row',gap:12,alignItems:'center',marginTop:4},
+  actionRow:{flexDirection:'row',flexWrap:'wrap',gap:12,alignItems:'center',marginTop:4},
   actionBtn:{paddingHorizontal:18,paddingVertical:10,borderRadius:20,minHeight:44,justifyContent:'center',alignItems:'center'},
   linksRow:{flexDirection:'row',flexWrap:'wrap',gap:16,paddingVertical:12,borderTopWidth:StyleSheet.hairlineWidth,borderBottomWidth:StyleSheet.hairlineWidth},
-  linkItem:{flexDirection:'row',alignItems:'center',gap:6,minHeight:36},
+  linkItem:{flexDirection:'row',alignItems:'center',gap:6,minHeight:48},
   guideBox:{padding:16,borderRadius:18,borderWidth:StyleSheet.hairlineWidth,gap:12,marginTop:4},
   guideStep:{flexDirection:'row',gap:8,alignItems:'flex-start'},
   guideStepText:{flex:1,fontSize:14,lineHeight:20},

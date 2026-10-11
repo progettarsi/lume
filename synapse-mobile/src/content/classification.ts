@@ -1,11 +1,11 @@
 import {CATEGORIES,categoryId,normalizeTopic} from './categories';
 import type {Article} from './types';
 
-export const CLASSIFICATION_VERSION=1;
+export const CLASSIFICATION_VERSION=2;
 // Introduction has priority over incidental mentions and administrative metadata.
 const rules:Record<string,RegExp>={
  politics:/\b(politic\w*|parlament\w*|elezion\w*|democrazi\w*|costituzion\w*|suffragio|presidente|ministro|senatore|governo|partito)\b/g,
- music:/\b(music\w*|cantant\w*|compositor\w*|sinfon\w*|jazz|pianist\w*|pianoforte|chitarr\w*|orchestra|album|canzon\w*)\b/g,
+ music:/\b(music\w*|cantant\w*|compositor\w*|sinfon\w*|jazz|rapper|rappers|rap|hip hop|pianist\w*|pianoforte|chitarr\w*|orchestra|album|canzon\w*)\b/g,
  cinema:/\b(cinem\w*|film|regista|attor\w*|attric\w*|sceneggi\w*|neorealismo|stop motion)\b/g,
  astronomy:/\b(astronom\w*|astrofisic\w*|galassi\w*|stella|stelle|stellare|pianet\w*|planetar\w*|sistema solare|corpi celesti|satellit\w*|buco nero|buchi neri|universo|cosmolog\w*|telescop\w*)\b/g,
  biology:/\b(biolog\w*|cellul\w*|genetic\w*|dna|evoluzione|organism\w*|fotosintesi|microbiolog\w*|batter\w*|proteine|enzim\w*)\b/g,

@@ -44,9 +44,11 @@ Gli strumenti portabili vengono cercati in `../.mobile-tools`: JDK 17, Android S
 ./scripts/build-android.ps1
 ```
 
-Il comando prepara il progetto Android, crea una chiave privata locale nella cartella ignorata `.credentials` e genera `releases/Synapse-0.1.3.apk`. Conservare `.credentials` privatamente: servirà per aggiornare la stessa installazione. Nessuna pubblicazione su store o servizio remoto è prevista.
+Il comando prepara il progetto Android, riusa la firma privata locale nella cartella ignorata `.credentials` (la crea solo alla prima build) e genera `releases/Synapse-<versione>.apk`. Conservare `.credentials` privatamente: servirà per aggiornare la stessa installazione. Nessuna pubblicazione su store o servizio remoto è prevista.
 
 ## Stato di verifica
+
+Category Patch, 11 ottobre 2026: **0.1.12/code15 installata sul Galaxy S23**, con firma e dati conservati. Revisione indipendente A→B, difetti corretti, TypeScript, 184 test, export Android e APK/checksum verificati. Provati feed/lettore, offline/riconnessione, categoria dinamica Musica, Gemini e combinazione scuro/testo ingrandito/movimento ridotto; simulazioni distinte dalle prove del prodotto. APK in `releases/Synapse-0.1.12.apk`, risultati e limiti in [CATEGORY-PATCH-0.1.12-REVIEW.md](docs/CATEGORY-PATCH-0.1.12-REVIEW.md). Nessuna pubblicazione o push. Le consegne seguenti sono evidenze storiche.
 
 Layout feed e scroll, 10 ottobre 2026: corretto lo spazio sopra la navbar, sfumatura statica, indicatore di rifornimento e salvataggio senza toast. 145 test, TypeScript, export e APK release verificati; **0.1.11/code14 installato sul Galaxy S23** e provato con flick/inversioni, doppio tap e offline senza spostamento della scheda. Dettagli e limiti in docs/FEED-LAYOUT-2026-10-10.md. Le build precedenti sotto sono evidenze storiche.
 

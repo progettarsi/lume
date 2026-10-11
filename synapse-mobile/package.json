@@ -2,7 +2,7 @@
   "name": "synapse-mobile",
   "description": "Synapse: scoperte quotidiane da Wikipedia, Android e iOS.",
   "license": "0BSD",
-  "version": "0.1.11",
+  "version": "0.1.12",
   "main": "index.ts",
   "dependencies": {
     "@expo-google-fonts/newsreader": "^0.4.1",
