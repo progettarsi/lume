@@ -1,9 +1,4 @@
 /** Worklets share these decisions with the isolated contract tests. */
-export function tutorialTarget(anchor:0|1,translation:number,height:number){
- 'worklet';
- const direction=translation<-height*.22?1:translation>height*.22?-1:0;
- return Math.max(0,Math.min(1,anchor+direction)) as 0|1;
-}
 export function organicPath(from:readonly number[],to:readonly number[],progress:number){
  'worklet';
  const count=from.length/2,p=Math.max(0,Math.min(1,progress));

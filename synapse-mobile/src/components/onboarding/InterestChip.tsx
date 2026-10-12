@@ -14,7 +14,8 @@ import Animated, {
   Easing,
   interpolateColor,
 } from 'react-native-reanimated';
-import { Label, useTheme } from '../Atoms';
+import { Icon, Label, useTheme } from '../Atoms';
+import {CATEGORIES} from '../../content/categories';
 import { body } from '../../theme';
 import type { MotionEnvironment } from '../../content/onboardingPresentation';
 
@@ -82,9 +83,7 @@ export function InterestChip({
         onPress={() => onToggle(id)}
         style={styles.pressable}
       >
-        <Animated.View style={[styles.checkWrapper, animatedCheckStyle]}>
-          <Text style={[styles.checkText, { color: palette.ink }]}>✓ </Text>
-        </Animated.View>
+        <Icon name={(CATEGORIES.find(c=>c.id===id)?.icon||'tag-outline') as any} size={20}/>
         <Text style={[styles.labelText, { color: palette.ink }]}>{label}</Text>
       </Pressable>
     </Animated.View>
@@ -102,7 +101,8 @@ const styles = StyleSheet.create({
     minHeight: 48,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
+    gap: 8,
+    paddingHorizontal: 18,
     paddingVertical: 12,
   },
   checkWrapper: {

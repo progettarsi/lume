@@ -10,10 +10,11 @@ import type { OnboardingBinding } from '../../useOnboarding';
 export interface InterestsStageProps {
   binding: b;
   motion: MotionEnvironment;
+  embedded?: boolean;
 }
 type b = OnboardingBinding;
 
-export function InterestsStage({ binding: b, motion }: InterestsStageProps) {
+export function InterestsStage({ binding: b, motion, embedded=false }: InterestsStageProps) {
   const { palette } = useTheme();
   const { width } = useWindowDimensions();
 
@@ -23,9 +24,9 @@ export function InterestsStage({ binding: b, motion }: InterestsStageProps) {
   return (
     <View style={styles.container}>
       {/* Subtitle */}
-      <Label style={[styles.subtitle, { color: palette.muted }]}>
+      {!embedded&&<Label style={[styles.subtitle, { color: palette.muted }]}>
         Scegli gli argomenti che ti incuriosiscono. Puoi continuare anche senza selezionarne.
-      </Label>
+      </Label>}
 
       {/* Chips Container */}
       <View style={styles.chipsContainer}>

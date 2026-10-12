@@ -1,4 +1,5 @@
 import {ProfileMenuRow} from './src/components/ProfileMenuRow';
+import {ProfileHeader} from './src/components/ProfileHeader';
 import {SearchComposer} from './src/components/SearchComposer';
 import 'react-native-gesture-handler';
 import React,{useEffect,useLayoutEffect,useRef,useState,useMemo,useCallback} from 'react';
@@ -12,11 +13,10 @@ import { Newsreader_500Medium } from '@expo-google-fonts/newsreader/500Medium';
 import { SourceSans3_400Regular } from '@expo-google-fonts/source-sans-3/400Regular';
 import { SourceSans3_600SemiBold } from '@expo-google-fonts/source-sans-3/600SemiBold';
 import { StatusBar } from 'expo-status-bar';
-import { LinearGradient } from 'expo-linear-gradient';
 import {useMotionPreference} from './src/useMotionPreference';
 import { useLibrary } from './src/useLibrary';
 import {useOnboarding} from './src/useOnboarding';
-import {useOnboardingExit} from './src/components/OnboardingMotionSlots';
+
 import {OnboardingScreen,LocalProfileEditor} from './src/components/OnboardingScreen';
 import { CATEGORIES } from './src/content/categories';
 import { body,heading,light,dark,spring } from './src/theme';
@@ -25,7 +25,7 @@ import {useKeyboardLift} from './src/useKeyboardLift';
 import {ArticleList} from './src/components/ArticleList';
 import {useReturnRows} from './src/components/useReturnRows';
 import { CategoryRail } from './src/components/CategoryRail';
-import { Feed,type OpenArticle,type Origin } from './src/components/Feed';
+import { Feed,FeedBottomFade,type OpenArticle,type Origin } from './src/components/Feed';
 import { Reader } from './src/components/Reader';
 import {Dock} from './src/components/Dock';
 import {FeedStatus,OfflineNotice} from './src/components/FeedStatus';
@@ -54,7 +54,7 @@ function Synapse(){
   const width=Math.min(window.width,Platform.OS==='web'?440:window.width),height=viewportHeight,top=insets.top+16,bottom=Math.max(insets.bottom,16),reduced=useMotionPreference();
   const [appActive,setAppActive]=useState(AppState.currentState==='active');
   const onboarding=useOnboarding(lib,reduced,appActive);
-  const onboardingEntry=useOnboardingExit(onboarding.active,reduced,appActive);
+
   const [editIdentity,setEditIdentity]=useState(false);
   const [settledIndex,setSettledIndex]=useState(0);
   const [route,setRoute]=useState<'home'|'profile'>('home'),[collection,setCollection]=useState<Collection>(null),[searchOpen,setSearchOpen]=useState(false),[category,setCategory]=useState('all'),[index,setIndex]=useState(0);
@@ -200,20 +200,21 @@ function Synapse(){
     const now=Date.now();if(next==='home'&&route==='home'&&!readerOpen&&!collection&&!searchOpen){if(now-lastHomeTap.current<350){lastHomeTap.current=0;refreshHome();return}lastHomeTap.current=now}else lastHomeTap.current=0;
     if(next==='home'&&route!=='home')lib.settleCategories();Keyboard.dismiss();randomRequest.current?.abort();setRandomBusy(false);readerRequest.current?.abort();setSearchOpen(false);setCollection(null);setRoute(next)};
   const sourceRows=collectionReturn.rows,searchRows=searchReturn.rows;
-  return <ThemeContext.Provider value={themeContext}><View style={styles.webFrame}><Animated.View ref={frame} collapsable={false} onLayout={e=>setViewportHeight(e.nativeEvent.layout.height)} style={[{width,flex:1,overflow:Platform.OS==='web'?'clip' as 'hidden':'hidden'},paper,onboardingEntry]}>
+  return <ThemeContext.Provider value={themeContext}><View style={styles.webFrame}><Animated.View ref={frame} collapsable={false} onLayout={e=>setViewportHeight(e.nativeEvent.layout.height)} style={[{width,flex:1,overflow:Platform.OS==='web'?'clip' as 'hidden':'hidden'},paper]}>
     <StatusBar style={lib.settings.dark?'light':'dark'}/>
-    {!lib.ready?<View style={styles.loader}><ActivityIndicator color={palette.accent}/><Label>{lib.error}</Label></View>:!onboarding.state||onboarding.bootError||onboarding.active?<OnboardingScreen key={onboarding.devSandbox?'sandbox':onboarding.replay?'replay':'onboarding'} binding={onboarding}/>:<>
+    {!lib.ready?<View style={styles.loader}><ActivityIndicator color={palette.accent}/><Label>{lib.error}</Label></View>:!onboarding.state||onboarding.bootError?<OnboardingScreen key={onboarding.devSandbox?'sandbox':onboarding.replay?'replay':'onboarding'} binding={onboarding}/>:<>
+      <View pointerEvents={onboarding.active?'none':'box-none'} accessibilityElementsHidden={onboarding.active} importantForAccessibility={onboarding.active?'no-hide-descendants':'auto'} style={{flex:1}}>
       <Animated.View style={[StyleSheet.absoluteFill,paper,homeStyle]} pointerEvents={route==='home'&&!searchOpen&&!collection&&!readerOpen?'auto':'none'} aria-hidden={route!=='home'||searchOpen||!!collection||readerOpen} accessibilityElementsHidden={route!=='home'||searchOpen||!!collection||readerOpen} importantForAccessibility={route!=='home'||searchOpen||!!collection||readerOpen?'no-hide-descendants':'auto'}>
         <View style={{paddingTop:top+8,paddingHorizontal:24,paddingBottom:10,zIndex:2}}><View style={{flexDirection:'row',alignItems:'center',justifyContent:'space-between'}}><Label style={styles.wordmark}>Synapse</Label></View><View pointerEvents="box-none" style={{height:48,overflow:'hidden'}}><Animated.View style={chipStyle}><CategoryRail selected={category} onSelect={selectCategory} items={lib.categoryRail} onInteractionStart={lib.beginCategoryInteraction} onInteractionEnd={lib.endCategoryInteraction}/></Animated.View></View></View>
         <Animated.View style={[{position:'absolute',top:top+84,left:0,right:0,height:homeHeight},feedStyle]}>{homeHeight>0&&!centralFeed&&<Feed key={`${category}:${feedRevision}`} articles={feedArticles} height={homeHeight} size={lib.settings.size} saved={saved} readerOpen={readerOpen} entry={categoryEntry.current} onOpen={open} onSave={save} covered={reader?.origin.kind==='home'?reader.article.id:undefined} position={index} onIndex={next=>setIndex(lib.trimFeed(category,next))} onEndReached={()=>{if(category!=='all'&&feedState.phase==='exhausted')setEndedCategory(category);else lib.retryFeed()}} onVisible={setSettledIndex} onDirection={hidden=>{chips.value=reduced?(hidden?1:0):withSpring(hidden?1:0,spring)}}/>}</Animated.View>
-        {!centralFeed&&<LinearGradient pointerEvents="none" colors={[palette.paper+'00',palette.paper,palette.paper]} locations={[0,90/fadeHeight,1]} style={{position:'absolute',bottom:0,left:0,right:0,height:fadeHeight}}/>}
+        {!centralFeed&&<FeedBottomFade height={fadeHeight}/>}
         {lib.loading&&<View pointerEvents="none" style={{position:'absolute',right:24,top:top+19}}><FeedSpinner/></View>}
         {centralFeed&&route==='home'&&!searchOpen&&!collection&&!reader&&<View style={{position:'absolute',top:top+142,bottom:bottom+110,left:0,right:0}}><FeedStatus key={category+':'+(!lib.online?'offline':feedState.phase==='exhausted'?'exhausted':'recover')} central state={feedState} online={lib.online} category={category} active={appActive} homeReady={lib.homeReady()} onHome={()=>selectCategory('all')} onRetry={lib.retryFeed}/></View>}
         {!centralFeed&&lib.online&&['service','limit','unavailable'].includes(feedState.phase)&&<View style={{position:'absolute',bottom:dockTop+6,left:24,right:24,backgroundColor:palette.paper}}><FeedStatus state={feedState} online category={category} active={appActive&&route==='home'} homeReady={lib.homeReady()} onHome={()=>selectCategory('all')} onRetry={lib.retryFeed}/></View>}
         {!lib.online&&<View pointerEvents="none" style={{position:'absolute',bottom:dockTop+6,left:8,right:8}}><OfflineNotice repeated={offlineRepeated}/></View>}
       </Animated.View>
       <Animated.View style={[StyleSheet.absoluteFill,paper,profileStyle]} pointerEvents={route==='profile'&&!collection&&!searchOpen&&!readerOpen?'auto':'none'} aria-hidden={route!=='profile'||!!collection||searchOpen||readerOpen} accessibilityElementsHidden={route!=='profile'||!!collection||searchOpen||readerOpen} importantForAccessibility={route!=='profile'||!!collection||searchOpen||readerOpen?'no-hide-descendants':'auto'}>
-        <Label accessibilityRole="header" style={[styles.pageTitle,{paddingTop:top+12}]}>Profilo</Label>
+        <ProfileHeader name={onboarding.state?.profile.name} photoUri={onboarding.state?.profile.photoUri} top={top+12}/>
         <ScrollView contentContainerStyle={{paddingBottom:bottom+110}}><View style={{paddingHorizontal:24}}><Button label="Modifica nome e foto" onPress={()=>setEditIdentity(v=>!v)}><Label>{onboarding.state?.profile.name||'Modifica nome e foto'}</Label></Button>{editIdentity&&<LocalProfileEditor binding={onboarding}/>}</View>
         <View style={{paddingHorizontal:24}}>{([{id:'saved',title:'Articoli salvati',icon:'bookmark-outline',count:lib.cache.filter(a=>a.saved).length},{id:'history',title:'Cronologia',icon:'history',count:lib.history.length},{id:'settings',title:'Impostazioni',icon:'tune',count:undefined}] as const).map(row=><ProfileMenuRow key={row.id} icon={row.icon} title={row.title} count={row.count} onPress={()=>setCollection(row.id)}/>)}</View></ScrollView>
       </Animated.View>
@@ -221,8 +222,6 @@ function Synapse(){
         <View style={[styles.headingRow,{paddingTop:top}]}><Button label="Torna al profilo" onPress={()=>{Keyboard.dismiss();setCollection(null)}}><Icon name="arrow-left"/></Button><Label accessibilityRole="header" style={styles.collectionTitle}>{displayCollection==='saved'?'Salvati':displayCollection==='history'?'Cronologia':'Impostazioni'}</Label></View>
         {displayCollection==='settings'?<ScrollView key={displayCollection} showsVerticalScrollIndicator={false} contentContainerStyle={{paddingHorizontal:24,paddingBottom:bottom+110}} keyboardShouldPersistTaps="handled">
           <>
-            <Label muted style={{fontSize:15,lineHeight:21,marginBottom:24}}>Il feed segue i tuoi interessi: le aperture contano poco, i salvataggi di più. Le preferenze restano sul telefono. Per te resta prima; le altre categorie seguono i tuoi interessi. Aggiorna con due tocchi rapidi su Home.</Label>
-            <Button label="Rivedi il tutorial" onPress={onboarding.replayTutorial}><Label>Rivedi il tutorial</Label></Button>
             {__DEV__&&<View><Button label="Anteprima primo avvio" onPress={()=>onboarding.developmentPreview()}><Label>Anteprima primo avvio</Label></Button><Button label="Anteprima ripresa dagli interessi" onPress={()=>onboarding.developmentPreview('interests')}><Label>Anteprima ripresa dagli interessi</Label></Button></View>}
             <Label strong style={{fontSize:18,marginBottom:16}}>Dimensione del testo</Label><View style={{flexDirection:'row',gap:6}}>{[18,20,23].map((n,i)=><Button key={n} label={['Testo piccolo','Testo medio','Testo grande'][i]} onPress={()=>lib.updateSettings({size:n})} style={{flex:1,borderRadius:24,backgroundColor:lib.settings.size===n?palette.active:palette.surface}}><Label style={{color:palette.ink}}>{['Piccolo','Medio','Grande'][i]}</Label></Button>)}</View>
             <Label muted style={{fontSize:lib.settings.size,lineHeight:lib.settings.size*1.5,marginVertical:24}}>Una piccola scoperta può cambiare il modo in cui guardiamo il mondo.</Label>
@@ -253,6 +252,8 @@ function Synapse(){
       {snapshot&&<ThemeReveal key={snapshot.id} snapshot={snapshot} width={width} height={height} topInset={insets.top} onReady={()=>{if(snapshotRef.current?.id===snapshot.id)lib.updateSettings({dark:snapshot.dark})}} onDone={()=>finishTheme(snapshot)}/>}
       {removedSaved.length>0&&collection==='saved'&&!reader&&<Animated.View entering={reduced?undefined:FadeInUp.duration(180)} exiting={reduced?undefined:FadeOutDown.duration(150)} accessibilityLiveRegion="polite" style={[styles.toast,{bottom:bottom+94,left:24,right:24,backgroundColor:palette.surface,borderRadius:18,flexDirection:'row',alignItems:'center',gap:8}]}><Label style={{flex:1,fontSize:14}}>{removedSaved.length===1?'Segnalibro rimosso':`${removedSaved.length} segnalibri rimossi`}</Label><Pressable accessibilityRole="button" accessibilityLabel="Annulla ultima rimozione dai salvati" onPress={undoSaved} style={{padding:12,minHeight:48}}><Label strong>Annulla</Label></Pressable><Pressable accessibilityRole="button" accessibilityLabel="Chiudi avviso di rimozione" onPress={()=>setRemovedSaved([])} style={{minWidth:48,minHeight:48,alignItems:'center',justifyContent:'center'}}><Icon name="close" size={18}/></Pressable></Animated.View>}
       {!!toast&&<DismissibleNotice key={toast} reduced={reduced} closeColor={palette.paper} onDismiss={()=>setToast(current=>current===toast?'':current)} style={[styles.toast,{bottom:bottom+174,backgroundColor:palette.ink}]}><Label style={{color:palette.paper,fontSize:15,paddingRight:42,minHeight:48,textAlignVertical:'center'}}>{toast}</Label></DismissibleNotice>}
+      </View>
+      {onboarding.active&&<View style={[StyleSheet.absoluteFill,{zIndex:200}]}><OnboardingScreen key={onboarding.devSandbox?'sandbox':onboarding.replay?'replay':'onboarding'} binding={onboarding}/></View>}
     </>}
   </Animated.View></View></ThemeContext.Provider>;
 }

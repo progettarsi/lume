@@ -11,7 +11,6 @@ export function useOnboarding(lib:ReturnType<typeof useLibrary>,reduced:boolean,
  const controller=sandbox.current??durable.current,state=controller?.state,photo=useRef(new LocalPhoto(photoPort));
  const [photoBusy,setPhotoBusy]=useState(false),[photoError,setPhotoError]=useState(''),[photoUri,setPhotoUri]=useState<string>();
  const demo=useRef(new TutorialDemo()),[demoRevision,updateDemo]=useReducer(n=>n+1,0);
- const completionAttempt=useRef<{controller:OnboardingController;revision:number}|null>(null);
  const photoTask=useRef(false);
  const replay=controller?.replayIndex!==null&&controller?.replayIndex!==undefined;
  const active=!!controller&&(!state?.completed||replay),stage:OnboardingStage|undefined=replay?'tutorial':state?.stage;
@@ -20,8 +19,9 @@ export function useOnboarding(lib:ReturnType<typeof useLibrary>,reduced:boolean,
  const references=()=>controller?[controller.state.profile.photoUri,controller.state.draft.photoUri].filter((s):s is string=>!!s):[];
  useEffect(()=>{let alive=true;const uri=active?state?.draft.photoUri:state?.profile.photoUri;void photo.current.usable(uri).then(value=>{if(alive){setPhotoUri(value);if(uri&&!value)setPhotoError('Questa foto non è più disponibile. Puoi sceglierne un’altra o rimuoverla.');else setPhotoError('')}});return()=>{alive=false}},[state?.draft.photoUri,state?.profile.photoUri,active]);
  useEffect(()=>{if(durable.current)void cleanPhotos([durable.current.state.draft.photoUri,durable.current.state.profile.photoUri].filter((s):s is string=>!!s)).catch(()=>{})},[!!durable.current]);
- useEffect(()=>{if(!lib.onboardingError&&stage==='preparation'&&preparation.kind==='ready'&&controller&&!controller.busy&&!photoBusy&&(completionAttempt.current?.controller!==controller||completionAttempt.current.revision!==revision)){completionAttempt.current={controller,revision};void controller.navigate('enter',revision).catch(()=>{})}},[lib.onboardingError,stage,preparation.kind,revision,controller?.busy,photoBusy,controller]);
  useEffect(()=>{if(sandbox.current?.state.completed){sandbox.current=null;render()}},[state?.completed,controller]);
+ // Readiness is exposed to the screen. It freezes the loader and completes the
+ // zoom before asking for durable entry, including reduced-motion handoffs.
  const navigate=(action:'next'|'back'|'skip'|'enter')=>{if(!controller||lib.onboardingError||photoTask.current||action==='enter'&&!preparation.canEnter)return;Keyboard.dismiss();void controller.navigate(action,revision).catch(()=>{})};
  const updateDraft=(patch:Parameters<OnboardingController['draft']>[0])=>{if(controller)void controller.draft(patch).catch(()=>{})};
  const identityTarget=()=>active&&!replay?'draft':'profile';
@@ -36,9 +36,10 @@ export function useOnboarding(lib:ReturnType<typeof useLibrary>,reduced:boolean,
  return {
   controller,state,draft:controller?.draftValue,stage,active,replay,revision,bootError:lib.onboardingError,retryBoot:lib.retryOnboarding,busy:!!controller?.busy||photoBusy,error:controller?.error||'',photoBusy,photoError,photoUri,
   reduced,appActive,motionEnabled:!reduced&&appActive&&active,
-  tutorialIndex:replay?controller!.replayIndex!:state?.tutorialIndex??0,demo:demo.current,demoRevision,
+  tutorialIndex:replay?controller!.replayIndex!:state?.tutorialIndex??0,tutorialNavigationRevision:controller?.tutorialNavigationRevision??0,demo:demo.current,demoRevision,
   interactDemo:(action:(d:TutorialDemo)=>void)=>{demo.current.interact();action(demo.current);updateDemo()},
-  options:interestOptions(lib.registry,new Set(lib.cache.filter(a=>a.preview.length).map(a=>a.category))),preparation,navigate,updateDraft,pickPhoto,
+  options:interestOptions(lib.registry,new Set(lib.cache.filter(a=>a.preview.length).map(a=>a.category))),preparation,navigate,presentPreparation:()=>{},updateDraft,pickPhoto,
+  seekTutorial:(index:number)=>{if(controller&&!lib.onboardingError)void controller.seekTutorial(index).catch(()=>{})},
   toggleInterest:(id:string)=>{if(!controller||controller.busy)return;const ids=controller.draftValue.interests;updateDraft({interests:ids.includes(id)?ids.filter(v=>v!==id):[...ids,id]})},
   reportPhotoUnavailable:()=>{setPhotoUri(undefined);setPhotoError('Questa foto non è più disponibile. Puoi sceglierne un’altra o rimuoverla.')},
   saveProfile:(name:string)=>controller?.profile({name}).catch(()=>{}),

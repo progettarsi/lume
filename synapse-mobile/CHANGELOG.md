@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.13 — integrazione del prototipo approvato, 12 ottobre 2026
+
+- Regia nativa della variante C: pulsante persistente alla stessa altezza, forme originali che ruotano, categorie con le icone della Home e ritorno dal tutorial alla personalizzazione.
+- Tutorial con tre articoli nel Feed reale, lettore condiviso che si richiude nella scheda, doppio tap locale, dock con etichette misurate e freccia centrata nella forma. Nessun articolo successivo visibile a riposo.
+- Titoli e nomi di esempio animati con geometria stabile; tastiera e testo ingrandito rispettati. Preparazione con almeno dieci anteprime, loader MD3 che si ferma e si espande verso la Home automaticamente.
+- Android versionCode 17, application ID e certificato conservati. Build 16 archiviata. Prove e limiti in [ONBOARDING-NATIVE-INTEGRATION-0.1.13.md](docs/ONBOARDING-NATIVE-INTEGRATION-0.1.13.md).
+
 ## 0.1.13 — 11 ottobre 2026
 
 - Onboarding locale con nome/foto facoltativi, interessi canonici e almeno dieci anteprime leggibili prima del normale ingresso online. Aggiornamenti legacy conservativi, ripresa e replay senza modificare il profilo.

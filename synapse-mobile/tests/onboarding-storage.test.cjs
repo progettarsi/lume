@@ -26,6 +26,20 @@ test('SQLite initializes before seed/migrations, resumes, completes atomically a
  }finally{f.dispose()}
  const legacy=fixture();try{const s=legacy.open();await s.putSettings({dark:true,size:23,categories:['music'],aiEnabled:true});await s.putSavedArticle(article,true);await s.markRead(article.id);const before=await s.getSettings();assert((await s.initOnboarding()).completed);assert.equal((await s.getArticles())[0].saved,true);assert.equal((await s.getHistory()).length,1);assert.deepEqual(await s.getSettings(),before)}finally{legacy.dispose()}
 });
+test('SQLite normalizes the retired version 1 position without losing profile, draft, backup or existing library data',async()=>{
+ const f=fixture();try{
+  const s=f.open();await s.initStorage();await s.putSettings({dark:true,size:23,categories:['science'],aiEnabled:false});await s.putSavedArticle(article,true);await s.markRead(article.id);
+  const learning={...require('../.test-build/recommendations').emptyLearning(),seen:['known'],opens:{known:1}};await s.putLearning(learning);
+  const previous={...initialOnboarding({preferenceKeys:[],visits:0,saved:0,read:0}),stage:'tutorial',tutorialIndex:3,revision:19,draft:{name:'Àlex 李',photoUri:'file:local/avatar.jpg',interests:['science','arts']},profile:{name:'Nome precedente',photoUri:'file:local/old-avatar.jpg'}};
+  const raw=JSON.stringify(previous),backup=JSON.stringify({...previous,revision:18,tutorialIndex:1});
+  const insert=f.db.prepare('INSERT OR REPLACE INTO preferences(key,value) VALUES(?,?)');insert.run('onboarding',raw);insert.run('onboarding-backup',backup);
+  const before={settings:await s.getSettings(),history:await s.getHistory(),articles:await s.getArticles(),learning:await s.getLearning()};
+  const resumed=await s.initOnboarding();assert.equal(resumed.tutorialIndex,2);assert.equal(resumed.revision,19);assert.equal(JSON.stringify(resumed.draft),JSON.stringify(previous.draft));assert.equal(JSON.stringify(resumed.profile),JSON.stringify(previous.profile));
+  assert.equal(f.db.prepare('SELECT value FROM preferences WHERE key=?').get('onboarding-recovery-source').value,raw);assert.equal(f.db.prepare('SELECT value FROM preferences WHERE key=?').get('onboarding-backup').value,backup);
+  assert.equal(JSON.stringify({settings:await s.getSettings(),history:await s.getHistory(),articles:await s.getArticles(),learning:await s.getLearning()}),JSON.stringify(before));
+  const c=new OnboardingController(resumed,(v,i)=>s.putOnboarding(v,i));await c.navigate('skip',c.navigationRevision);assert.equal((await s.initOnboarding()).stage,'preparation');assert.equal(c.state.revision,20);assert.deepEqual(c.state.draft.interests,resumed.draft.interests);
+ }finally{f.dispose()}
+});
 test('SQLite failure rolls onboarding, backup and learning back together; recovery keeps the damaged source',async()=>{
  const f=fixture();try{const s=f.open();await s.initStorage();const first=await s.initOnboarding(),next={...first,stage:'tutorial',revision:1,draft:{name:'Alex',interests:['music']}};
  f.fail('onboarding');await assert.rejects(s.putOnboarding(next,true));assert.equal((await s.initOnboarding()).stage,'intro');assert.equal((await s.getLearning()).initialInterests,undefined);assert.equal(f.db.prepare('SELECT value FROM preferences WHERE key=?').get('onboarding-backup'),undefined);

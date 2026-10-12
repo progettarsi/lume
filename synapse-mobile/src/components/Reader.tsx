@@ -17,7 +17,7 @@ import {readerContinuation,hasRevision} from '../content/text';
 import {categoryLabel} from '../content/categories';
 import {LinearGradient} from 'expo-linear-gradient';
 function phase(p:number,start:number,end:number){'worklet';const t=Math.max(0,Math.min(1,(p-start)/(end-start)));return t*t*(3-2*t)}
-export function Reader({article:incomingArticle,origin,open,width,height,top,bottom,size,saved,onClose,onReopen,onClosed,onSave,aiMessage:incomingMessage,aiBusy:incomingBusy,onRetryAI,onRetryArticle,notice:incomingNotice,onReturnNear,returnDetached=false,reducedOverride}:{article:Article;origin:Origin;open:boolean;width:number;height:number;top:number;bottom:number;size:number;saved:boolean;onClose:()=>void;onReopen:()=>void;onClosed:()=>void;onSave:()=>void;aiMessage?:string;aiBusy?:boolean;onRetryAI?:()=>void;onRetryArticle?:()=>void;notice?:ReaderStatus;onReturnNear?:()=>void;returnDetached?:boolean;reducedOverride?:boolean}){
+export function Reader({article:incomingArticle,origin,open,width,height,top,bottom,size,saved,onClose,onReopen,onClosed,onSave,aiMessage:incomingMessage,aiBusy:incomingBusy,onRetryAI,onRetryArticle,notice:incomingNotice,onReturnNear,returnDetached=false,reducedOverride,returnPaper,onDoubleTapSave}:{article:Article;origin:Origin;open:boolean;width:number;height:number;top:number;bottom:number;size:number;saved:boolean;onClose:()=>void;onReopen:()=>void;onClosed:()=>void;onSave:()=>void;aiMessage?:string;aiBusy?:boolean;onRetryAI?:()=>void;onRetryArticle?:()=>void;notice?:ReaderStatus;onReturnNear?:()=>void;returnDetached?:boolean;reducedOverride?:boolean;returnPaper?:string;onDoubleTapSave?:()=>void}){
   const {palette}=useTheme(),systemReduced=useReducedMotion(),[reduced,setReduced]=useState(systemReduced),progress=useSharedValue(0),scroll=useSharedValue(0),target=useRef(open);target.current=open;
   useEffect(()=>{
     let listening=true;
@@ -52,9 +52,12 @@ export function Reader({article:incomingArticle,origin,open,width,height,top,bot
     viewport.value=e.layoutMeasurement.height;
     if(active.value&&scroll.value>1)scrolled.value=true;
   });
-  const touch=useRef<{x:number;y:number;moved:boolean}|null>(null);
+  const touch=useRef<{x:number;y:number;moved:boolean}|null>(null),lastTap=useRef<{x:number;y:number;time:number}|null>(null);
   const completed=()=>{if(!target.current)onClosed()};
   const closing=useSharedValue(false),didComplete=useSharedValue(false),didHandOff=useSharedValue(false);
+  // The source preview retains its own native layout throughout the morph.
+  // A nested feed is narrower than the full reader; never rewrap it mid-flight.
+  const embedded=origin.kind==='home'&&!!returnPaper;
   const handOff=()=>{if(!target.current)onReturnNear?.()};
   useAnimatedReaction(()=>({closing:closing.value,y:returnScroll.value}),next=>{
     if(next.closing)scrollTo(scrollRef,0,next.y,false);
@@ -94,11 +97,12 @@ export function Reader({article:incomingArticle,origin,open,width,height,top,bot
   useEffect(()=>()=>{cancelAnimation(progress);cancelAnimation(returnScroll);cancelAnimation(exit)},[]);
   // Capture every geometry input. A restricted dependency list kept the IME-open
   // origin in this mapper after close supplied the IME-closed shuffle endpoint.
-  const surface=useAnimatedStyle(()=>{const p=Math.max(0,Math.min(1,progress.value));return {opacity:returnDetached?phase(p,0,.12):1,left:origin.x*(1-p),top:origin.y*(1-p),width:origin.width+(width-origin.width)*p,height:origin.height+(height-origin.height)*p,borderRadius:shuffle?28*(1-p):0,backgroundColor:shuffle?interpolateColor(Math.min(1,p/.14),[0,1],[palette.active,palette.paper]):palette.paper}});
+  const surface=useAnimatedStyle(()=>{const p=Math.max(0,Math.min(1,progress.value));return {opacity:returnDetached?phase(p,0,.12):1,left:origin.x*(1-p),top:origin.y*(1-p),width:origin.width+(width-origin.width)*p,height:origin.height+(height-origin.height)*p,borderRadius:shuffle?28*(1-p):0,backgroundColor:shuffle?interpolateColor(Math.min(1,p/.14),[0,1],[palette.active,palette.paper]):returnPaper?interpolateColor(p,[0,1],[returnPaper,palette.paper]):palette.paper}});
   const content=useAnimatedStyle(()=>{const p=Math.max(0,Math.min(1,progress.value));const scale=shuffle?origin.width/width+(1-origin.width/width)*p:1;
     // Centre the miniature around its title, rather than squeezing an unscaled page into a circle.
-    return {width,height,opacity:shuffle?phase(p,.12,.25):1,overflow:'hidden',transformOrigin:'top left',transform:[{translateX:shuffle?0:-origin.x*(1-p)},{translateY:shuffle?(origin.height/2-destinationY*scale)*(1-p):row?((origin.title?.y??48)-destinationY)*(1-p):-destinationY*(1-p)},{scale}]};
+    return {width,height,opacity:shuffle?phase(p,.12,.25):embedded?phase(p,.65,.9):1,overflow:'hidden',transformOrigin:'top left',transform:[{translateX:shuffle?0:-(embedded?24:origin.x)*(1-p)},{translateY:shuffle?(origin.height/2-destinationY*scale)*(1-p):row?((origin.title?.y??48)-destinationY)*(1-p):-destinationY*(1-p)},{scale}]};
   });
+  const sourcePreview=useAnimatedStyle(()=>{const p=Math.max(0,Math.min(1,progress.value));return {opacity:1-phase(p,.65,.9),transform:[{translateX:24*p},{translateY:destinationY*p}]}});
   const expanded=useAnimatedStyle(()=>({opacity:phase(progress.value,.55,.82),overflow:'hidden'}));
   const controls=useAnimatedStyle(()=>({height:phase(progress.value,.58,1)*(top+56),transform:[{translateY:-10*(1-progress.value)}],overflow:'hidden'}));
   const iconStyle=useAnimatedStyle(()=>{const p=Math.max(0,Math.min(1,progress.value));return {
@@ -113,14 +117,14 @@ export function Reader({article:incomingArticle,origin,open,width,height,top,bot
   const titleScroll=useAnimatedStyle(()=>({transform:[{translateY:-scroll.value*Math.max(0,Math.min(1,progress.value))}]}));
   const returnGradient=useAnimatedStyle(()=>({opacity:1-Math.max(0,Math.min(1,progress.value))}));
   const rowHandoff=useAnimatedStyle(()=>({opacity:returnDetached?phase(progress.value,0,.12):1}),[returnDetached]);
-  return <View style={[StyleSheet.absoluteFill,{zIndex:40}]} pointerEvents="box-none" accessibilityViewIsModal>
+  return <Animated.View style={[StyleSheet.absoluteFill,{zIndex:40}]} pointerEvents="box-none" accessibilityViewIsModal>
     <Animated.View style={[styles.surface,surface]}>
       <Animated.View style={content}>
         <Animated.ScrollView ref={scrollRef} scrollEnabled={open} onScroll={onScroll} onLayout={e=>{viewport.value=e.nativeEvent.layout.height}} scrollEventThrottle={16} showsVerticalScrollIndicator={false} style={{position:'absolute',top:destinationY-16,left:0,right:0,bottom:0}} contentContainerStyle={{paddingHorizontal:24,paddingTop:16,paddingBottom:bottom+40}}>
-          <View onTouchStart={e=>{touch.current={x:e.nativeEvent.pageX,y:e.nativeEvent.pageY,moved:false}}} onTouchMove={e=>{if(touch.current&&Math.hypot(e.nativeEvent.pageX-touch.current.x,e.nativeEvent.pageY-touch.current.y)>8)touch.current.moved=true}} onTouchCancel={()=>{touch.current=null}} onTouchEnd={()=>{const tap=touch.current;touch.current=null;if(!open&&tap&&!tap.moved)onReopen()}}>
+          <View onTouchStart={e=>{touch.current={x:e.nativeEvent.pageX,y:e.nativeEvent.pageY,moved:false}}} onTouchMove={e=>{if(touch.current&&Math.hypot(e.nativeEvent.pageX-touch.current.x,e.nativeEvent.pageY-touch.current.y)>8)touch.current.moved=true}} onTouchCancel={()=>{touch.current=null}} onTouchEnd={()=>{const tap=touch.current;touch.current=null;if(!tap||tap.moved){lastTap.current=null;return}if(!open){lastTap.current=null;onReopen();return}if(onDoubleTapSave){const now=Date.now(),previous=lastTap.current;if(previous&&now-previous.time<=280&&Math.hypot(tap.x-previous.x,tap.y-previous.y)<=24){lastTap.current=null;onDoubleTapSave()}else lastTap.current={x:tap.x,y:tap.y,time:now}}}}>
             <View>{row?<View accessible accessibilityRole="header" accessibilityLabel={article.title} style={{height:titleLayout?.height||88,marginBottom:22}}/>:<Label accessibilityRole="header" style={styles.title}>{article.title}</Label>}</View>
             <View onLayout={e=>{bodyY.value=e.nativeEvent.layout.y}}>
-              <View>{preview.map((p,i)=><Label key={`preview-${i}`} style={{fontSize:size,lineHeight:size*1.47,marginBottom:22}}>{p}</Label>)}</View>
+              <Animated.View style={row&&returnPaper?expanded:undefined}>{preview.map((p,i)=><Label key={`preview-${i}`} style={{fontSize:size,lineHeight:size*1.47,marginBottom:22}}>{p}</Label>)}</Animated.View>
               <Animated.View style={expanded} onLayout={e=>{expandedY.value=e.nativeEvent.layout.y}}>
                 <ReaderExit exit={exit} scroll={scroll} viewport={viewport} bodyY={bodyY} expandedY={expandedY} reduced={motionReduced} size={size}>
                 <ReaderReveal paragraphs={paragraphs} size={size} scroll={scroll} viewport={viewport} scrolled={scrolled} bodyY={bodyY} expandedY={expandedY} progress={progress} active={active} reduced={motionReduced}/>
@@ -133,8 +137,9 @@ export function Reader({article:incomingArticle,origin,open,width,height,top,bot
           </View>
         </Animated.ScrollView>
       </Animated.View>
+      {embedded&&<Animated.View pointerEvents="none" accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={[{position:'absolute',top:0,left:0,width:origin.width,height:origin.height,overflow:'hidden'},sourcePreview]}><Label style={styles.title}>{article.title}</Label>{preview.map((paragraph,index)=><Label key={index} style={{fontSize:size,lineHeight:size*1.47,marginBottom:22}}>{paragraph}</Label>)}</Animated.View>}
       {shuffle&&<Animated.View pointerEvents="none" style={[{position:'absolute',width:SHUFFLE_ICON_SIZE,height:SHUFFLE_ICON_SIZE},iconStyle]}><Animated.View style={[{alignItems:'center',justifyContent:'center'},iconClip]}><ShuffleIcon/></Animated.View></Animated.View>}
-      {origin.kind==='home'&&<Animated.View pointerEvents="none" style={[{position:'absolute',bottom:0,left:0,right:0,height:145},returnGradient]}><LinearGradient colors={[palette.paper+'00',palette.paper,palette.paper]} locations={[0,.68,1]} style={StyleSheet.absoluteFill}/></Animated.View>}
+      {origin.kind==='home'&&<Animated.View pointerEvents="none" style={[{position:'absolute',bottom:0,left:0,right:0,height:145},returnGradient]}><LinearGradient colors={[(returnPaper||palette.paper)+'00',returnPaper||palette.paper,returnPaper||palette.paper]} locations={[0,.68,1]} style={StyleSheet.absoluteFill}/></Animated.View>}
     </Animated.View>
     {row&&<>
       {!titleLayout&&<View style={{position:'absolute',left:origin.x,top:origin.y+(origin.title?.y??48),width:origin.width-30}}><TitleWords title={article.title} size={25}/></View>}
@@ -143,7 +148,7 @@ export function Reader({article:incomingArticle,origin,open,width,height,top,bot
       <Animated.View pointerEvents="none" style={[{position:'absolute',left:origin.x,top:origin.y+21},metaStyle,rowHandoff]}><Label muted numberOfLines={1} style={{fontSize:12,lineHeight:18}}>{categoryLabel(article.category)}</Label></Animated.View>
     </>}
     <Animated.View pointerEvents={open?'auto':'none'} style={[{position:'absolute',top:0,left:0,right:0,backgroundColor:palette.paper},controls]}><View style={[styles.header,{paddingTop:top}]}><Button label="Chiudi approfondimento" onPress={onClose}><Icon name="arrow-left"/></Button><Label muted style={{flex:1,fontSize:14}}>Articolo</Label><SaveButton saved={saved} onPress={onSave}/></View></Animated.View>
-  </View>;
+  </Animated.View>;
 }
 function MorphWord({text,source,destination,origin,destinationY,progress,onReopen}:{text:string;source:{x:number;y:number};destination:{x:number;y:number;width:number};origin:Origin;destinationY:number;progress:SharedValue<number>;onReopen:()=>void}){
   const animated=useAnimatedStyle(()=>{const p=Math.max(0,Math.min(1,progress.value)),q=phase(p,.22,.77),sourceX=origin.x+(origin.title?.x||0)+source.x,sourceY=origin.y+(origin.title?.y??48)+source.y;

@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
+  Keyboard,
   Text,
   TextInput,
   Image,
@@ -24,6 +25,7 @@ export interface IdentityStageProps {
   motion: MotionEnvironment;
   usableHeight: number;
   fontScale: number;
+  embedded?: boolean;
 }
 
 export function IdentityStage({
@@ -31,6 +33,7 @@ export function IdentityStage({
   motion,
   usableHeight,
   fontScale,
+  embedded=false,
 }: IdentityStageProps) {
   const { palette } = useTheme();
   const { width } = useWindowDimensions();
@@ -64,7 +67,14 @@ export function IdentityStage({
   };
 
   useEffect(() => {
-    if (motion.reduced || !motion.visible || !motion.appActive || realValue.length > 0) {
+    // Persistent scene layers are mounted before they become visible. Pause
+    // offscreen/background work without marking an untouched suggestion stopped.
+    if (!motion.visible || !motion.appActive) {
+      if (loopTimerRef.current) clearTimeout(loopTimerRef.current);
+      loopTimerRef.current = null;
+      return;
+    }
+    if (motion.reduced || realValue.length > 0) {
       stopLoop();
       return;
     }
@@ -139,6 +149,7 @@ export function IdentityStage({
   };
 
   const handleBlur = () => {
+    Keyboard.dismiss();
     setIsFocused(false);
     stopLoop();
     // On blur with empty field, keep static accessible placeholder, do not restart loop
@@ -157,7 +168,7 @@ export function IdentityStage({
   // Responsive adaptions:
   // Under 700dp usable height or fontScale >= 1.3: avatar 112, gap 20
   const isCompact = usableHeight < 700 || fontScale >= 1.3;
-  const avatarSize = isCompact ? 112 : 140;
+  const avatarSize = isFocused ? 96 : isCompact ? 112 : 140;
   const sectionGap = isCompact ? 32 : 80;
 
   const isLight = palette.paper === '#f7f4ee';
@@ -165,12 +176,12 @@ export function IdentityStage({
   return (
     <View style={styles.container}>
       {/* Subtitle */}
-      <Label style={[styles.subtitle, { color: palette.muted }]}>
+      {!embedded&&<Label style={[styles.subtitle, { color: palette.muted }]}>
         Come ti chiami? Nome e foto sono facoltativi e rimangono sul dispositivo.
-      </Label>
+      </Label>}
 
       {/* Avatar Section */}
-      <View style={[styles.avatarSection, { marginTop: sectionGap }]}>
+      <View style={[styles.avatarSection, { marginTop: embedded?0:sectionGap }]}>
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={
@@ -224,7 +235,7 @@ export function IdentityStage({
           )}
         </Pressable>
 
-        <Label style={[styles.photoLabel, { color: palette.muted }]}>
+        <Label style={[styles.photoLabel, { color: palette.muted,marginTop:isFocused?12:16 }]}>
           {b.photoUri ? 'Modifica foto profilo' : 'Aggiungi foto profilo'}
         </Label>
 
@@ -252,7 +263,7 @@ export function IdentityStage({
       </View>
 
       {/* Name Input */}
-      <View style={styles.inputSection}>
+      <View style={[styles.inputSection,{marginTop:isFocused?16:24}]}>
         <View style={styles.inputWrapper}>
           <TextInput
             accessibilityLabel="Il tuo nome, facoltativo"

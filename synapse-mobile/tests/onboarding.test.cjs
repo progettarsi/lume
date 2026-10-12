@@ -1,5 +1,5 @@
 const {test}=require('node:test'),assert=require('node:assert/strict');
-const {initialOnboarding,parseOnboarding,recoverOnboarding,OnboardingController,setInitialInterests,interestOptions,TutorialDemo,preparationState,usablePreviewCount}=require('../.test-build/onboarding');
+const {initialOnboarding,parseOnboarding,recoverOnboarding,OnboardingController,setInitialInterests,interestOptions,TutorialDemo,TUTORIAL,DEMO_CARDS,preparationState,usablePreviewCount}=require('../.test-build/onboarding');
 const {emptyLearning,parseLearning,learn,initialInterestWeight,explainRecommendation}=require('../.test-build/recommendations');
 const {emptyRegistry}=require('../.test-build/categoryRegistry'),{CATEGORIES}=require('../.test-build/categories');
 const {LocalPhoto}=require('../.test-build/onboardingPhoto');
@@ -13,14 +13,46 @@ test('fresh, conservative legacy evidence and interrupted configuration are inde
  assert.throws(()=>recoverOnboarding('{broken','{also broken',{}));
  assert.throws(()=>parseOnboarding(JSON.stringify({...paused,version:2})));
 });
-test('navigation skips only optional steps, returns through four tutorial moments and completes exactly once',async()=>{
+test('version 1 retired tutorial position resumes at Saves without changing identity, selections or revision',()=>{
+ const previous={...fresh(),stage:'tutorial',tutorialIndex:3,revision:37,draft:{name:'Àlex 李',photoUri:'file:local/photo.jpg',interests:['science','arts']},profile:{name:'Nome precedente',photoUri:'file:local/old.jpg'}};
+ const expected={...previous,tutorialIndex:2};
+ assert.equal(TUTORIAL.length,3);assert.equal(DEMO_CARDS.length,3);
+ assert.deepEqual(parseOnboarding(JSON.stringify(previous)),expected);
+ assert.deepEqual(recoverOnboarding('{broken',JSON.stringify(previous),{}),expected);
+ assert.deepEqual(new OnboardingController(previous,async()=>{}).state,expected);
+ assert.throws(()=>parseOnboarding(JSON.stringify({...previous,tutorialIndex:4})));
+});
+
+test('navigation returns directly to personalization, preserves choices and completes only via the preparation handoff',async()=>{
  const writes=[],c=new OnboardingController(fresh(),async(s,i)=>writes.push({s,i}));
  const go=action=>c.navigate(action,c.navigationRevision);
- await go('next');assert.equal(c.state.stage,'identity');await go('skip');assert.equal(c.state.stage,'interests');await go('next');assert.equal(c.state.stage,'tutorial');assert(writes.at(-1).i);
- await go('next');await go('next');await go('back');assert.equal(c.state.tutorialIndex,1);await go('next');await go('next');assert.equal(c.state.tutorialIndex,3);await go('next');assert.equal(c.state.stage,'preparation');await go('back');assert.equal(c.state.stage,'tutorial');assert.equal(c.state.tutorialIndex,3);await go('skip');await go('enter');assert(c.state.completed);const n=writes.length;await go('next');assert.equal(writes.length,n);
+ await go('next');assert.equal(c.state.stage,'identity');await c.draft({name:'Alex',interests:['science','arts']});await go('skip');assert.equal(c.state.stage,'interests');await go('next');assert.equal(c.state.stage,'tutorial');assert(writes.at(-1).i);
+ await go('next');await go('next');assert.equal(c.state.tutorialIndex,2);await go('back');assert.equal(c.state.stage,'interests');assert.deepEqual(c.state.draft,{name:'Alex',interests:['science','arts']});
+ await go('next');assert.equal(c.state.stage,'tutorial');assert.equal(c.state.tutorialIndex,2);await go('next');assert.equal(c.state.stage,'preparation');
+ const before=writes.length;for(const action of ['back','next','skip'])await go(action);assert.equal(writes.length,before);assert.equal(c.state.stage,'preparation');
+ await go('enter');assert(c.state.completed);assert.equal(c.state.profile.name,'Alex');const n=writes.length;await go('next');assert.equal(writes.length,n);
+});
+test('external tutorial forward skips directly to preparation from every article',async()=>{
+ for(let tutorialIndex=0;tutorialIndex<TUTORIAL.length;tutorialIndex++){
+  const c=new OnboardingController({...fresh(),stage:'tutorial',tutorialIndex},async()=>{});
+  await c.navigate('skip',c.navigationRevision);assert.equal(c.state.stage,'preparation');assert.equal(c.state.tutorialIndex,tutorialIndex);
+ }
 });
 test('duplicate presses carry a revision and cannot advance twice; no clock-based input lock',async()=>{
  let release;const c=new OnboardingController(fresh(),()=>new Promise(r=>release=r));const revision=c.navigationRevision,pending=c.navigate('next',revision);await Promise.resolve();await c.navigate('next',revision);assert(c.busy);release();await pending;assert.equal(c.state.stage,'identity');await c.navigate('next',revision);assert.equal(c.state.stage,'identity');
+});
+test('scroll positions coalesce behind an in-flight write, stay reversible and cannot reopen a completed tutorial',async()=>{
+ let release;const writes=[],c=new OnboardingController({...fresh(),stage:'tutorial'},async s=>{writes.push(s.tutorialIndex);if(writes.length===1)await new Promise(r=>release=r)});
+ const first=c.seekTutorial(1);await new Promise(setImmediate);assert.equal(c.busy,false);
+ const second=c.seekTutorial(2),last=c.seekTutorial(0);release();await Promise.all([first,second,last]);assert.deepEqual(writes,[1,0]);assert.equal(c.state.tutorialIndex,0);
+ await c.seekTutorial(2);await c.navigate('back',c.navigationRevision);assert.equal(c.state.stage,'interests');assert.equal(c.state.tutorialIndex,2);await c.seekTutorial(1);assert.equal(c.state.tutorialIndex,2);
+ await c.navigate('next',c.navigationRevision);const revision=c.tutorialNavigationRevision;await c.seekTutorial(1);assert.equal(c.tutorialNavigationRevision,revision);await c.seekTutorial(2);await c.navigate('skip',c.navigationRevision);await c.seekTutorial(1);assert.equal(c.state.stage,'preparation');assert.equal(c.state.tutorialIndex,2);
+ await c.seekTutorial(NaN);await c.seekTutorial(3);assert.equal(c.state.tutorialIndex,2);
+});
+test('replay seeking has no durable writes, and a failed scroll save can be retried at the same position',async()=>{
+ let fail=true,writes=0;const c=new OnboardingController({...fresh(),stage:'tutorial'},async()=>{writes++;if(fail)throw Error('disk')});
+ await assert.rejects(c.seekTutorial(2));assert.equal(c.state.tutorialIndex,0);assert(c.error);fail=false;await c.seekTutorial(2);assert.equal(c.state.tutorialIndex,2);assert.equal(c.error,'');
+ c.state={...c.state,stage:'home',completed:true};const before=JSON.stringify(c.state),n=writes;c.replay();await c.seekTutorial(2);await c.seekTutorial(1);assert.equal(c.replayIndex,1);assert.equal(writes,n);assert.equal(JSON.stringify(c.state),before);
 });
 test('failed draft and failed navigation retain intent; retry commits it before advancing',async()=>{
  let fail=true;const c=new OnboardingController({...fresh(),stage:'identity'},async()=>{if(fail)throw Error('disk')});
@@ -38,7 +70,9 @@ test('interest catalog has canonical IDs and no duplicate or availability-disabl
 });
 test('tutorial and replay have no persistence or learning side effects, including duplicate replay actions',async()=>{
  const state={...fresh(),completed:true,stage:'home',profile:{name:'Nome locale'},revision:9};let writes=0;const c=new OnboardingController(state,async()=>writes++),before=JSON.stringify(c.state),demo=new TutorialDemo();
- demo.swipe('next');demo.swipe('next');assert.equal(demo.card,1);assert(demo.hintStopped);demo.saved=true;demo.opened=true;demo.destination='profile';c.replay();const revision=c.navigationRevision;await c.navigate('next',revision);await c.navigate('next',revision);assert.equal(c.replayIndex,1);await c.navigate('skip',c.navigationRevision);assert.equal(c.replayIndex,null);assert.equal(JSON.stringify(c.state),before);assert.equal(writes,0);
+ demo.swipe('next');demo.swipe('next');demo.swipe('next');assert.equal(demo.card,2);assert(demo.hintStopped);demo.swipe('previous');assert.equal(demo.card,1);demo.saved=true;demo.opened=true;demo.destination='profile';c.replay();const revision=c.navigationRevision;await c.navigate('next',revision);await c.navigate('next',revision);assert.equal(c.replayIndex,1);await c.navigate('skip',c.navigationRevision);assert.equal(c.replayIndex,null);assert.equal(JSON.stringify(c.state),before);assert.equal(writes,0);
+ for(let index=0;index<TUTORIAL.length;index++){c.replay();await c.seekTutorial(index);await c.navigate('back',c.navigationRevision);assert.equal(c.replayIndex,null)}
+ c.replay();await c.seekTutorial(2);await c.navigate('next',c.navigationRevision);assert.equal(c.replayIndex,null);assert.equal(JSON.stringify(c.state),before);assert.equal(writes,0);
 });
 test('preparation requires ten unique usable previews, counts real work, and offers finite offline/error exits',()=>{
  const rows=Array.from({length:10},(_,i)=>a(i));assert.equal(usablePreviewCount([...rows,rows[0],{...a(100),source:rows[0].source},{...a(101),preview:[]}]),10);
