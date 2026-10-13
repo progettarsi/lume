@@ -31,7 +31,7 @@
       },
       "softwareKeyboardLayoutMode": "resize",
       "predictiveBackGestureEnabled": true,
-      "versionCode": 17
+      "versionCode": 18
     },
     "plugins": [
       "expo-sqlite",

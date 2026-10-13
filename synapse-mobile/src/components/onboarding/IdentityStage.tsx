@@ -4,16 +4,11 @@ import {
   Keyboard,
   Text,
   TextInput,
-  Image,
-  Pressable,
   StyleSheet,
-  useWindowDimensions,
-  type NativeSyntheticEvent,
-  type TextInputFocusEventData,
 } from 'react-native';
-import { Label, Button, Icon, useTheme } from '../Atoms';
-import { body, heading } from '../../theme';
-import { ActionButton } from './ActionButton';
+import { Label, useTheme } from '../Atoms';
+import { body } from '../../theme';
+import {ProfilePhotoSlot} from './ProfilePhotoSlot';
 import {
   ONBOARDING_MOTION,
   type MotionEnvironment,
@@ -36,7 +31,6 @@ export function IdentityStage({
   embedded=false,
 }: IdentityStageProps) {
   const { palette } = useTheme();
-  const { width } = useWindowDimensions();
 
   // Real input value matches binding.draft.name
   const initialValue = b.draft?.name ?? '';
@@ -171,7 +165,6 @@ export function IdentityStage({
   const avatarSize = isFocused ? 96 : isCompact ? 112 : 140;
   const sectionGap = isCompact ? 32 : 80;
 
-  const isLight = palette.paper === '#f7f4ee';
 
   return (
     <View style={styles.container}>
@@ -182,74 +175,7 @@ export function IdentityStage({
 
       {/* Avatar Section */}
       <View style={[styles.avatarSection, { marginTop: embedded?0:sectionGap }]}>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={
-            b.photoUri ? 'Sostituisci foto profilo' : 'Aggiungi foto profilo'
-          }
-          accessibilityHint="Apre il selettore immagini di sistema"
-          disabled={b.busy || b.devSandbox}
-          onPress={() => void b.pickPhoto()}
-          style={[
-            styles.avatarCircle,
-            {borderWidth:1},
-            {
-              width: avatarSize,
-              height: avatarSize,
-              borderRadius: avatarSize / 2,
-              backgroundColor: palette.surface,
-              borderColor:palette.line,
-            },
-          ]}
-        >
-          {b.photoUri ? (
-            <Image
-              source={{ uri: b.photoUri }}
-              onError={b.reportPhotoUnavailable}
-              style={{
-                width: avatarSize,
-                height: avatarSize,
-                borderRadius: avatarSize / 2,
-              }}
-            />
-          ) : (
-            <View
-              style={[
-                styles.plusBadge,
-                {
-                  backgroundColor: palette.active,
-                },
-              ]}
-            >
-              <Image
-                source={require('../../../assets/onboarding/photo-plus.png')}
-                style={{
-                  width: 18,
-                  height: 18,
-                  tintColor: palette.ink,
-                }}
-                resizeMode="contain"
-                accessible={false}
-              />
-            </View>
-          )}
-        </Pressable>
-
-        <Label style={[styles.photoLabel, { color: palette.muted,marginTop:isFocused?12:16 }]}>
-          {b.photoUri ? 'Modifica foto profilo' : 'Aggiungi foto profilo'}
-        </Label>
-
-        {/* Remove photo button if photo is present */}
-        {!!(b.active ? b.state?.draft.photoUri : b.state?.profile.photoUri) && (
-          <Button
-            disabled={b.busy}
-            label="Rimuovi foto"
-            onPress={() => void b.pickPhoto(true)}
-            style={{ marginTop: 4 }}
-          >
-            <Label style={{ color: palette.accent }}>Rimuovi foto</Label>
-          </Button>
-        )}
+        <ProfilePhotoSlot binding={b} motion={motion} size={avatarSize} compact={isFocused}/>
 
         {/* Non-blocking photo error message */}
         {!!b.photoError && (

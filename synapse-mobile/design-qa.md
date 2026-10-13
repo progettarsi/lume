@@ -18,3 +18,7 @@ Riferimento: prototipo approvato `synapse-onboarding-motion-prototype`, versione
 I confronti accostati sono stati aperti e ispezionati; i fotogrammi intermedi sono stati riesaminati dopo le correzioni di testo e zoom. Il confronto Salvati precedente contiene la forma decentrata che l’utente ha segnalato: la cattura finale e il dettaglio della freccia lo sostituiscono come evidenza.
 
 Esito del perimetro verificato: **passed**, nessun difetto P0/P1/P2 aperto. Differenze P3 deliberate: safe area Android, antialiasing nativo, ombra/elevazione native e scorrimento standard del catalogo degli interessi; il lettore mantiene la tipografia della vera Home. Questo esito non estende la verifica a font estremi, iOS/tablet o TalkBack non provati.
+
+## Rifinitura onboarding — 13 ottobre 2026
+
+Verifica del lotto foto/didascalia, maschera interessi, dock e titoli: superata su Galaxy S23, copia QA isolata, tema chiaro e font normale. Foto sintetica chiaramente riconoscibile visibile dopo selezione e riavvio; mask superiore/inferiore senza colore sullo sfondo; tre sezioni della dock conservate e selezionabili; titolo completo misurato prima della scrittura e sottotitolo riposizionato per una sola riga. Residuo del Salta dell’identità sopra la dock individuato e corretto; le catture finali sono refinement-*-verified.png. La tavola dock-motion-final-board precedente alla correzione è superata. Dettagli e limiti in docs/ONBOARDING-REFINEMENTS-0.1.13.md.

@@ -34,7 +34,7 @@ export function useOnboardingExit(active:boolean,reduced:boolean,appActive:boole
  useLayoutEffect(()=>{cancelAnimation(opacity);if(previous.current&&!active&&!reduced&&appActive){opacity.value=0;opacity.value=withTiming(1,{duration:220,easing:Easing.bezier(.22,1,.36,1)})}else opacity.value=1;previous.current=active;return()=>cancelAnimation(opacity)},[active,reduced,appActive]);
  return useAnimatedStyle(()=>({opacity:opacity.value}));
 }
-export function OnboardingTitleSlot({title,titleKey,motion,center=false,minLines=2,initialReveal=false,onTitleMeasure}:{title:string;titleKey:string;motion:MotionEnvironment;center?:boolean;minLines?:1|2;initialReveal?:boolean;onTitleMeasure?:(text:string,lines:TitleLine[])=>void}){
+export function OnboardingTitleSlot({title,titleKey,motion,center=false,minLines=2,initialReveal=false,onTitleMeasure,onPaintHeight}:{title:string;titleKey:string;motion:MotionEnvironment;center?:boolean;minLines?:1|2;initialReveal?:boolean;onTitleMeasure?:(text:string,lines:TitleLine[])=>void;onPaintHeight?:(height:number)=>void}){
  const {palette}=useTheme(),{width,fontScale}=useWindowDimensions(),shared=useContext(OnboardingTitleContext),own=useRef<TitleSession>({title,key:titleKey,animating:false}),session=shared??own;
  const first=useRef(true),previous=useRef({title:session.current.title,key:session.current.key}),node=useRef<View>(null);
  const [paint,setPaint]=useState({title,count:Array.from(title).length}),[pending,setPending]=useState<{from:string;to:string}|null>(null),[slotWidth,setSlotWidth]=useState(0);
@@ -68,9 +68,15 @@ export function OnboardingTitleSlot({title,titleKey,motion,center=false,minLines
  const measure=(text:string,lines:TitleLine[])=>{onTitleMeasure?.(text,lines);const key=layoutKey(text);setLayouts(old=>JSON.stringify(old[key])===JSON.stringify(lines)?old:{...old,[key]:lines})};
  const hidden={accessible:false,accessibilityElementsHidden:true,importantForAccessibility:'no-hide-descendants' as const};
  const painted=layouts[layoutKey(paint.title)];
- return <View ref={node} testID="onboarding-title-slot" accessible accessibilityRole="header" accessibilityLabel={title.replace(/\n/g,' ')} onLayout={e=>setSlotWidth(e.nativeEvent.layout.width)} style={{minHeight:center?line:line*minLines,overflow:'hidden'}}>
+ // Measure both complete titles before the timer can start. Height is keyed to
+ // a whole title, never to the changing character count; old lines stay intact
+ // during erase, then the subtitle follows the already-measured incoming title.
+ const heightOf=(lines:TitleLine[]|undefined)=>Math.max(line,...(lines??[]).map(row=>row.y+row.height));
+ useEffect(()=>{if(painted&&motion.visible)onPaintHeight?.(heightOf(painted))},[painted,paint.title,motion.visible,onPaintHeight]);
+ const reserved=Math.max(center?line:line*minLines,heightOf(toLines),pending?heightOf(fromLines):line);
+ return <View ref={node} testID="onboarding-title-slot" accessible accessibilityRole="header" accessibilityLabel={title.replace(/\n/g,' ')} onLayout={e=>setSlotWidth(e.nativeEvent.layout.width)} style={{minHeight:reserved,overflow:'hidden'}}>
   <Text {...hidden} key={layoutKey(title)} onTextLayout={e=>measure(title,e.nativeEvent.lines)} style={[font,{opacity:0}]}>{title}</Text>
   {pending&&pending.from!==title&&<Text {...hidden} key={layoutKey(pending.from)} onTextLayout={e=>measure(pending.from,e.nativeEvent.lines)} style={[font,{position:'absolute',left:0,right:0,top:0,opacity:0}]}>{pending.from}</Text>}
-  {painted?revealedTitleLines(paint.title,painted,paint.count).map((row,i)=><Text {...hidden} key={i} numberOfLines={1} style={[font,{textAlign:'left',position:'absolute',left:row.x,top:row.y,width:Math.max(1,row.width+2)}]}>{row.text}</Text>):<Text {...hidden} style={[font,{position:'absolute',left:0,right:0,top:0}]}>{paint.title}</Text>}
+  {painted&&revealedTitleLines(paint.title,painted,paint.count).map((row,i)=><Text {...hidden} key={i} numberOfLines={1} style={[font,{textAlign:'left',position:'absolute',left:row.x,top:row.y,width:Math.max(1,row.width+2)}]}>{row.text}</Text>)}
  </View>;
 }

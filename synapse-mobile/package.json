@@ -8,6 +8,7 @@
     "@expo-google-fonts/newsreader": "^0.4.1",
     "@expo-google-fonts/source-sans-3": "^0.4.2",
     "@expo/vector-icons": "^15.1.1",
+    "@react-native-masked-view/masked-view": "0.3.2",
     "@xmldom/xmldom": "0.8.15",
     "expo": "~57.0.27",
     "expo-file-system": "~57.0.7",
