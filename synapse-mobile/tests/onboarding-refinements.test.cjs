@@ -80,11 +80,11 @@ test('photo displays directly while only captions and removable controls animate
  const images=()=>nodes(f.tree).filter(n=>n.type==='Image'&&n.props.source.uri);
  b.photoUri='file:new';b.state.draft.photoUri=b.photoUri;f.update({binding:b});
  assert.equal(images().length,1);assert.equal(images()[0].props.source.uri,'file:new');
- assert.equal(images()[0].props.style.width,140);assert.equal(images()[0].props.onLoad,undefined);
+ assert.equal(nodes(f.tree).filter(n=>n.type==='Label'&&n.props.children==='Modifica foto profilo').length,1);assert.equal(nodes(f.tree).filter(n=>n.type==='Label'&&n.props.children==='Aggiungi foto profilo').length,0);assert.equal(images()[0].props.style.width,140);assert.equal(images()[0].props.onLoad,undefined);
  assert.equal(nodes(f.tree).filter(n=>n.type==='AnimatedImage').length,0);
  assert.equal(f.shared.length,2);assert.equal(f.shared[0].animation.target,1);assert.equal(f.shared[1].animation.target,1);
  f.settle(f.shared[0].animation);f.settle(f.shared[1].animation);
  b.photoUri='file:replacement';b.state.draft.photoUri=b.photoUri;f.update({binding:b});assert.equal(images()[0].props.source.uri,'file:replacement');
  b.photoUri=undefined;b.state.draft.photoUri=undefined;f.update({binding:b});assert.equal(images().length,0);
- f.update({motion:{...motion,reduced:true}});assert.equal(f.shared[0].value,0);assert.equal(f.shared[1].value,0);
+ f.update({motion:{...motion,reduced:true}});assert.equal(f.shared[0].value,1);assert.equal(f.shared[1].value,0);
 });
