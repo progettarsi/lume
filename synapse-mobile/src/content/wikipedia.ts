@@ -32,7 +32,7 @@ export class Wikipedia {
       const timeout=setTimeout(()=>controller.abort(),10000);
       let retrySeconds=0;
       try{
-      const response=await this.fetcher(url.toString(),{signal:controller.signal,headers:{'User-Agent':'Lume/0.2.0 (personal educational reader; app.synapse.reader) ReactNative/0.86','Api-User-Agent':'Lume/0.2.0 (personal educational reader; app.synapse.reader)','Accept':'application/json'}});
+      const response=await this.fetcher(url.toString(),{signal:controller.signal,headers:{'User-Agent':'Lume/0.2.1 (personal educational reader; app.synapse.reader) ReactNative/0.86','Api-User-Agent':'Lume/0.2.1 (personal educational reader; app.synapse.reader)','Accept':'application/json'}});
       if(response.status===429||response.status===503){
         const delay=retryDelay(response.headers.get('Retry-After'));
         if(response.status===429){this.serviceAfter=Date.now()+delay;this.serviceKind='limit';throw new WikiError('Il servizio richiede una pausa. Riprova tra poco.','limit',delay)}

@@ -48,9 +48,9 @@ import {GeminiSettings} from './src/components/GeminiSettings';
 type Collection='saved'|'history'|'settings'|null;
 export default function App(){
   const [fonts,error]=useFonts(fontAssets);
-  return <GestureHandlerRootView style={{flex:1}}><SafeAreaProvider>{fonts||error?<Synapse/>:<View style={styles.loader}><ActivityIndicator color={light.accent}/></View>}</SafeAreaProvider></GestureHandlerRootView>;
+  return <GestureHandlerRootView style={{flex:1}}><SafeAreaProvider><Synapse fontsReady={!!(fonts||error)}/></SafeAreaProvider></GestureHandlerRootView>;
 }
-function Synapse(){
+function Synapse({fontsReady}:{fontsReady:boolean}){
   const lib=useLibrary(),insets=useSafeAreaInsets(),window=useWindowDimensions(),frame=useRef<View>(null),input=useRef<TextInput>(null),shuffleNode=useRef<View>(null);
   const [viewportHeight,setViewportHeight]=useState(window.height);
   const keyboardLift=useKeyboardLift();
@@ -206,14 +206,14 @@ function Synapse(){
   };
   useEffect(()=>()=>{themeRequest.current++;if(snapshotRef.current)releaseCapture(snapshotRef.current.uri)},[]);
   const dismissSearch=()=>{Keyboard.dismiss();randomRequest.current?.abort();setRandomBusy(false);setSearchOpen(false)};
-  const refreshHome=()=>{lib.settleCategories();setEndedCategory('');chips.value=reduced?0:withSpring(0,spring);void lib.refresh(category)};
+  const refreshHome=()=>{lib.settleCategories();setEndedCategory('');setIndex(0);previousIndex.current=0;setFeedRevision(n=>n+1);chips.value=reduced?0:withSpring(0,spring);void lib.refresh(category)};
   const navigate=(next:'home'|'profile')=>{
     const now=Date.now();if(next==='home'&&route==='home'&&!readerOpen&&!collection&&!searchOpen){if(now-lastHomeTap.current<350){lastHomeTap.current=0;refreshHome();return}lastHomeTap.current=now}else lastHomeTap.current=0;
     if(next==='home'&&route!=='home')lib.settleCategories();Keyboard.dismiss();randomRequest.current?.abort();setRandomBusy(false);readerRequest.current?.abort();setSearchOpen(false);setCollection(null);setRoute(next)};
   const sourceRows=collectionReturn.rows,searchRows=searchReturn.rows;
   return <ThemeContext.Provider value={themeContext}><View style={styles.webFrame}><Animated.View ref={frame} collapsable={false} onLayout={e=>setViewportHeight(e.nativeEvent.layout.height)} style={[{width,flex:1,overflow:Platform.OS==='web'?'clip' as 'hidden':'hidden'},paper]}>
     <StatusBar style={isDark?'light':'dark'}/>
-    {!lib.ready?<View style={styles.loader}><ActivityIndicator color={palette.accent}/><Label>{lib.error}</Label></View>:!onboarding.state||onboarding.bootError?<OnboardingScreen key={onboarding.devSandbox?'sandbox':onboarding.replay?'replay':'onboarding'} binding={onboarding}/>:<>
+    {!fontsReady||!lib.ready?<View style={[styles.loader,{backgroundColor:palette.paper}]}><ActivityIndicator color={palette.accent}/><Label>{lib.error}</Label></View>:!onboarding.state||onboarding.bootError?<OnboardingScreen key={onboarding.devSandbox?'sandbox':onboarding.replay?'replay':'onboarding'} binding={onboarding}/>:<>
       <View pointerEvents={onboarding.active||editIdentity?'none':'box-none'} accessibilityElementsHidden={onboarding.active||editIdentity} importantForAccessibility={onboarding.active||editIdentity?'no-hide-descendants':'auto'} style={{flex:1}}>
       <ScreenLayer active={route==='home'&&!searchOpen&&!collection&&!readerOpen} style={[StyleSheet.absoluteFill,paper,homeStyle]}>
         <View style={{paddingTop:top+8,paddingHorizontal:24,paddingBottom:10,zIndex:2}}><View style={{flexDirection:'row',alignItems:'center',justifyContent:'space-between'}}><Label style={styles.wordmark}>lume</Label></View><View pointerEvents="box-none" style={{height:48,overflow:'hidden'}}><Animated.View style={chipStyle}><CategoryRail selected={category} onSelect={selectCategory} items={lib.categoryRail} onInteractionStart={lib.beginCategoryInteraction} onInteractionEnd={lib.endCategoryInteraction}/></Animated.View></View></View>

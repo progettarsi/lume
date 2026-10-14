@@ -16,9 +16,9 @@ try{
  Push-Location android
  try{& ./gradlew.bat assembleRelease --offline --no-daemon '-PreactNativeArchitectures=arm64-v8a' *> (Join-Path $taskRoot 'discovery-release-apk.log');$taskExit=$LASTEXITCODE}finally{Pop-Location}
  if($taskExit -ne 0){Get-Content discovery-release-apk.log -Tail 30;throw 'Production build failed'}
- $taskApk=Join-Path $taskRoot 'releases/Lume-0.2.apk'
+ $taskApk=Join-Path $taskRoot 'releases/Lume-0.2.1.apk'
  Copy-Item -LiteralPath android/app/build/outputs/apk/release/app-release.apk -Destination $taskApk
  $taskHash=(Get-FileHash -LiteralPath $taskApk -Algorithm SHA256).Hash.ToLowerInvariant()
- [IO.File]::WriteAllText($taskApk+'.sha256',$taskHash+"  Lume-0.2.apk`n")
+ [IO.File]::WriteAllText($taskApk+'.sha256',$taskHash+"  Lume-0.2.1.apk`n")
  Get-Content discovery-release-apk.log -Tail 6
 }finally{Remove-Item Env:SYNAPSE_STORE_PASSWORD -ErrorAction SilentlyContinue;Pop-Location}

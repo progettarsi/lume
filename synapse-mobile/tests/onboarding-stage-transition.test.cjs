@@ -1,7 +1,8 @@
 const {test}=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm'),ts=require('typescript');
 const {initialOnboarding,preparationState}=require('../.test-build/onboarding');
 
-function fixture({stage='interests',reduced=false,appActive=true,count=9}={}){
+function fixture({stage='interests',reduced=false,appActive=true,count=9,height=852}={}){
+ const keyboard={value:0};
  const slots=[],effects=[],animations=[],shared=[],navigations=[];let cursor=0,tree,dirty=false;
  const jsx=(type,props)=>({type,props}),slot=make=>{const i=cursor++;return slots[i]??(slots[i]=make())};
  const effect=(fn,deps)=>{const s=slot(()=>({deps:null,cleanup:null}));if(!s.deps||deps.some((d,i)=>!Object.is(d,s.deps[i]))){effects.push(()=>{s.cleanup?.();s.cleanup=fn()});s.deps=deps}};
@@ -20,9 +21,9 @@ function fixture({stage='interests',reduced=false,appActive=true,count=9}={}){
  const module={exports:{}},code=ts.transpileModule(fs.readFileSync('src/components/onboarding/ApprovedOnboardingScene.tsx','utf8'),{compilerOptions:{jsx:ts.JsxEmit.ReactJSX,module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText;
  vm.runInNewContext(code,{module,exports:module.exports,Math,require(id){
   if(id==='../../theme')return require('./helpers/theme.cjs');if(id==='react')return react;if(id==='react/jsx-runtime')return {jsx,jsxs:jsx};if(id==='react-native-reanimated')return reanimated;
-  if(id==='react-native')return {View:'View',ScrollView:'ScrollView',Pressable:'Pressable',Keyboard:{dismiss(){}},Platform:{OS:'android'},StyleSheet:{create:x=>x,absoluteFill:{},hairlineWidth:1},useWindowDimensions:()=>({width:393,height:852,fontScale:1})};
+  if(id==='react-native')return {View:'View',ScrollView:'ScrollView',Pressable:'Pressable',Keyboard:{dismiss(){}},Platform:{OS:'android'},StyleSheet:{create:x=>x,absoluteFill:{},hairlineWidth:1},useWindowDimensions:()=>({width:393,height,fontScale:1})};
   if(id==='react-native-safe-area-context')return {useSafeAreaInsets:()=>({top:24,bottom:24})};if(id==='react-native-svg')return {__esModule:true,default:'Svg',Path:'Path',SvgXml:'SvgXml'};
-  if(id==='../../useKeyboardLift')return {useKeyboardLift:()=>({value:0})};if(id==='../../content/onboarding')return require('../.test-build/onboarding');
+  if(id==='../../useKeyboardLift')return {useKeyboardLift:()=>keyboard};if(id==='../../content/onboarding')return require('../.test-build/onboarding');
   if(id==='../../content/onboardingBrand')return {onboardingBrand:()=>({logo:'<svg/>'})};
   if(id==='../Atoms')return {useTheme:()=>({palette:{paper:require('./helpers/theme.cjs').dark.paper,ink:'#efe9df',muted:'#b6aea2',active:'#804e3b',accent:'#df9878',surface:'#35302c',line:'#474139'}}),Label:'Label',Button:'Button',Icon:'Icon'};
   if(id==='../OnboardingMotionSlots')return {OnboardingTitleContext:{Provider:'TitleProvider'},OnboardingTitleSlot:'Title',OrganicShapeSlot:'Shape'};
@@ -34,7 +35,7 @@ function fixture({stage='interests',reduced=false,appActive=true,count=9}={}){
  const flush=()=>{for(let i=0;i<30;i++){while(effects.length)effects.shift()();if(!dirty)break;dirty=false;render()}};
  const settle=animation=>{assert(animation&&!animation.cancelled);animation.owner.value=animation.target;animation.done?.(true);render();flush()};
  const change=patch=>{Object.assign(binding,patch);render();flush()};
- render();flush();return {binding,render,flush,change,settle,animations,shared,navigations,get tree(){return tree}};
+ render();flush();return {binding,keyboard,render,flush,change,settle,animations,shared,navigations,get tree(){return tree}};
 }
 function nodes(root){if(!root||typeof root!=='object')return [];if(Array.isArray(root))return root.flatMap(nodes);return [root,...nodes(root.props?.children)]}
 const find=(f,testID)=>nodes(f.tree).find(n=>n.props?.testID===testID),ofType=(f,type)=>nodes(f.tree).filter(n=>n.type===type);
@@ -86,3 +87,9 @@ test('failed durable entry restores readable preparation with a manual retry and
  f.render();f.flush();assert.deepEqual(f.navigations,['enter']);const retry=ofType(f,'Button').find(n=>n.props.label==='Riprova ingresso nella Home');assert(retry&&!retry.props.disabled);retry.props.onPress();assert.deepEqual(f.navigations,['enter','enter']);
 });
 
+
+
+test('identity scroll viewport stays above keyboard-raised actions through open, close and interrupted navigation',()=>{
+ for(const height of [600,700,852]){const f=fixture({stage:'identity',height});for(const lift of [0,90,180,280,330]){f.keyboard.value=lift;const container=nodes(f.tree).find(n=>n.type==='AnimatedView'&&n.props.children?.type==='ScrollView');const area=container.props.style[1].read(),action=find(f,'onboarding-persistent-action').props.style[1].read();assert(height-area.bottom<=action.top-12,'content must not run behind the action');assert(area.top<height-area.bottom,'scroll viewport remains usable')}
+ f.keyboard.value=280;const before=find(f,'onboarding-persistent-action').props.style[1].read().top;f.change({stage:'interests'});const after=find(f,'onboarding-persistent-action').props.style[1].read().top;assert.equal(after,before,'changing logical stage must not abruptly remove keyboard offset');}
+});

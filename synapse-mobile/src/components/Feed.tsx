@@ -42,7 +42,7 @@ export function Feed({articles,height,size,saved,onOpen,onSave,onIndex,onDirecti
   const reportEnd=useCallback(()=>callbacks.current.onEndReached?.(),[]);
   // Refills update the limit, not the recognizer under an active finger.
   const pan=useMemo(()=>Gesture.Pan().activeOffsetY([-10,10]).failOffsetX([-24,24])
-    .onStart(()=>{cancelAnimation(offset);anchor.value=Math.max(0,Math.min(count.value-1,Math.round(offset.value/height)));start.value=offset.value;direction.value=0;lastTranslation.value=0})
+    .onStart(()=>{cancelAnimation(offset);anchor.value=Math.max(0,Math.min(Math.max(1,count.value)-1,Math.round(offset.value/height)));start.value=offset.value;direction.value=0;lastTranslation.value=0})
     .onUpdate(e=>{
       const low=Math.max(0,(anchor.value-1)*height),high=Math.min(Math.max(0,count.value-1),(anchor.value+1))*height;
       offset.value=Math.max(low,Math.min(high,start.value-e.translationY));
@@ -50,7 +50,7 @@ export function Feed({articles,height,size,saved,onOpen,onSave,onIndex,onDirecti
       if(Math.abs(delta)>1){const next=delta<0?1:-1;if(next!==direction.value){direction.value=next;upward.value=next===1?1:0;runOnJS(reportDirection)(next===1)}};
     })
     .onEnd(e=>{
-      const next=swipeTarget(anchor.value,anchor.value*height-offset.value,e.velocityY,height,count.value);target.value=next;
+      const next=swipeTarget(anchor.value,anchor.value*height-offset.value,e.velocityY,height,Math.max(1,count.value));target.value=next;
       offset.value=reduced?next*height:withSpring(next*height,{stiffness:360,damping:34,mass:.8,velocity:-e.velocityY,overshootClamping:true,energyThreshold:.0001});
       runOnJS(commit)(next);if(next===anchor.value&&next===count.value-1&&e.translationY<-24)runOnJS(reportEnd)();
     })

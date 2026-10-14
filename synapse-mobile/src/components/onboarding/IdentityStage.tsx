@@ -21,6 +21,7 @@ export interface IdentityStageProps {
   usableHeight: number;
   fontScale: number;
   embedded?: boolean;
+  onNameFocus?: (focused:boolean)=>void;
 }
 
 export function IdentityStage({
@@ -29,6 +30,7 @@ export function IdentityStage({
   usableHeight,
   fontScale,
   embedded=false,
+  onNameFocus,
 }: IdentityStageProps) {
   const { palette } = useTheme();
 
@@ -135,6 +137,7 @@ export function IdentityStage({
 
   const handleFocus = () => {
     setIsFocused(true);
+    onNameFocus?.(true);
     stoppedRef.current=true;
     if(loopTimerRef.current){clearTimeout(loopTimerRef.current);loopTimerRef.current=null}
     let visible=Array.from(placeholderOverlay);
@@ -145,6 +148,7 @@ export function IdentityStage({
   const handleBlur = () => {
     Keyboard.dismiss();
     setIsFocused(false);
+    onNameFocus?.(false);
     stopLoop();
     // On blur with empty field, keep static accessible placeholder, do not restart loop
     if (realValue.length === 0) {
@@ -162,7 +166,7 @@ export function IdentityStage({
   // Responsive adaptions:
   // Under 700dp usable height or fontScale >= 1.3: avatar 112, gap 20
   const isCompact = usableHeight < 700 || fontScale >= 1.3;
-  const avatarSize = isFocused ? 96 : isCompact ? 112 : 140;
+  const avatarSize = isCompact ? 112 : 140;
   const sectionGap = isCompact ? 32 : 80;
 
 
@@ -175,7 +179,7 @@ export function IdentityStage({
 
       {/* Avatar Section */}
       <View style={[styles.avatarSection, { marginTop: embedded?0:sectionGap }]}>
-        <ProfilePhotoSlot binding={b} motion={motion} size={avatarSize} compact={isFocused}/>
+        <ProfilePhotoSlot binding={b} motion={motion} size={avatarSize} compact={false}/>
 
         {/* Non-blocking photo error message */}
         {!!b.photoError && (
@@ -189,7 +193,7 @@ export function IdentityStage({
       </View>
 
       {/* Name Input */}
-      <View style={[styles.inputSection,{marginTop:isFocused?16:24}]}>
+      <View style={[styles.inputSection,{marginTop:24}]}>
         <View style={styles.inputWrapper}>
           <TextInput
             accessibilityLabel="Il tuo nome, facoltativo"

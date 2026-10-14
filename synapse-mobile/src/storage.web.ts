@@ -32,7 +32,7 @@ export async function putOnboarding(next:OnboardingState,applyInterests=false){
 export async function putArticles(articles:Article[]){for(const a of articles){const old=rows.find(r=>r.id===a.id);rows=rows.filter(r=>r.id!==a.id);rows.push(mergeArticle(old,a))}write()}
 export async function putSavedArticle(article:Article,saved:boolean,learning?:Learning){const before=[...rows],raw=localStorage.getItem('synapse-native-learning');try{if(!rows.some(a=>a.id===article.id))await putArticles([article]);await setSaved(article.id,saved);if(learning)await putLearning(learning)}catch(error){rows=before;write();if(raw!==null)localStorage.setItem('synapse-native-learning',raw);throw error}}
 export async function markRead(id:string){const stamp=Date.now();rows=rows.map(a=>a.id===id?{...a,readAt:stamp}:a);const a=rows.find(r=>r.id===id);if(a){visits=[{...a,paragraphs:[],preview:[],complete:false,simplified:undefined},...visits.filter(v=>v.id!==id)].slice(0,500);localStorage.setItem('synapse-native-visits',JSON.stringify(visits))}write()}
-export async function getHistory(){const cache=new Map(rows.map(a=>[a.id,a]));return visits.map(a=>({...cache.get(a.id)||a,readAt:a.readAt}))}
+export async function getHistory(_knownArticles?:Article[]){const cache=new Map(rows.map(a=>[a.id,a]));return visits.map(a=>({...cache.get(a.id)||a,readAt:a.readAt}))}
 export async function setSaved(id:string,saved:boolean){rows=rows.map(a=>a.id===id?{...a,saved}:a);write()}
 export async function getSettings():Promise<Settings>{try{return parseSettings(localStorage.getItem('synapse-native-settings'))}catch{return parseSettings(null)}}
 export async function putSettings(settings:Settings){localStorage.setItem('synapse-native-settings',JSON.stringify(settings))}

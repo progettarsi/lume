@@ -1,14 +1,12 @@
 import React, { useEffect, useRef } from 'react';
 import { View, StyleSheet, type StyleProp, type ViewStyle } from 'react-native';
 import Animated, {
-  cancelAnimation,
-  Easing,
   runOnJS,
   useAnimatedProps,
   useAnimatedReaction,
   useAnimatedStyle,
   useSharedValue,
-  withTiming,
+  useFrameCallback,
 } from 'react-native-reanimated';
 import Svg, { Path } from 'react-native-svg';
 import {
@@ -16,9 +14,7 @@ import {
   evaluateMd3Loader,
   md3RotationDegrees,
   md3SpringResponse,
-  MD3_SHAPE_COUNT,
   MD3_STAGE_DURATION_MS,
-  MD3_TOTAL_CYCLE_MS,
 } from '../../content/materialLoading';
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
@@ -83,65 +79,18 @@ export function MaterialLoadingIndicator({
     }
   }, [frozen, isFrozen, hasEmittedFreeze]);
 
-  // Handle animation lifecycle: start, pause, resume, cancel on unmount
+  // A single UI frame clock avoids a recursive worklet callback crossing
+  // runtimes at the end of each cycle (a fatal error in release Hermes).
+  const clock = useFrameCallback(frame => {
+    if (!isFrozen.value && frame.timeSincePreviousFrame !== null) {
+      sequenceProgress.value += frame.timeSincePreviousFrame / MD3_STAGE_DURATION_MS;
+    }
+  }, false);
   useEffect(() => {
-    cancelAnimation(sequenceProgress);
-
-    if (reduced) {
-      // In reduced motion, park at shape 0 at rest
-      sequenceProgress.value = 0;
-      return () => cancelAnimation(sequenceProgress);
-    }
-
-    if (active && !frozen) {
-      // Seamless resume: compute remaining duration in the 7-shape cycle
-      const currentSequence = sequenceProgress.value;
-      const cycleProgress = ((currentSequence % MD3_SHAPE_COUNT) + MD3_SHAPE_COUNT) % MD3_SHAPE_COUNT;
-      const remainingProgress = MD3_SHAPE_COUNT - cycleProgress;
-      const remainingDuration = (remainingProgress / MD3_SHAPE_COUNT) * MD3_TOTAL_CYCLE_MS;
-
-      const runFullCycle = () => {
-        'worklet';
-        // Keep an absolute stage counter: resetting after seven shapes would
-        // jump the rotation by 260 degrees at every loop boundary.
-        const nextCycle = sequenceProgress.value + MD3_SHAPE_COUNT;
-        sequenceProgress.value = withTiming(
-          nextCycle,
-          {
-            duration: MD3_TOTAL_CYCLE_MS,
-            easing: Easing.linear,
-          },
-          (finished) => {
-            if (finished) {
-              runFullCycle();
-            }
-          }
-        );
-      };
-
-      if (remainingDuration > 0 && remainingProgress < MD3_SHAPE_COUNT) {
-        // Resume smoothly from the current fractional position
-        sequenceProgress.value = withTiming(
-          currentSequence + remainingProgress,
-          {
-            duration: remainingDuration,
-            easing: Easing.linear,
-          },
-          (finished) => {
-            if (finished) {
-              runFullCycle();
-            }
-          }
-        );
-      } else {
-        runFullCycle();
-      }
-    }
-
-    return () => {
-      cancelAnimation(sequenceProgress);
-    };
-  }, [active, frozen, reduced, sequenceProgress]);
+    if (reduced) sequenceProgress.value = 0;
+    clock.setActive(active && !frozen && !reduced);
+    return () => clock.setActive(false);
+  }, [active, frozen, reduced, clock, sequenceProgress]);
 
   // React to frozen state change on the UI thread and emit snapshot once per freeze
   useAnimatedReaction(

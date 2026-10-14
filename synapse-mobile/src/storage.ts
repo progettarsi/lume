@@ -24,6 +24,10 @@ export function initStorage(){return run(async()=>{})}
 export function initOnboarding(){return run(async db=>{
  const rows=await db.getAllAsync<{key:string;value:string}>('SELECT key,value FROM preferences');
  const values=new Map(rows.map(r=>[r.key,r.value]));
+ const current=values.get('onboarding')??null;
+ // Configured installations need no legacy evidence scans. Corrupt state still
+ // goes through the existing backup recovery below.
+ try{const parsed=parseOnboarding(current);if(parsed&&JSON.stringify(parsed)===current)return parsed}catch{}
  const count=await db.getFirstAsync<{saved:number;read:number}>('SELECT COALESCE(SUM(saved),0) AS saved,COUNT(read_at) AS read FROM articles');
  const visits=await db.getFirstAsync<{n:number}>('SELECT COUNT(*) AS n FROM visits');
  const raw=values.get('onboarding')??null;
@@ -73,7 +77,7 @@ export function markRead(id:string){const stamp=Date.now();return run(async db=>
   const article={...decode(row),paragraphs:[],preview:[],simplified:undefined,simplifiedInput:undefined,simplifiedPrepared:undefined,complete:false,readAt:stamp};
   await db.withTransactionAsync(async()=>{await db.runAsync('UPDATE articles SET read_at=? WHERE id=?',stamp,id);await db.runAsync('INSERT OR REPLACE INTO visits(id,json,read_at) VALUES(?,?,?)',id,JSON.stringify(article),stamp);await db.runAsync('DELETE FROM visits WHERE id NOT IN (SELECT id FROM visits ORDER BY read_at DESC LIMIT 500)')});
 })}
-export function getHistory(){return run(async db=>{const rows=await db.getAllAsync<{json:string}>('SELECT json FROM visits ORDER BY read_at DESC');const cached=new Map((await articles(db)).map(a=>[a.id,a]));return rows.map(r=>{const a=JSON.parse(r.json) as Article;return {...(cached.get(a.id)||a),readAt:a.readAt}})})}
+export function getHistory(knownArticles?:Article[]){return run(async db=>{const rows=await db.getAllAsync<{json:string}>('SELECT json FROM visits ORDER BY read_at DESC');const cached=new Map((knownArticles??await articles(db)).map(a=>[a.id,a]));return rows.map(r=>{const a=JSON.parse(r.json) as Article;return {...(cached.get(a.id)||a),readAt:a.readAt}})})}
 export function setSaved(id:string,saved:boolean){return run(db=>db.runAsync('UPDATE articles SET saved=? WHERE id=?',saved?1:0,id))}
 export function getSettings():Promise<Settings>{return run(async db=>{const r=await db.getFirstAsync<{value:string}>('SELECT value FROM preferences WHERE key=?','settings');return parseSettings(r?.value)})}
 export function putSettings(settings:Settings){return run(db=>db.runAsync('INSERT OR REPLACE INTO preferences(key,value) VALUES(?,?)','settings',JSON.stringify(settings)))}
