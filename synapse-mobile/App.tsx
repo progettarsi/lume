@@ -45,10 +45,11 @@ import type { Article,ThemeMode } from './src/content/types';
 import {isDarkTheme} from './src/content/settings';
 import {GeminiIntegration,type GeminiConfigurationState} from './src/content/geminiIntegration';
 import {GeminiSettings} from './src/components/GeminiSettings';
+import {AppErrorBoundary} from './src/components/AppErrorBoundary';
 type Collection='saved'|'history'|'settings'|null;
 export default function App(){
   const [fonts,error]=useFonts(fontAssets);
-  return <GestureHandlerRootView style={{flex:1}}><SafeAreaProvider><Synapse fontsReady={!!(fonts||error)}/></SafeAreaProvider></GestureHandlerRootView>;
+  return <AppErrorBoundary><GestureHandlerRootView style={{flex:1}}><SafeAreaProvider><Synapse fontsReady={!!(fonts||error)}/></SafeAreaProvider></GestureHandlerRootView></AppErrorBoundary>;
 }
 function Synapse({fontsReady}:{fontsReady:boolean}){
   const lib=useLibrary(),insets=useSafeAreaInsets(),window=useWindowDimensions(),frame=useRef<View>(null),input=useRef<TextInput>(null),shuffleNode=useRef<View>(null);
