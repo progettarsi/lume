@@ -18,6 +18,7 @@ import type {Origin} from './Feed';
 import {readerContinuation,hasRevision} from '../content/text';
 import {categoryLabel} from '../content/categories';
 import {LinearGradient} from 'expo-linear-gradient';
+import {safeSourceUrl} from '../content/safeSourceUrl';
 function phase(p:number,start:number,end:number){'worklet';const t=Math.max(0,Math.min(1,(p-start)/(end-start)));return t*t*(3-2*t)}
 export function Reader({article:incomingArticle,origin,open,width,height,top,bottom,size,saved,onClose,onReopen,onClosed,onSave,aiMessage:incomingMessage,aiBusy:incomingBusy,onRetryAI,onRetryArticle,notice:incomingNotice,onReturnNear,returnDetached=false,reducedOverride,returnPaper,onDoubleTapSave}:{article:Article;origin:Origin;open:boolean;width:number;height:number;top:number;bottom:number;size:number;saved:boolean;onClose:()=>void;onReopen:()=>void;onClosed:()=>void;onSave:()=>void;aiMessage?:string;aiBusy?:boolean;onRetryAI?:()=>void;onRetryArticle?:()=>void;notice?:ReaderStatus;onReturnNear?:()=>void;returnDetached?:boolean;reducedOverride?:boolean;returnPaper?:string;onDoubleTapSave?:()=>void}){
   const {palette}=useTheme(),systemReduced=useReducedMotion(),[reduced,setReduced]=useState(systemReduced),progress=useSharedValue(0),scroll=useSharedValue(0),target=useRef(open);target.current=open;
@@ -32,6 +33,8 @@ export function Reader({article:incomingArticle,origin,open,width,height,top,bot
   const lastOpen=useRef({article:incomingArticle,aiMessage:incomingMessage,aiBusy:incomingBusy,notice:incomingNotice});
   if(open)lastOpen.current={article:incomingArticle,aiMessage:incomingMessage,aiBusy:incomingBusy,notice:incomingNotice};
   const {article,aiMessage,aiBusy,notice}=lastOpen.current;
+  const [sourceNotice,setSourceNotice]=useState<ReaderStatus|null>(null);
+  const effectiveNotice=sourceNotice||notice;
   const row=origin.kind==='row',shuffle=origin.kind==='shuffle',destinationY=top+72;
   const preview=useRef(article.preview).current;
   const revision=hasRevision(article),[titleLayout,setTitleLayout]=useState<TitleGeometry|null>(null);
@@ -40,7 +43,7 @@ export function Reader({article:incomingArticle,origin,open,width,height,top,bot
   const edition=JSON.stringify(readerContinuation({...article,preview}));
   const paragraphs=useMemo<string[]>(()=>JSON.parse(edition),[edition]);
   const active=useSharedValue(open),viewport=useSharedValue(0),scrolled=useSharedValue(false),bodyY=useSharedValue(0),expandedY=useSharedValue(0);
-  const noticeY=useSharedValue(-1),noticeHeight=useSharedValue(0),[noticeVisible,setNoticeVisible]=useState(false),hasNotice=!!notice;
+  const noticeY=useSharedValue(-1),noticeHeight=useSharedValue(0),[noticeVisible,setNoticeVisible]=useState(false),hasNotice=!!effectiveNotice;
   // Count the dismissal deadline only when the footer can actually be seen.
   // The UI observes scroll/layout; JS changes only on crossing the boundary.
   useAnimatedReaction(()=>{
@@ -55,6 +58,7 @@ export function Reader({article:incomingArticle,origin,open,width,height,top,bot
     if(active.value&&scroll.value>1)scrolled.value=true;
   });
   const touch=useRef<{x:number;y:number;moved:boolean}|null>(null),lastTap=useRef<{x:number;y:number;time:number}|null>(null);
+  const openSource=()=>{const safe=safeSourceUrl(article.source);if(safe)void Linking.openURL(safe);else setSourceNotice({kind:'content',message:article.contentIssue||'Approfondimento non disponibile per questa voce.',action:'source'})};
   const completed=()=>{if(!target.current)onClosed()};
   const closing=useSharedValue(false),didComplete=useSharedValue(false),didHandOff=useSharedValue(false);
   // The source preview retains its own native layout throughout the morph.
@@ -130,9 +134,9 @@ export function Reader({article:incomingArticle,origin,open,width,height,top,bot
               <Animated.View style={expanded} onLayout={e=>{expandedY.value=e.nativeEvent.layout.y}}>
                 <ReaderExit exit={exit} scroll={scroll} viewport={viewport} bodyY={bodyY} expandedY={expandedY} reduced={motionReduced} size={size}>
                 <ReaderReveal paragraphs={paragraphs} size={size} scroll={scroll} viewport={viewport} scrolled={scrolled} bodyY={bodyY} expandedY={expandedY} progress={progress} active={active} reduced={motionReduced}/>
-                {notice&&<View onLayout={e=>{noticeY.value=e.nativeEvent.layout.y;noticeHeight.value=e.nativeEvent.layout.height}}><ReaderNotice status={notice} onArticle={onRetryArticle} onAI={onRetryAI} onSource={()=>void Linking.openURL(article.source)} timeoutEnabled={noticeVisible&&open}/></View>}
-                {!notice&&aiMessage&&<View style={{marginBottom:18}}>{aiBusy&&<ActivityIndicator size="small" color={palette.accent} style={{alignSelf:'flex-start',marginBottom:8}}/>}<Label muted accessibilityLiveRegion="polite" style={{fontSize:13,lineHeight:18}}>{aiMessage}</Label>{!aiBusy&&!revision&&article.complete&&readerContinuation({...article,simplified:undefined}).length>0&&onRetryAI&&<Button label="Riprova revisione Gemini" onPress={onRetryAI}><Label style={{fontSize:14,color:palette.accent}}>Riprova con Gemini</Label></Button>}</View>}
-                <View style={{borderTopWidth:1,borderColor:palette.line,marginTop:16,paddingTop:20}}>{revision&&!aiBusy&&<View style={{flexDirection:'row',gap:8,alignItems:'flex-start',marginBottom:10}}><Icon name="auto-fix" size={16} color={palette.muted}/><Label muted style={{flex:1,fontSize:13,lineHeight:18}}>Approfondimento revisionato con Gemini. Verifica la fonte per i dettagli.</Label></View>}<Button label={"Apri la fonte "+sourceName(article)} onPress={()=>void Linking.openURL(article.source)}><Label style={{color:palette.accent}}>Approfondisci su {sourceName(article)} ↗</Label></Button><Label muted style={{fontSize:12,lineHeight:18}}>Fonte: {sourceInfo(article).attribution} · CC BY-SA. {article.revision?`Revisione ${article.revision}. `:''}Selezione divulgativa del testo; consulta la fonte per la voce completa.</Label><Button label="Licenza del testo" onPress={()=>void Linking.openURL(sourceInfo(article).license)}><Label muted style={{fontSize:12}}>Licenza e attribuzione ↗</Label></Button></View>
+                {effectiveNotice&&<View onLayout={e=>{noticeY.value=e.nativeEvent.layout.y;noticeHeight.value=e.nativeEvent.layout.height}}><ReaderNotice status={effectiveNotice} onArticle={onRetryArticle} onAI={onRetryAI} onSource={openSource} timeoutEnabled={noticeVisible&&open}/></View>}
+                {!effectiveNotice&&aiMessage&&<View style={{marginBottom:18}}>{aiBusy&&<ActivityIndicator size="small" color={palette.accent} style={{alignSelf:'flex-start',marginBottom:8}}/>}<Label muted accessibilityLiveRegion="polite" style={{fontSize:13,lineHeight:18}}>{aiMessage}</Label>{!aiBusy&&!revision&&article.complete&&readerContinuation({...article,simplified:undefined}).length>0&&onRetryAI&&<Button label="Riprova revisione Gemini" onPress={onRetryAI}><Label style={{fontSize:14,color:palette.accent}}>Riprova con Gemini</Label></Button>}</View>}
+                <View style={{borderTopWidth:1,borderColor:palette.line,marginTop:16,paddingTop:20}}>{revision&&!aiBusy&&<View style={{flexDirection:'row',gap:8,alignItems:'flex-start',marginBottom:10}}><Icon name="auto-fix" size={16} color={palette.muted}/><Label muted style={{flex:1,fontSize:13,lineHeight:18}}>Approfondimento revisionato con Gemini. Verifica la fonte per i dettagli.</Label></View>}<Button label={"Apri la fonte "+sourceName(article)} onPress={openSource}><Label style={{color:palette.accent}}>Approfondisci su {sourceName(article)} ↗</Label></Button><Label muted style={{fontSize:12,lineHeight:18}}>Fonte: {sourceInfo(article).attribution} · CC BY-SA. {article.revision?`Revisione ${article.revision}. `:''}Selezione divulgativa del testo; consulta la fonte per la voce completa.</Label><Button label="Licenza del testo" onPress={()=>void Linking.openURL(sourceInfo(article).license)}><Label muted style={{fontSize:12}}>Licenza e attribuzione ↗</Label></Button></View>
                 </ReaderExit>
               </Animated.View>
             </View>
