@@ -1,6 +1,10 @@
 param([switch]$SkipPrebuild)
 $ErrorActionPreference='Stop'
 $taskProject=Split-Path -Parent $PSScriptRoot
+$taskSecrets=Join-Path $taskProject '.credentials'
+$taskKeyStore=Join-Path $taskSecrets 'synapse-release.p12'
+if(-not (Test-Path -LiteralPath $taskKeyStore)){throw 'File di firma mancante: .credentials/synapse-release.p12 non trovato.'}
+if(-not $env:SYNAPSE_STORE_PASSWORD){throw 'Variabile di ambiente SYNAPSE_STORE_PASSWORD non impostata.'}
 $taskVersion=(Get-Content -LiteralPath (Join-Path $taskProject 'app.json') -Raw | ConvertFrom-Json).expo.version
 $taskTools=Join-Path (Split-Path -Parent $taskProject) '.mobile-tools'
 $taskJava=Get-ChildItem (Join-Path $taskTools 'java') -Directory | Select-Object -First 1
@@ -16,17 +20,6 @@ $env:ANDROID_USER_HOME=Join-Path $taskTools 'android-user'
 New-Item -ItemType Directory -Force $env:ANDROID_USER_HOME | Out-Null
 $env:PATH="$env:JAVA_HOME\bin;"+$env:PATH
 if(-not (Test-Path (Join-Path $env:ANDROID_HOME 'licenses/android-sdk-license'))){throw 'Prima della compilazione occorre accettare la licenza Android SDK.'}
-$taskSecrets=Join-Path $taskProject '.credentials'
-New-Item -ItemType Directory -Force $taskSecrets | Out-Null
-$taskKeyStore=Join-Path $taskSecrets 'synapse-release.p12'
-$taskSigning=Join-Path $taskSecrets 'signing.json'
-if(-not (Test-Path $taskKeyStore)){
-  $taskPassword=[Convert]::ToHexString([System.Security.Cryptography.RandomNumberGenerator]::GetBytes(24))
-  @{password=$taskPassword} | ConvertTo-Json | Set-Content -LiteralPath $taskSigning
-  & "$env:JAVA_HOME\bin\keytool.exe" -genkeypair -keystore $taskKeyStore -storetype PKCS12 -alias synapse -keyalg RSA -keysize 3072 -validity 10000 -storepass $taskPassword -keypass $taskPassword -dname 'CN=Synapse Personal'
-  if($LASTEXITCODE -ne 0){throw 'Creazione chiave di firma non riuscita.'}
-}
-$env:SYNAPSE_STORE_PASSWORD=(Get-Content -LiteralPath $taskSigning -Raw | ConvertFrom-Json).password
 Push-Location $taskProject
 try{
   if(-not $SkipPrebuild){
@@ -53,4 +46,4 @@ try{
   Copy-Item -LiteralPath android/app/build/outputs/apk/release/app-release.apk -Destination "releases/Synapse-$taskVersion.apk" -Force
   'Gradle cache uses the short workspace junction.' | Set-Content -LiteralPath $taskMigration
   Write-Output "APK pronto in releases/Synapse-$taskVersion.apk"
-}finally{Remove-Item Env:SYNAPSE_STORE_PASSWORD -ErrorAction SilentlyContinue;Pop-Location}
+}finally{Pop-Location}
