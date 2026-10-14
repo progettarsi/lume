@@ -48,6 +48,7 @@ export function validateClassifications(value:unknown,rows:Article[]):Classifica
   return {id:v.id,categoryId:v.categoryId,topics:[...new Set<string>(v.topics.map((s:string)=>categoryId(s)!))].filter(id=>id!==v.categoryId),confidence:v.confidence,proposal};
  });
 }
+export class ClassificationError extends Error{constructor(message:string,public kind:'quota'|'auth'|'network'|'content'='content'){super(message)}}
 export type ClassificationGenerator=(rows:Article[],key:string,signal:AbortSignal)=>Promise<unknown>;
 export async function geminiClassifications(rows:Article[],key:string,signal:AbortSignal):Promise<unknown>{
  const response=await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent',{method:'POST',signal,headers:{'Content-Type':'application/json','x-goog-api-key':key.trim()},body:JSON.stringify({
@@ -55,7 +56,18 @@ export async function geminiClassifications(rows:Article[],key:string,signal:Abo
   contents:[{role:'user',parts:[{text:JSON.stringify({catalog:CATEGORIES.filter(c=>c.id!=='curiosity').map(c=>({id:c.id,label:c.label})),articles:rows.map(a=>({id:a.id,...classificationInput(a)}))})}]}],
   generationConfig:{temperature:0,maxOutputTokens:1200,responseMimeType:'application/json',responseSchema:{type:'OBJECT',properties:{articles:{type:'ARRAY',maxItems:4,items:{type:'OBJECT',properties:{id:{type:'STRING'},categoryId:{type:'STRING',enum:CATEGORIES.filter(c=>c.id!=='curiosity').map(c=>c.id)},topics:{type:'ARRAY',maxItems:3,items:{type:'STRING',enum:CATEGORIES.map(c=>c.id)}},confidence:{type:'NUMBER'},proposal:{type:'OBJECT',nullable:true,properties:{label:{type:'STRING'},parent:{type:'STRING'}},required:['label','parent']}},required:['id','categoryId','topics','confidence']}}},required:['articles']}}
  })});
- if(!response.ok)throw Error('Classification unavailable');const data=await response.json(),c=data.candidates?.[0];if(c?.finishReason!=='STOP')throw Error('Incomplete classification');return JSON.parse(c.content.parts.filter((p:{thought?:boolean})=>!p.thought).map((p:{text?:string})=>p.text||'').join(''));
+ if(!response.ok){
+  if(response.status===401||response.status===403)throw new ClassificationError('Chiave Gemini non valida o non autorizzata. Controllala nelle impostazioni.','auth');
+  if(response.status===400){
+   let body='';try{body=await response.text()}catch{}
+   if(body.includes('API_KEY_INVALID'))throw new ClassificationError('Chiave Gemini non valida o non autorizzata. Controllala nelle impostazioni.','auth');
+   throw new ClassificationError('Gemini ha rifiutato la richiesta. Puoi riprovare.','content');
+  }
+  if(response.status===429)throw new ClassificationError('Quota Gemini esaurita. Riprova più tardi.','quota');
+  if(response.status>=500&&response.status<600)throw new ClassificationError('Gemini momentaneamente non disponibile. Puoi riprovare.','network');
+  throw new ClassificationError('Gemini momentaneamente non disponibile. Puoi riprovare.','content');
+ }
+ const data=await response.json(),c=data.candidates?.[0];if(c?.finishReason!=='STOP')throw Error('Incomplete classification');return JSON.parse(c.content.parts.filter((p:{thought?:boolean})=>!p.thought).map((p:{text?:string})=>p.text||'').join(''));
 }
 export type ClassificationCache=Record<string,ClassificationResult>;
 export function parseClassificationCache(raw:string|null):ClassificationCache{try{const x=JSON.parse(raw||'{}'),out:ClassificationCache={};for(const [k,v] of Object.entries(x).slice(-128)){const r=v as ClassificationResult;if(typeof k==='string'&&k.startsWith(CLASSIFICATION_VERSION+':')&&r&&typeof r.id==='string'){try{out[k]=validateClassifications({articles:[r]},[{id:r.id} as Article])[0]}catch{}}}return out}catch{return {}}}

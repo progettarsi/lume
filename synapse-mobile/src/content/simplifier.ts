@@ -24,9 +24,15 @@ export async function simplify(paragraphs:string[],key:string,signal?:AbortSigna
     }
     if(!response)throw new SimplificationError('Nessun modello Gemini disponibile.');
     if(!response.ok){
-      if(response.status===400||response.status===401||response.status===403)throw new SimplificationError('Chiave Gemini non valida o non autorizzata. Controllala nelle impostazioni.','auth');
+      if(response.status===401||response.status===403)throw new SimplificationError('Chiave Gemini non valida o non autorizzata. Controllala nelle impostazioni.','auth');
+      if(response.status===400){
+        let body='';try{body=await response.text()}catch{}
+        if(body.includes('API_KEY_INVALID'))throw new SimplificationError('Chiave Gemini non valida o non autorizzata. Controllala nelle impostazioni.','auth');
+        throw new SimplificationError('Gemini ha rifiutato la richiesta. Puoi riprovare.','content');
+      }
       if(response.status===429)throw new SimplificationError('Quota Gemini esaurita. Riprova più tardi; il testo Wikipedia resta disponibile.','quota');
       if(response.status===404)throw new SimplificationError('Modello Gemini non disponibile per questa chiave.');
+      if(response.status>=500&&response.status<600)throw new SimplificationError('Gemini momentaneamente non disponibile. Puoi riprovare.','network');
       throw new SimplificationError('Gemini momentaneamente non disponibile. Puoi riprovare.');
     }
     const data=await response.json();if(signal?.aborted)return;
