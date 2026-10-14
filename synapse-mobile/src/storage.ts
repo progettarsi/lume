@@ -11,7 +11,7 @@ import {parseRegistry,type CategoryRegistry} from './content/categoryRegistry';
 import {parseClassificationCache,type ClassificationCache} from './content/classification';
 import {recoverOnboarding,parseOnboarding,setInitialInterests,type OnboardingState} from './content/onboarding';
 type Row={id:string;json:string;saved:number;read_at:number|null;touched:number};
-const decode=(r:Row):Article=>({...JSON.parse(r.json),saved:!!r.saved,readAt:r.read_at||undefined,fetchedAt:r.touched});
+const decode=(r:Row):Article|undefined=>{try{const o=JSON.parse(r.json);return o&&typeof o==='object'?{...o,saved:!!r.saved,readAt:r.read_at||undefined,fetchedAt:r.touched}:undefined}catch{return undefined}};
 const run=databaseQueue(async()=>{
   const db=await SQLite.openDatabaseAsync('synapse.db',{useNewConnection:true});
   try{
@@ -19,7 +19,7 @@ const run=databaseQueue(async()=>{
     await db.getFirstAsync('SELECT 1');return db;
   }catch(error){await db.closeAsync().catch(()=>{});throw error}
 },db=>db.closeAsync());
-const articles=async(db:SQLite.SQLiteDatabase)=>(await db.getAllAsync<Row>('SELECT * FROM articles ORDER BY touched DESC')).map(decode);
+const articles=async(db:SQLite.SQLiteDatabase)=>{const rows=await db.getAllAsync<Row>('SELECT * FROM articles ORDER BY touched DESC');const out:Article[]=[];for(const r of rows){const a=decode(r);if(a)out.push(a)}return out};
 export function initStorage(){return run(async()=>{})}
 export function initOnboarding(){return run(async db=>{
  const rows=await db.getAllAsync<{key:string;value:string}>('SELECT key,value FROM preferences');
@@ -67,17 +67,19 @@ export function putSavedArticle(article:Article,saved:boolean,learning?:Learning
   await db.withTransactionAsync(async()=>{
     const row=await db.getFirstAsync<Row>('SELECT * FROM articles WHERE id=?',article.id);
     // A bookmark intent (including undo) must not overwrite a newer cached edition.
-    const merged={...(row?decode(row):article),saved};
+    const d=row?decode(row):undefined;
+    const merged={...(d||article),saved};
     await db.runAsync('INSERT INTO articles(id,json,saved,touched) VALUES(?,?,?,?) ON CONFLICT(id) DO UPDATE SET json=excluded.json,saved=excluded.saved,touched=excluded.touched',article.id,JSON.stringify(merged),saved?1:0,article.fetchedAt);
     if(learning)await db.runAsync('INSERT OR REPLACE INTO preferences(key,value) VALUES(?,?)','learning',JSON.stringify(learning));
   });
 })}
 export function markRead(id:string){const stamp=Date.now();return run(async db=>{
   const row=await db.getFirstAsync<Row>('SELECT * FROM articles WHERE id=?',id);if(!row)return;
-  const article={...decode(row),paragraphs:[],preview:[],simplified:undefined,simplifiedInput:undefined,simplifiedPrepared:undefined,complete:false,readAt:stamp};
+  const d=decode(row);if(!d)return;
+  const article={...d,paragraphs:[],preview:[],simplified:undefined,simplifiedInput:undefined,simplifiedPrepared:undefined,complete:false,readAt:stamp};
   await db.withTransactionAsync(async()=>{await db.runAsync('UPDATE articles SET read_at=? WHERE id=?',stamp,id);await db.runAsync('INSERT OR REPLACE INTO visits(id,json,read_at) VALUES(?,?,?)',id,JSON.stringify(article),stamp);await db.runAsync('DELETE FROM visits WHERE id NOT IN (SELECT id FROM visits ORDER BY read_at DESC LIMIT 500)')});
 })}
-export function getHistory(knownArticles?:Article[]){return run(async db=>{const rows=await db.getAllAsync<{json:string}>('SELECT json FROM visits ORDER BY read_at DESC');const cached=new Map((knownArticles??await articles(db)).map(a=>[a.id,a]));return rows.map(r=>{const a=JSON.parse(r.json) as Article;return {...(cached.get(a.id)||a),readAt:a.readAt}})})}
+export function getHistory(knownArticles?:Article[]){return run(async db=>{const rows=await db.getAllAsync<{json:string}>('SELECT json FROM visits ORDER BY read_at DESC');const cached=new Map((knownArticles??await articles(db)).map(a=>[a.id,a]));const out:Article[]=[];for(const r of rows){try{const a=JSON.parse(r.json) as Article;if(a&&typeof a==='object'&&a.id)out.push({...cached.get(a.id)||a,readAt:a.readAt})}catch{}}return out})}
 export function setSaved(id:string,saved:boolean){return run(db=>db.runAsync('UPDATE articles SET saved=? WHERE id=?',saved?1:0,id))}
 export function getSettings():Promise<Settings>{return run(async db=>{const r=await db.getFirstAsync<{value:string}>('SELECT value FROM preferences WHERE key=?','settings');return parseSettings(r?.value)})}
 export function putSettings(settings:Settings){return run(db=>db.runAsync('INSERT OR REPLACE INTO preferences(key,value) VALUES(?,?)','settings',JSON.stringify(settings)))}
@@ -90,7 +92,7 @@ export function migrateProfile(articles:Article[],visits:Article[]){return run(a
   if(row)await db.runAsync('INSERT OR IGNORE INTO preferences(key,value) VALUES(?,?)','learning-pre-v3-backup',row.value);
   // Retire derived metadata only; preserve every article, visit and explicit setting.
   for(const table of ['articles','visits'])for(const entry of await db.getAllAsync<{id:string;json:string}>(`SELECT id,json FROM ${table}`)){
-   const value=JSON.parse(entry.json);if('readingMetadata' in value){delete value.readingMetadata;await db.runAsync(`UPDATE ${table} SET json=? WHERE id=?`,JSON.stringify(value),entry.id)}
+   try{const value=JSON.parse(entry.json);if(value&&typeof value==='object'&&'readingMetadata' in value){delete value.readingMetadata;await db.runAsync(`UPDATE ${table} SET json=? WHERE id=?`,JSON.stringify(value),entry.id)}}catch{}
   }
   await db.runAsync('INSERT OR REPLACE INTO preferences(key,value) VALUES(?,?)','learning',JSON.stringify(next));
  });return next;
@@ -99,7 +101,9 @@ export function putLearning(learning:Learning){return run(db=>db.runAsync('INSER
 export function migrateCategories(){return run(async db=>{
  const raw=await db.getFirstAsync<{value:string}>('SELECT value FROM preferences WHERE key=?','learning'),profile=parseLearning(raw?.value||null);
  if(profile.categoryVersion===1)return profile;
- const rows=await articles(db),visits=await db.getAllAsync<{id:string;json:string}>('SELECT id,json FROM visits'),next=categoryMigration(profile,rows,visits.map(r=>JSON.parse(r.json)));
+ const rows=await articles(db),visits=await db.getAllAsync<{id:string;json:string}>('SELECT id,json FROM visits');
+ const validVisits:Article[]=[];for(const r of visits){try{const a=JSON.parse(r.json) as Article;if(a&&typeof a==='object'&&a.id)validVisits.push(a)}catch{}}
+ const next=categoryMigration(profile,rows,validVisits);
  await db.withTransactionAsync(async()=>{
   await db.runAsync('INSERT OR IGNORE INTO preferences(key,value) VALUES(?,?)','category-pre-v1-backup',JSON.stringify({learning:raw?.value||null,articles:rows,visits}));
   for(const a of next.articles)await db.runAsync('UPDATE articles SET json=? WHERE id=?',JSON.stringify(a),a.id);
