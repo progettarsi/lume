@@ -46,6 +46,8 @@ Gli strumenti portabili vengono cercati in `../.mobile-tools`: JDK 17, Android S
 
 Il comando prepara il progetto Android, riusa la firma privata locale nella cartella ignorata `.credentials` (la crea solo alla prima build) e genera `releases/Synapse-<versione>.apk`. Conservare `.credentials` privatamente: servirà per aggiornare la stessa installazione. Nessuna pubblicazione su store o servizio remoto è prevista.
 
+La cartella `android/` è generata da `expo prebuild` e le risorse `@xml/secure_store_*` vengono create dal plugin `expo-secure-store`.
+
 ## Stato di verifica
 
 Onboarding Patch C, 11 ottobre 2026: **0.1.13/code16 installata sul Galaxy S23**, con firma e dati conservati. Tutorial con componenti reali dell’app e interazioni isolate; SVG e animazioni, spaziatura nome e tastiera corretti. Precaricamento online di almeno10 anteprime leggibili. TypeScript,214 test, export Android, APK/firma/checksum verificati; percorso e replay provati nella QA, aggiornamento legacy e conteggi9 salvati/230 cronologia conservati. [Risultati e limiti](docs/ONBOARDING-0.1.13-REVIEW.md). APK in `releases/Synapse-0.1.13.apk`. Nessun merge/push/pubblicazione. Le consegne seguenti sono evidenze storiche.
