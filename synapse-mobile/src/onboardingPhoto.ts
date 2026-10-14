@@ -1,4 +1,5 @@
 import * as ImagePicker from 'expo-image-picker';
+import {Image} from 'react-native';
 import {ImageManipulator,SaveFormat} from 'expo-image-manipulator';
 import {Directory,File,Paths} from 'expo-file-system';
 import type {PhotoPort} from './content/onboardingPhoto';
@@ -13,8 +14,16 @@ export const photoPort:PhotoPort={
   }catch(error){if(/permission|denied/i.test(String(error)))return {kind:'denied'};throw error}
  },
  async copy(photo){
-  const context=ImageManipulator.manipulate(photo.uri),scale=Math.min(1,768/Math.max(photo.width,photo.height));
-  context.resize({width:Math.max(1,Math.round(photo.width*scale)),height:Math.max(1,Math.round(photo.height*scale))});
+  let w=photo.width,h=photo.height;
+  if((!Number.isFinite(w)||!Number.isFinite(h)||w<=0||h<=0)&&typeof Image?.getSize==='function'){
+   try{
+    const size=await new Promise<{width:number;height:number}>((res,rej)=>{Image.getSize(photo.uri,(width,height)=>res({width,height}),rej)});
+    w=size.width;h=size.height;
+   }catch{}
+  }
+  if(!Number.isFinite(w)||!Number.isFinite(h)||w<=0||h<=0)throw Error('Non riesco a ridurre questa foto. Prova un’altra immagine.');
+  const context=ImageManipulator.manipulate(photo.uri),scale=Math.min(1,768/Math.max(w,h));
+  context.resize({width:Math.max(1,Math.round(w*scale)),height:Math.max(1,Math.round(h*scale))});
   const image=await context.renderAsync();let temporary:File|undefined,destination:File|undefined;
   try{const result=await image.saveAsync({format:SaveFormat.JPEG,compress:.8});temporary=new File(result.uri);
    if(!temporary.exists||temporary.size>1024*1024)throw Error('Non riesco a ridurre questa foto. Prova un’altra immagine.');
