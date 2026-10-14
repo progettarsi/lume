@@ -1,4 +1,6 @@
+import {connectDiscoveries} from './discoveryPaths';
 import type {Article} from './types';
+import {isVerified} from './edition';
 import {articleBytes} from './cache';
 import {generalAudienceScore} from './text';
 import {identity,rankRecommendations,seenArticle,type Learning} from './recommendations';
@@ -7,30 +9,32 @@ import {assessEditorial,orderEditorial} from './editorial';
 export const RESERVE_TARGET=30,RESERVE_LOW=20,RESERVE_BYTES=512*1024,PREVIEW_BYTES=16*1024;
 export const CATEGORY_RESERVE=8,REFILL_AHEAD=12,FEED_WINDOW=64;
 export const BACKGROUND_JOBS_PER_MINUTE=6,BACKGROUND_GAP=1800;
-export function previewOnly(a:Article):Article{return {...a,paragraphs:a.preview,complete:false,simplified:undefined,simplifiedVersion:undefined,simplifiedPreview:undefined,simplifiedInput:undefined,simplifiedPrepared:undefined,contentIssue:undefined,contentIssueKind:undefined}}
+export function previewOnly(a:Article):Article{if(isVerified(a)||a.edition&&a.complete)return a;return {...a,paragraphs:a.preview,complete:false,simplified:undefined,simplifiedVersion:undefined,simplifiedPreview:undefined,simplifiedInput:undefined,simplifiedPrepared:undefined,contentIssue:undefined,contentIssueKind:undefined}}
+/** Immutable bundled text is shared, not a downloaded reserve payload. */
+export const reserveArticleBytes=(a:Article)=>isVerified(a)?JSON.stringify([a.id,a.title,a.preview,a.category]).length*2:articleBytes(previewOnly(a));
 export function reserveArticles(rows:Article[],learning:Learning,served:Set<string>,category='all'):Article[]{
   const ids=new Set<string>(),sources=new Set<string>();let bytes=0;
   const ranked=rankRecommendations(rows.filter(a=>a.preview.length&&!seenArticle(a,learning)&&!served.has(a.id)&&generalAudienceScore(a.title,a.paragraphs)>=.45&&assessEditorial(a).eligible),learning,()=>.5);
   if(category!=='all')ranked.sort((a,b)=>Number(b.category===category)-Number(a.category===category));
   return ranked.filter(a=>{
-    const source=identity(a),size=articleBytes(previewOnly(a));
+    const source=identity(a),size=reserveArticleBytes(a);
     if(ids.has(a.id)||sources.has(source)||size>PREVIEW_BYTES||bytes+size>RESERVE_BYTES||ids.size>=RESERVE_TARGET)return false;
     ids.add(a.id);sources.add(source);bytes+=size;return true;
   });
 }
-export function appendDiscoveries(current:Article[],incoming:Article[],learning:Learning,served:Set<string>):Article[]{
+export function appendDiscoveries(current:Article[],incoming:Article[],learning:Learning,served:Set<string>,linked=false):Article[]{
   const ids=new Set(current.map(a=>a.id)),sources=new Set(current.map(identity));
   const unique=incoming.filter(a=>{
     const source=identity(a);if(ids.size>=FEED_WINDOW||seenArticle(a,learning)||served.has(a.id)||ids.has(a.id)||sources.has(source))return false;
     ids.add(a.id);sources.add(source);return true;
   });
-  return unique.length?[...current,...rankRecommendations(unique,learning,Math.random,current.slice(-3))]:current;
+  return unique.length?[...current,...connectDiscoveries(rankRecommendations(unique,learning,Math.random,current.slice(-3)),current,linked)]:current;
 }
 /** Re-rank the future only. The visible card and every preceding identity stay put. */
-export function refreshFuture(current:Article[],incoming:Article[],learning:Learning,served:Set<string>,position:number){
+export function refreshFuture(current:Article[],incoming:Article[],learning:Learning,served:Set<string>,position:number,linked=false){
   const prefix=current.slice(0,Math.max(0,position+1)),ids=new Set(prefix.map(identity));
   const future=[...current.slice(prefix.length),...incoming].filter(a=>{const id=identity(a);if(!a.preview.length||!assessEditorial(a).eligible||generalAudienceScore(a.title,a.paragraphs)<.45||ids.has(id)||served.has(a.id)||seenArticle(a,learning))return false;ids.add(id);return true});
-  return [...prefix,...rankRecommendations(future,learning,()=>.5,prefix.slice(-3))].slice(0,FEED_WINDOW);
+  return [...prefix,...connectDiscoveries(rankRecommendations(future,learning,()=>.5,prefix.slice(-3)),prefix,linked)].slice(0,FEED_WINDOW);
 }
 export type ReserveContext={enabled:boolean;category:string;pool:Article[];pendingFull:boolean;refresh?:boolean};
 export function reserveContext(enabled:boolean,category:string,pool:()=>Article[],pendingFull:boolean):ReserveContext{

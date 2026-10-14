@@ -1,3 +1,4 @@
+import {fontAssets} from '../../src/design-system/fonts';
 // Native QA only: no production data or remote service. Real hook/SQLite/Feed/Reader.
 import React,{useEffect,useRef,useState} from 'react';
 import {View,Text,Pressable,useWindowDimensions} from 'react-native';
@@ -5,9 +6,6 @@ import {registerRootComponent} from 'expo';
 import {GestureHandlerRootView} from 'react-native-gesture-handler';
 import {SafeAreaProvider,useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useFonts} from 'expo-font';
-import {Newsreader_500Medium} from '@expo-google-fonts/newsreader/500Medium';
-import {SourceSans3_400Regular} from '@expo-google-fonts/source-sans-3/400Regular';
-import {SourceSans3_600SemiBold} from '@expo-google-fonts/source-sans-3/600SemiBold';
 import {useSharedValue} from 'react-native-reanimated';
 import {useLibrary} from '../../src/useLibrary';
 import * as storage from '../../src/storage';
@@ -18,7 +16,7 @@ import {Reader} from '../../src/components/Reader';
 import {ThemeContext} from '../../src/components/Atoms';
 import {dark} from '../../src/theme';
 const corpus=require('./personalization-corpus.cjs') as {rows:Article[];article:(t:number,i:number,p?:string)=>Article};
-function Harness(){const [fonts]=useFonts({Newsreader_500Medium,SourceSans3_400Regular,SourceSans3_600SemiBold}),[ready,setReady]=useState(false);
+function Harness(){const [fonts]=useFonts(fontAssets),[ready,setReady]=useState(false);
  useEffect(()=>{void (async()=>{await storage.initStorage();if(!(await storage.getArticles()).length){await storage.putArticles(corpus.rows);await storage.putLearning({version:2,seen:[],categories:{nature:999},topics:{},updatedAt:1} as any)}setReady(true)})()},[]);
  return <GestureHandlerRootView style={{flex:1}}><SafeAreaProvider>{fonts&&ready&&<Cases/>}</SafeAreaProvider></GestureHandlerRootView>}
 function Cases(){const w=useWindowDimensions(),insets=useSafeAreaInsets(),paint=useSharedValue(1),[index,setIndex]=useState(0),[online,setOnline]=useState(false),[note,setNote]=useState('Pronto'),[reader,setReader]=useState<{article:Article;origin:Origin}|null>(null),[open,setOpen]=useState(false),calls=useRef(0);

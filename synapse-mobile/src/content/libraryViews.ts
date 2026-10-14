@@ -1,3 +1,4 @@
+import {isVerified} from './edition';
 import type {Article} from './types';
 import type {Learning} from './recommendations';
 import {reserveArticles} from './reserve';
@@ -27,7 +28,7 @@ export class LibraryViews{
    const completed=this.byId.get(article.id);
    const old=previous?.items.get(article.id);
    if(previous?.ai===ai&&old?.source===article&&old.completed===completed){items.set(article.id,old);return old.view}
-   const updated=completed?.complete?{...article,textVersion:completed.textVersion,revision:completed.revision,paragraphs:completed.paragraphs,complete:true,contentIssue:undefined,contentIssueKind:undefined,simplified:completed.simplified,simplifiedVersion:completed.simplifiedVersion,simplifiedPreview:completed.simplifiedPreview,simplifiedInput:completed.simplifiedInput,simplifiedPrepared:completed.simplifiedPrepared}:article;
+   const updated=isVerified(article)?article:completed?.complete&&!article.edition?{...article,textVersion:completed.textVersion,revision:completed.revision,paragraphs:completed.paragraphs,complete:true,contentIssue:undefined,contentIssueKind:undefined,simplified:completed.simplified,simplifiedVersion:completed.simplifiedVersion,simplifiedPreview:completed.simplifiedPreview,simplifiedInput:completed.simplifiedInput,simplifiedPrepared:completed.simplifiedPrepared}:article;
    const result=ai||!updated.simplified?updated:{...updated,simplified:undefined};
    items.set(article.id,{source:article,completed,view:result});return result;
   });

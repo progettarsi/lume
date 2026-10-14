@@ -102,24 +102,11 @@ export function IntroStage({ motion, onNext, busy, bottomInset }: IntroStageProp
       <View style={styles.centerGroup}>
         <View testID="onboarding-bulb-slot" style={styles.bulbContainer} accessible={false}>
           <Animated.View pointerEvents="none" accessible={false} style={[styles.raysWrapper, animatedRaysStyle]}>
-            <SvgXml xml={brand.rays} width={105} height={89.5} accessible={false}/>
+            <SvgXml xml={brand.logo} width={105} height={105} accessible={false}/>
           </Animated.View>
-          <SvgXml xml={brand.bulb} width={48.8175} height={72.875} accessible={false}/>
         </View>
 
         <View style={{marginBottom:12,width:'100%'}}><OnboardingTitleSlot title="Benvenuto!" titleKey="intro" motion={motion} center/></View>
-
-        {/* Subtitle */}
-        <Label
-          style={[
-            styles.subtitle,
-            {
-              color: palette.muted,
-            },
-          ]}
-        >
-          Piccole scoperte, ogni giorno. Nessun account necessario.
-        </Label>
       </View>
 
       {/* Footer Continue */}

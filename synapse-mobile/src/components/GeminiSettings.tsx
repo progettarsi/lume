@@ -1,235 +1,35 @@
-import React,{useState} from 'react';
-import {View,Pressable,TextInput,StyleSheet,Linking} from 'react-native';
-import Animated,{FadeIn} from 'react-native-reanimated';
-import {Label,Icon,Button,useTheme} from './Atoms';
-import {useMotionPreference} from '../useMotionPreference';
+import React,{useEffect,useState} from 'react';
+import {Alert,Linking,Pressable,View} from 'react-native';
+import {Label,Icon,useTheme} from './Atoms';
+import {Action,Field,Section,Surface,ToggleRow} from '../design-system/components';
+import {typography} from '../theme';
 import type {GeminiConfigurationState} from '../content/geminiIntegration';
 
-const AI_STUDIO_URL='https://aistudio.google.com/apikey';
-const DOCS_URL='https://ai.google.dev/gemini-api/docs/api-key';
-
-export function GeminiSettings({
-  state,
-  aiKey,
-  keyEdited,
-  onChangeKey,
-  onSaveKey,
-  onRemoveKey,
-  aiEnabled,
-  onToggleEnabled,
-  reducedOverride,
-}:{
-  state:GeminiConfigurationState;
-  aiKey:string;
-  keyEdited:boolean;
-  onChangeKey:(val:string)=>void;
-  onSaveKey:()=>void;
-  onRemoveKey:()=>void;
-  aiEnabled:boolean;
-  onToggleEnabled:(enabled:boolean)=>void;
-  reducedOverride?:boolean;
+export function GeminiSettings({state,aiKey,keyEdited,onChangeKey,onSaveKey,onRemoveKey,aiEnabled,onToggleEnabled,online=true,onRetryConfiguration}:{
+ state:GeminiConfigurationState;aiKey:string;keyEdited:boolean;onChangeKey:(value:string)=>void;onSaveKey:()=>void;onRemoveKey:()=>void;aiEnabled:boolean;onToggleEnabled:(value:boolean)=>void;online?:boolean;onRetryConfiguration?:()=>void;reducedOverride?:boolean;
 }){
-  const {palette}=useTheme(),systemReduced=useMotionPreference(),noMotion=reducedOverride??systemReduced;
-  const [guideOpen,setGuideOpen]=useState(false);
-  const [linkError,setLinkError]=useState('');
-  const openLink=(url:string)=>{setLinkError('');void Linking.openURL(url).catch(()=>setLinkError('Impossibile aprire il collegamento. Riprova con un browser disponibile.'))};
-
-  const openAiStudio=()=>{
-    openLink(AI_STUDIO_URL);
-  };
-
-  const openDocs=()=>{
-    openLink(DOCS_URL);
-  };
-
-  // State badge presentation
-  const badgeConfig=state.busy
-    ? {icon:'progress-clock' as const,label:'Aggiornamento in corso…',color:palette.muted}
-    : state.status==='error'
-    ? {icon:'alert-circle-outline' as const,label:'Problema di configurazione',color:palette.accent}
-    : state.configured
-    ? state.enabled
-      ? {icon:'check-circle-outline' as const,label:'Configurato e attivo',color:palette.accent}
-      : {icon:'pause-circle-outline' as const,label:'Configurato (disattivato)',color:palette.muted}
-    : {icon:'information-outline' as const,label:'Non configurato',color:palette.muted};
-
-  return <View style={styles.container}>
-    {/* Header */}
-    <View style={styles.header}>
-      <Label accessibilityRole="header" strong style={styles.sectionTitle}>Integrazione Gemini</Label>
-      <Label muted style={styles.sectionSubtitle}>
-        Usa Gemini per rielaborare i testi e migliorare la classificazione degli articoli. Richiede una chiave API personale.
-      </Label>
-      <Label muted style={styles.sectionSubtitle}>Facoltativa: usa un progetto con quota gratuita e fatturazione disattivata. Synapse non verifica il piano del progetto e non attiva la fatturazione. Senza chiave o quota resta disponibile Wikipedia.</Label>
-    </View>
-
-    {/* Status Card */}
-    <View style={[styles.card,{backgroundColor:palette.surface,borderColor:palette.line}]}>
-      <View style={styles.statusRow}>
-        <Icon name={badgeConfig.icon} size={22} color={badgeConfig.color}/>
-        <Label strong style={{fontSize:16,flex:1,color:palette.ink}}>{badgeConfig.label}</Label>
-      </View>
-      <Label muted accessibilityLiveRegion="polite" style={styles.statusMessage}>
-        {state.message}
-      </Label>
-    </View>
-
-    {/* Toggle Switch */}
-    <Pressable
-      accessibilityRole="switch"
-      accessibilityState={{checked:aiEnabled}}
-      accessibilityLabel="Attiva o disattiva l'integrazione con Gemini"
-      onPress={()=>onToggleEnabled(!aiEnabled)}
-      style={[styles.menuRow,{borderColor:palette.line}]}
-    >
-      <View style={{flex:1,gap:2}}>
-        <Label strong style={{fontSize:18}}>Abilita Gemini</Label>
-        <Label muted style={{fontSize:14}}>Rielaborazione testi e classificazione semantica</Label>
-      </View>
-      <Icon name={aiEnabled?'toggle-switch':'toggle-switch-off-outline'} size={42} color={aiEnabled?palette.accent:palette.muted}/>
-    </Pressable>
-
-    {/* Key Input Section */}
-    <View style={styles.inputSection}>
-      <Label strong style={{fontSize:16,marginBottom:4}}>
-        {state.configured?'Sostituisci la chiave API':'Chiave API personale'}
-      </Label>
-      <TextInput
-        accessibilityLabel="Chiave API Gemini personale"
-        secureTextEntry
-        autoComplete="off"
-        textContentType="none"
-        autoCapitalize="none"
-        autoCorrect={false}
-        value={aiKey}
-        onChangeText={onChangeKey}
-        placeholder={state.configured?'Chiave memorizzata (inserisci per sostituire)':'Incolla qui la chiave (es. AIza…)'}
-        placeholderTextColor={palette.muted}
-        style={[styles.input,{color:palette.ink,backgroundColor:palette.surface,borderColor:palette.line}]}
-      />
-
-      <View style={styles.actionRow}>
-        <Button
-          reduced={noMotion}
-          disabled={!keyEdited||!aiKey.trim()||state.busy}
-          label="Salva chiave API"
-          onPress={onSaveKey}
-          style={[styles.actionBtn,{backgroundColor:keyEdited&&aiKey.trim()&&!state.busy?palette.active:palette.surface,opacity:keyEdited&&aiKey.trim()&&!state.busy?1:0.5}]}
-        >
-          <Label strong style={{color:palette.ink}}>Salva chiave</Label>
-        </Button>
-
-        {state.configured&&(
-          <Button
-            reduced={noMotion}
-            disabled={state.busy}
-            label="Rimuovi chiave Gemini"
-            onPress={onRemoveKey}
-            style={[styles.actionBtn,{backgroundColor:palette.surface}]}
-          >
-            <View style={{flexDirection:'row',alignItems:'center',gap:6}}>
-              <Icon name="delete-outline" size={18} color={palette.accent}/>
-              <Label strong style={{color:palette.accent}}>Rimuovi</Label>
-            </View>
-          </Button>
-        )}
-      </View>
-    </View>
-
-    {/* Helpful Links */}
-    <View style={[styles.linksRow,{borderColor:palette.line}]}>
-      <Pressable
-        accessibilityRole="link"
-        accessibilityLabel="Ottieni una chiave API su Google AI Studio"
-        onPress={openAiStudio}
-        style={styles.linkItem}
-      >
-        <Icon name="open-in-new" size={18} color={palette.accent}/>
-        <Label strong style={{color:palette.accent,fontSize:15}}>Ottieni una chiave API</Label>
-      </Pressable>
-
-      <Pressable
-        accessibilityRole="button"
-        accessibilityState={{expanded:guideOpen}}
-        accessibilityLabel="Mostra o nascondi la guida alla configurazione"
-        onPress={()=>setGuideOpen(!guideOpen)}
-        style={styles.linkItem}
-      >
-        <Icon name={guideOpen?'chevron-up':'help-circle-outline'} size={18} color={palette.ink}/>
-        <Label strong style={{color:palette.ink,fontSize:15}}>
-          {guideOpen?'Chiudi guida':'Come configurarla'}
-        </Label>
-      </Pressable>
-    </View>
-    {!!linkError&&<Label muted accessibilityLiveRegion="polite" style={styles.statusMessage}>{linkError}</Label>}
-
-    {/* Guide Accordion */}
-    {guideOpen&&(
-      <Animated.View
-        entering={noMotion?undefined:FadeIn.duration(200)}
-        style={[styles.guideBox,{backgroundColor:palette.surface,borderColor:palette.line}]}
-      >
-        <Label strong style={{fontSize:16,marginBottom:8}}>Guida rapida alla configurazione</Label>
-
-        <View style={styles.guideStep}>
-          <Label strong style={{color:palette.accent,fontSize:14}}>1.</Label>
-          <Label style={styles.guideStepText}>
-            Apri Google AI Studio all'indirizzo <Label strong style={{color:palette.accent}} onPress={openAiStudio}>aistudio.google.com/apikey</Label> con il tuo account Google.
-          </Label>
-        </View>
-
-        <View style={styles.guideStep}>
-          <Label strong style={{color:palette.accent,fontSize:14}}>2.</Label>
-          <Label style={styles.guideStepText}>
-            Seleziona o crea un progetto con piano gratuito e fatturazione disattivata, poi tocca "Create API key" (Crea chiave API). Non scegliere "Set up billing" e non collegare un account di fatturazione. Usa una chiave dedicata a Gemini.
-          </Label>
-        </View>
-
-        <View style={styles.guideStep}>
-          <Label strong style={{color:palette.accent,fontSize:14}}>3.</Label>
-          <Label style={styles.guideStepText}>
-            Copia la chiave generata e incollala nel campo qui sopra in Synapse, poi tocca "Salva chiave".
-          </Label>
-        </View>
-
-        <View style={[styles.guideDisclaimer,{borderColor:palette.line}]}>
-          <Label muted style={{fontSize:13,lineHeight:18}}>
-            • <Label strong style={{fontSize:13}}>Facoltativa</Label>: l'integrazione è del tutto opzionale. L'applicazione funziona perfettamente anche senza Gemini consultando Wikipedia.
-          </Label>
-          <Label muted style={{fontSize:13,lineHeight:18}}>
-            • <Label strong style={{fontSize:13}}>Cosa viene inviato</Label>: titolo, testo e metadati enciclopedici necessari alla rielaborazione o classificazione. Salvataggi, cronologia di lettura e profilo personale restano sul telefono.
-          </Label>
-          <Label muted style={{fontSize:13,lineHeight:18}}>
-            • <Label strong style={{fontSize:13}}>Limiti e disponibilità</Label>: dipendono esclusivamente dal servizio di Google. Un abbonamento consumer (come Google One) non garantisce quota API per gli sviluppatori, e la quota gratuita non è illimitata.
-          </Label>
-        </View>
-
-        <Pressable accessibilityRole="link" accessibilityLabel="Documentazione ufficiale chiavi API Gemini" onPress={openDocs} style={{flexDirection:'row',alignItems:'center',gap:6,marginTop:8,minHeight:48}}>
-          <Icon name="open-in-new" size={16} color={palette.muted}/>
-          <Label muted style={{fontSize:13,textDecorationLine:'underline'}}>Documentazione ufficiale chiavi API Gemini</Label>
-        </Pressable>
-      </Animated.View>
-    )}
-  </View>;
+ const {palette}=useTheme();
+ const [guide,setGuide]=useState(false),[privacy,setPrivacy]=useState(false),[replace,setReplace]=useState(false),[linkError,setLinkError]=useState('');
+ useEffect(()=>{if(!keyEdited)setReplace(false)},[keyEdited]);
+ const open=(url:string)=>{setLinkError('');void Linking.openURL(url).catch(()=>setLinkError('Impossibile aprire il collegamento. Controlla che sia disponibile un browser.'))};
+ const link=(title:string,url:string)=><Pressable accessibilityRole="link" accessibilityLabel={title} onPress={()=>open(url)} style={{minHeight:48,justifyContent:'center'}}><Label strong style={{color:palette.accent,fontSize:15}}>{title} ↗</Label></Pressable>;
+ const disclosure=(title:string,value:boolean,set:(value:boolean)=>void)=><Pressable accessibilityRole="button" accessibilityLabel={title} accessibilityState={{expanded:value}} onPress={()=>set(!value)} style={{minHeight:56,flexDirection:'row',alignItems:'center',gap:12}}><Label strong style={{flex:1,fontSize:16}}>{title}</Label><Icon name={value?'chevron-up':'chevron-down'} size={20}/></Pressable>;
+ return <View>
+  <Label muted style={[typography.body,{marginBottom:24}]}>Rielabora i testi e aiuta a classificare gli articoli. È facoltativo: Lume funziona anche senza Gemini.</Label>
+  <Section title="Stato"><Surface style={{padding:16,gap:8}}><View style={{flexDirection:'row',gap:10,alignItems:'center'}}><Icon name={state.status==='error'?'alert-circle-outline':state.configured?'check-circle-outline':'information-outline'} color={palette.accent}/><Label strong style={[typography.title,{flex:1}]}>{state.busy?'Aggiornamento in corso…':state.status==='error'?'Configurazione da controllare':!state.configured?'Da configurare':aiEnabled?'Attivo':'Disattivato'}</Label></View><Label muted accessibilityLiveRegion="polite" style={typography.detail}>{state.message}</Label>{state.status==='error'&&onRetryConfiguration&&<Action title="Rileggi configurazione" secondary onPress={onRetryConfiguration}/>}</Surface></Section>
+  {!online&&<Surface style={{padding:16,marginBottom:24}}><Label strong>Sei offline</Label><Label muted style={typography.detail}>Puoi gestire la chiave sul telefono. Gemini tornerà disponibile quando sarai connesso.</Label></Surface>}
+  {state.configured&&<Section title="Utilizzo"><Surface><ToggleRow title="Abilita Gemini" description="Rielaborazione dei testi e classificazione degli articoli." value={aiEnabled} disabled={state.busy} onChange={onToggleEnabled}/></Surface></Section>}
+  <Section title="Chiave personale"><Surface style={{padding:16,gap:12}}>
+   {(!state.configured||replace)?<><Label strong>{state.configured?'Sostituisci la chiave API':'Configura Gemini'}</Label><Field accessibilityLabel="Chiave API Gemini personale" secureTextEntry autoComplete="off" textContentType="none" autoCapitalize="none" autoCorrect={false} editable={!state.busy} value={aiKey} onChangeText={onChangeKey} placeholder="Incolla la chiave API"/><Label muted style={typography.detail}>Usa un progetto con quota gratuita e fatturazione disattivata. Lume non verifica il piano né attiva la fatturazione.</Label><Action title={state.busy?'Salvataggio…':'Salva chiave'} disabled={!keyEdited||!aiKey.trim()||state.busy} onPress={onSaveKey}/>{replace&&<Action title="Annulla sostituzione" secondary disabled={state.busy} onPress={()=>{onChangeKey('');setReplace(false)}}/>}</>:<><Label muted style={typography.detail}>La chiave è memorizzata sul dispositivo e non viene mostrata.</Label><Action title="Sostituisci chiave" secondary disabled={state.busy} onPress={()=>setReplace(true)}/><Action title="Rimuovi chiave" secondary disabled={state.busy} onPress={()=>Alert.alert('Rimuovere la chiave?','Gemini verrà disattivato. Gli articoli di Wikipedia restano disponibili.',[{text:'Annulla',style:'cancel'},{text:'Rimuovi',style:'destructive',onPress:onRemoveKey}])}/></>}
+   {state.status==='error'&&<Label accessibilityLiveRegion="polite" style={typography.detail}>{state.message}</Label>}
+  </Surface></Section>
+  <Section title="Aiuto"><Surface style={{paddingHorizontal:16,paddingBottom:8}}>
+   {link('Ottieni una chiave API','https://aistudio.google.com/apikey')}
+   {disclosure('Come configurarla',guide,setGuide)}
+   {guide&&<View style={{gap:12,paddingBottom:12}}><Label style={typography.detail}>1. Apri Google AI Studio con il tuo account Google.</Label><Label style={typography.detail}>2. Seleziona un progetto con quota gratuita e fatturazione disattivata, poi scegli “Create API key”. Non attivare “Set up billing”.</Label><Label style={typography.detail}>3. Incolla qui la chiave e tocca “Salva chiave”.</Label>{link('Documentazione ufficiale','https://ai.google.dev/gemini-api/docs/api-key')}</View>}
+   {disclosure('Privacy, limiti e disponibilità',privacy,setPrivacy)}
+   {privacy&&<View style={{gap:12,paddingBottom:16}}><Label style={typography.detail}>A Google vengono inviati titolo, testo e metadati enciclopedici necessari. Profilo personale, salvataggi e cronologia restano sul telefono.</Label><Label style={typography.detail}>La quota gratuita non è illimitata. Un abbonamento consumer Google non garantisce quota per le API. Se il servizio non risponde o la quota termina, rimane disponibile il testo originale di Wikipedia.</Label></View>}
+   {!!linkError&&<Label accessibilityLiveRegion="polite" style={[typography.detail,{paddingVertical:12}]}>{linkError}</Label>}
+  </Surface></Section>
+ </View>;
 }
-
-const styles=StyleSheet.create({
-  container:{gap:16,paddingVertical:12},
-  header:{gap:6,marginBottom:4},
-  sectionTitle:{fontSize:20,lineHeight:24},
-  sectionSubtitle:{fontSize:15,lineHeight:21},
-  card:{padding:16,borderRadius:18,borderWidth:StyleSheet.hairlineWidth,gap:8},
-  statusRow:{flexDirection:'row',alignItems:'center',gap:10},
-  statusMessage:{fontSize:14,lineHeight:20},
-  menuRow:{minHeight:64,flexDirection:'row',alignItems:'center',justifyContent:'space-between',borderBottomWidth:StyleSheet.hairlineWidth,paddingVertical:8},
-  inputSection:{gap:8,marginTop:8},
-  input:{fontFamily:'SourceSans3_400Regular',fontSize:16,paddingHorizontal:16,paddingVertical:14,borderRadius:16,borderWidth:StyleSheet.hairlineWidth},
-  actionRow:{flexDirection:'row',flexWrap:'wrap',gap:12,alignItems:'center',marginTop:4},
-  actionBtn:{paddingHorizontal:18,paddingVertical:10,borderRadius:20,minHeight:44,justifyContent:'center',alignItems:'center'},
-  linksRow:{flexDirection:'row',flexWrap:'wrap',gap:16,paddingVertical:12,borderTopWidth:StyleSheet.hairlineWidth,borderBottomWidth:StyleSheet.hairlineWidth},
-  linkItem:{flexDirection:'row',alignItems:'center',gap:6,minHeight:48},
-  guideBox:{padding:16,borderRadius:18,borderWidth:StyleSheet.hairlineWidth,gap:12,marginTop:4},
-  guideStep:{flexDirection:'row',gap:8,alignItems:'flex-start'},
-  guideStepText:{flex:1,fontSize:14,lineHeight:20},
-  guideDisclaimer:{paddingTop:10,borderTopWidth:StyleSheet.hairlineWidth,gap:6},
-});

@@ -1,4 +1,5 @@
 import type {Article} from './types';
+import {reserveArticleBytes} from './reserve';
 import {identity,seenArticle,type Learning} from './recommendations';
 import {previewOnly,RESERVE_TARGET,PREVIEW_BYTES,RESERVE_BYTES} from './reserve';
 import {articleBytes} from './cache';
@@ -52,7 +53,7 @@ export function offlineReserve(rows:Article[],learning:Learning,served:Set<strin
  usable.sort((a,b)=>Number(repeatedArticle(a,learning,served))-Number(repeatedArticle(b,learning,served))||Number(avoid.includes(a.id))-Number(avoid.includes(b.id))||b.fetchedAt-a.fetchedAt);
  const ordered:Article[]=[];
  while(usable.length){const tier=repeatedArticle(usable[0],learning,served);let index=usable.findIndex(a=>repeatedArticle(a,learning,served)===tier&&!avoid.includes(a.id)&&a.category!==ordered.at(-1)?.category);if(index<0)index=0;ordered.push(...usable.splice(index,1))}
- return ordered.filter(a=>{const key=identity(a),size=articleBytes(previewOnly(a));if(ids.size>=RESERVE_TARGET||ids.has(a.id)||sources.has(key)||size>PREVIEW_BYTES||bytes+size>RESERVE_BYTES)return false;ids.add(a.id);sources.add(key);bytes+=size;return true});
+ return ordered.filter(a=>{const key=identity(a),size=reserveArticleBytes(a);if(ids.size>=RESERVE_TARGET||ids.has(a.id)||sources.has(key)||size>PREVIEW_BYTES||bytes+size>RESERVE_BYTES)return false;ids.add(a.id);sources.add(key);bytes+=size;return true});
 }
 export function offlineContinuation(current:Article[],position:number,local:Article[],learning:Learning,served:Set<string>){
  if(!current.length)return offlineReserve(local,learning,served);

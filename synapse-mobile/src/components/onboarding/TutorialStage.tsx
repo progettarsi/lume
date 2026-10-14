@@ -1,3 +1,4 @@
+import {surfaceTones} from '../../theme';
 import React,{useLayoutEffect,useRef,useState} from 'react';
 import {Modal,StyleSheet,View,useWindowDimensions} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
@@ -19,7 +20,7 @@ const articles:Article[]=DEMO_CARDS.map((a,i)=>({id:a.id,title:a.title,category:
 export interface TutorialStageProps{binding:OnboardingBinding;motion:MotionEnvironment;onIndex?:(index:number)=>void;commandedPage?:{index:number;revision:number}}
 export function TutorialStage({binding:b,motion,onIndex,commandedPage}:TutorialStageProps){
  const theme=useTheme(),{palette}=theme,insets=useSafeAreaInsets(),window=useWindowDimensions();
- const paper=palette.paper==='#1d1b19'?'#272320':'#f1ede6',saved=useRef(new Set<string>()),feed=useRef<TutorialFeedHandle>(null);
+ const paper=surfaceTones(palette).snippet,saved=useRef(new Set<string>()),feed=useRef<TutorialFeedHandle>(null);
  const [reader,setReader]=useState<{article:Article;origin:Origin}|null>(null),[readerOpen,setReaderOpen]=useState(false),[readerSize,setReaderSize]=useState({width:window.width,height:window.height});
  const [activeIndex,setActiveIndex]=useState(Math.min(2,b.tutorialIndex)),navigation=useRef(b.tutorialNavigationRevision);
  useLayoutEffect(()=>{if(navigation.current!==b.tutorialNavigationRevision){navigation.current=b.tutorialNavigationRevision;feed.current?.goTo(Math.min(2,b.tutorialIndex))}},[b.tutorialNavigationRevision,b.tutorialIndex]);

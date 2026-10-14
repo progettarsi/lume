@@ -6,7 +6,7 @@ type Signal={id:string;category:string;tokens:string[];title:string;weight:numbe
 type Bookmark=Signal&{on:boolean};
 export type Learning={seen:string[];categories:Record<string,number>;topics:Record<string,number>;updatedAt:number;version?:number;categoryVersion?:number;bookmarks?:Record<string,Bookmark>;opens?:Record<string,number>;recent?:Signal[];sequence?:number;initialInterests?:{version:1;ids:string[];sequence:number}};
 export const emptyLearning=():Learning=>({seen:[],categories:{},topics:{},updatedAt:Date.now(),version:3,bookmarks:{},opens:{},recent:[],sequence:0});
-export function identity(a:Article):string{try{return decodeURIComponent(new URL(a.source).pathname).replaceAll('_',' ').toLocaleLowerCase('it')}catch{return a.id}}
+export function identity(a:Article):string{try{const url=new URL(a.source),path=decodeURIComponent(url.pathname).replaceAll('_',' ').toLocaleLowerCase('it');return url.hostname==='it.wikipedia.org'?path:url.hostname.toLowerCase()+path}catch{return a.id}}
 export function seenArticle(a:Article,learning:Learning){return !!a.readAt||learning.seen.includes(a.id)||learning.seen.includes(identity(a))}
 const stop=new Set('della delle degli nella nelle dello dallo dalla storia effetto questo questa questi queste quello quella hanno essere viene vengono anche quando molto delle della attraverso quindi permette esempio infatti primo prima parte forma mondo anni come sono sulla sulle degli quale quali oltre altri altre tutti tutte stato stata stati state della delle'.split(' '));
 export function interestTerms(a:Article){

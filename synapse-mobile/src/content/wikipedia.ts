@@ -1,15 +1,16 @@
+import {makeEdition} from './edition';
 import { CATEGORIES } from './categories';
 import { generalAudienceScore, makePreview, paragraphsFromExtract } from './text';
 import type { Article } from './types';
 import {PERSONALIZATION} from './personalization';
-import {chooseCategory,discoveryAnchor,rankRecommendations,emptyLearning,type Learning} from './recommendations';
+import {identity,chooseCategory,discoveryAnchor,rankRecommendations,emptyLearning,type Learning} from './recommendations';
 import {paragraphsFromHtml} from './html';
 import {discoveryCandidates} from './editorial';
 import {classifyLocal} from './classification';
 declare const __DEV__:boolean;
 const ENDPOINT='https://it.wikipedia.org/w/api.php';
 type Page={pageid:number;title:string;extract?:string;fullurl?:string;revisions?:{revid:number}[];missing?:boolean;pageprops?:Record<string,string>;categories?:{title:string}[]};
-type Response={query?:{pages?:Page[]};parse?:{text:string;revid?:number;properties?:{name:string;value:string}[]|Record<string,string>};continue?:Record<string,string>;error?:{code:string;info:string}};
+type Response={query?:{pages?:Page[]};parse?:{pageid?:number;title?:string;text:string;revid?:number;properties?:{name:string;value:string}[]|Record<string,string>};continue?:Record<string,string>;error?:{code:string;info:string}};
 export class WikiError extends Error { constructor(message:string,public kind:'network'|'limit'|'content'='network',public retryAfterMs=0,public recoverable=true,public status?:number){super(message)} }
 export function retryDelay(value:string|null,now=Date.now()){const seconds=Number(value);return value&&Number.isFinite(seconds)?Math.max(0,seconds*1000):Math.max(0,Date.parse(value||'')-now)||1000}
 export class Wikipedia {
@@ -19,11 +20,11 @@ export class Wikipedia {
   private linkIndex=new Map<string,number>();
   private serviceAfter=0;private serviceKind:'network'|'limit'='limit';
   private shuffledSeeds=new Map(CATEGORIES.map(c=>[c.id,c.seeds.map(s=>({s,n:Math.random()})).sort((a,b)=>a.n-b.n).map(r=>r.s)]));
-  constructor(private fetcher:typeof fetch=globalThis.fetch.bind(globalThis)){}
+  constructor(private fetcher:typeof fetch=globalThis.fetch.bind(globalThis),private endpoint=ENDPOINT){}
   async request(params:Record<string,string>, signal?:AbortSignal,attempts=2):Promise<Response>{
     if(signal?.aborted)throw signal.reason;
     if(Date.now()<this.serviceAfter)throw new WikiError('Il servizio richiede una pausa. Riprova tra poco.',this.serviceKind,this.serviceAfter-Date.now());
-    const url=new URL(ENDPOINT);Object.entries({format:'json',formatversion:'2',origin:'*',...params}).forEach(([k,v])=>url.searchParams.set(k,v));
+    const url=new URL(this.endpoint);Object.entries({format:'json',formatversion:'2',origin:'*',...params}).forEach(([k,v])=>url.searchParams.set(k,v));
     for(let attempt=0;attempt<attempts;attempt++){
       if(signal?.aborted)throw signal.reason||new Error('Richiesta annullata');
       const controller=new AbortController();
@@ -31,7 +32,7 @@ export class Wikipedia {
       const timeout=setTimeout(()=>controller.abort(),10000);
       let retrySeconds=0;
       try{
-      const response=await this.fetcher(url.toString(),{signal:controller.signal,headers:{'User-Agent':'Synapse/0.1.3 (personal educational reader; app.synapse.reader) ReactNative/0.86','Api-User-Agent':'Synapse/0.1.3 (personal educational reader; app.synapse.reader)','Accept':'application/json'}});
+      const response=await this.fetcher(url.toString(),{signal:controller.signal,headers:{'User-Agent':'Lume/0.2.0 (personal educational reader; app.synapse.reader) ReactNative/0.86','Api-User-Agent':'Lume/0.2.0 (personal educational reader; app.synapse.reader)','Accept':'application/json'}});
       if(response.status===429||response.status===503){
         const delay=retryDelay(response.headers.get('Retry-After'));
         if(response.status===429){this.serviceAfter=Date.now()+delay;this.serviceKind='limit';throw new WikiError('Il servizio richiede una pausa. Riprova tra poco.','limit',delay)}
@@ -122,6 +123,21 @@ export class Wikipedia {
       if(signal?.aborted)throw signal.reason||new Error('Richiesta annullata');
     }
     return output.slice(0,limit);
+  }
+  async discovery(categoryId:string,exclude:Set<string>,signal:AbortSignal,learning:Learning=emptyLearning()):Promise<Article[]>{
+    const category=CATEGORIES.find(c=>c.id===(categoryId==='all'?chooseCategory(learning):categoryId))||CATEGORIES[0];
+    const titles=this.shuffledSeeds.get(category.id)||category.seeds;
+    const title=titles.find(t=>!this.usedSeeds.has('full:'+t));if(!title)return [];
+    const data=await this.request({action:'parse',page:title,prop:'text|revid|properties',redirects:'1'},signal,1),p=data.parse;
+    if(!p?.pageid||!p.text)return [];
+    this.usedSeeds.add('full:'+title);
+    if(Array.isArray(p.properties)?p.properties.some(x=>x.name==='disambiguation'):p.properties&&'disambiguation' in p.properties)return [];
+    const sections:{text:string;section:string}[]=[];
+    const url='https://it.wikipedia.org/wiki/'+encodeURIComponent(p.title||title),paragraphs=paragraphsFromHtml(p.text,undefined,(text,section)=>sections.push({text,section}));
+    const a=makeEdition({id:'wiki:'+p.pageid,title:p.title||title,category:'general',source:url,revision:p.revid,paragraphs,preview:[],complete:true,textVersion:3,fetchedAt:Date.now(),provenance:{provider:'wikipedia',title:p.title||title,url,revision:p.revid,section:'Passaggi selezionati dalla voce',license:'https://creativecommons.org/licenses/by-sa/4.0/',attribution:'Wikipedia e suoi contributori'}},true);
+    if(a?.provenance)a.provenance.section=sections.find(s=>s.text.includes(a.preview[0]?.slice(0,60)))?.section||'Introduzione';
+    if(!a||exclude.has(a.id)||exclude.has(identity(a))||generalAudienceScore(a.title,a.preview)<.45)return [];
+    const row=classifyLocal(a);return categoryId==='all'||row.category===categoryId?[row]:[];
   }
   async search(query:string,signal?:AbortSignal):Promise<Article[]>{
     if(!query.trim())return [];

@@ -1,3 +1,4 @@
+import {fontAssets} from '../../src/design-system/fonts';
 // Isolated package: real library, Wikipedia parser, SQLite, Feed and Reader.
 // Controlled transport; no personal data, credentials or phone configuration.
 import React,{useEffect,useRef,useState} from 'react';
@@ -6,9 +7,6 @@ import {registerRootComponent} from 'expo';
 import {GestureHandlerRootView} from 'react-native-gesture-handler';
 import {SafeAreaProvider,useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useFonts} from 'expo-font';
-import {Newsreader_500Medium} from '@expo-google-fonts/newsreader/500Medium';
-import {SourceSans3_400Regular} from '@expo-google-fonts/source-sans-3/400Regular';
-import {SourceSans3_600SemiBold} from '@expo-google-fonts/source-sans-3/600SemiBold';
 import {useSharedValue} from 'react-native-reanimated';
 import {SimplificationError} from '../../src/content/simplifier';
 import {useLibrary} from '../../src/useLibrary';
@@ -22,7 +20,7 @@ import {dark} from '../../src/theme';
 import {getLearning} from '../../src/storage';
 const intro='Le aurore polari sono fenomeni luminosi dell’atmosfera. Le particelle cariche interagiscono con il campo magnetico terrestre e con i gas atmosferici, formando archi di luce che cambiano colore e intensità nel cielo.';
 const tail='Le persone osservano il cielo nelle notti limpide. La luce cambia nel corso della notte, mentre le particelle raggiungono gli strati più alti dell’atmosfera. Lo studio del fenomeno aiuta a comprendere i rapporti tra la Terra e il Sole.';
-function Harness(){const [fonts]=useFonts({Newsreader_500Medium,SourceSans3_400Regular,SourceSans3_600SemiBold});return <GestureHandlerRootView style={{flex:1}}><SafeAreaProvider>{fonts&&<Cases/>}</SafeAreaProvider></GestureHandlerRootView>}
+function Harness(){const [fonts]=useFonts(fontAssets);return <GestureHandlerRootView style={{flex:1}}><SafeAreaProvider>{fonts&&<Cases/>}</SafeAreaProvider></GestureHandlerRootView>}
 function Cases(){
  const w=useWindowDimensions(),insets=useSafeAreaInsets(),paint=useSharedValue(1),frame=useRef<View>(null),transport=useRef({online:false,slow:false,fail:false,next:1000,requests:0,aborted:0,full:0,inflight:0,gens:0,genAbort:0,quota:false});
  const [online,setOnline]=useState(false),[slow,setSlow]=useState(false),[tick,setTick]=useState(0),[settled,setSettled]=useState(0),[foreground,setForeground]=useState(AppState.currentState==='active'),[category,setCategory]=useState('all'),[index,setIndex]=useState(0),[large,setLarge]=useState(false),[reduced,setReduced]=useState(false),[aiEnabled,setAIEnabled]=useState(true),[profileNote,setProfileNote]=useState('');

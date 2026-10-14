@@ -1,10 +1,12 @@
 import type { Article } from './types';
 import {validRevision} from './revision';
+import {isVerified,boundedParagraphs,wordCount} from './edition';
 /** Cached revisions from before the continuation-only contract must never replace the lead. */
 export function hasRevision(article:Article):boolean {
   return validRevision(article);
 }
 export function readerContinuation(article:Article):string[]{
+  if(article.edition){const rest=isVerified(article)?article.edition.continuation:hasRevision(article)?article.simplified!:article.edition.continuation;return boundedParagraphs(rest,Math.max(0,300-wordCount(article.preview.join(' '))))}
   if(article.contentIssue&&!article.complete)return [];
   const available=Math.max(0,1100-article.preview.join(' ').trim().split(/\s+/).filter(Boolean).length);
   return makePreview(hasRevision(article)?article.simplified!:continuation(article.paragraphs,article.preview),available,24,true);

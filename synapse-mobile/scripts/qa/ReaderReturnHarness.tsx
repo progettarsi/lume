@@ -1,3 +1,4 @@
+import {fontAssets} from '../../src/design-system/fonts';
 // Return regression fixture, never imported by the production entry. No personal
 // storage/network/key. Real Reader, ArticleList and return-order controller.
 import React,{useEffect,useRef,useState} from 'react';
@@ -6,9 +7,6 @@ import {registerRootComponent} from 'expo';
 import {GestureHandlerRootView} from 'react-native-gesture-handler';
 import {SafeAreaProvider,useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useFonts} from 'expo-font';
-import {Newsreader_500Medium} from '@expo-google-fonts/newsreader/500Medium';
-import {SourceSans3_400Regular} from '@expo-google-fonts/source-sans-3/400Regular';
-import {SourceSans3_600SemiBold} from '@expo-google-fonts/source-sans-3/600SemiBold';
 import {useSharedValue} from 'react-native-reanimated';
 import {Reader} from '../../src/components/Reader';
 import {ArticleList} from '../../src/components/ArticleList';
@@ -25,7 +23,7 @@ const article:Article={id:'return-qa',title:'Il percorso lungo il fiume',categor
 type Source='Home'|'Ricerca'|'Shuffle'|'Salvati'|'Cronologia';
 function rowsFor(deep:boolean){const count=deep?500:8;return Array.from({length:count},(_,i)=>i===(deep?499:4)?article:{...article,id:`row-${i}`,title:`Scoperta ${i+1}`,saved:true})}
 function Harness(){
- const [fonts]=useFonts({Newsreader_500Medium,SourceSans3_400Regular,SourceSans3_600SemiBold});
+ const [fonts]=useFonts(fontAssets);
  return <GestureHandlerRootView style={{flex:1}}><SafeAreaProvider>{fonts&&<Cases/>}</SafeAreaProvider></GestureHandlerRootView>;
 }
 function Cases(){

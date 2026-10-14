@@ -15,7 +15,7 @@ test('boot retry hydrates saved data and preferences before enabling discovery a
   assert(h.lib.onboardingError);assert.equal(h.lib.onboarding,undefined);const before=JSON.stringify(disk.profile);
   await h.lib.load('all');await h.flush();assert.equal(calls,0);assert.equal(JSON.stringify(disk.profile),before);
   h.repairDisk();await Promise.all([h.lib.retryOnboarding(),h.lib.retryOnboarding()]);await h.flush();
-  assert.equal(h.lib.onboardingError,'');assert(h.lib.onboarding.completed);assert.equal(h.lib.settings.dark,true);assert.equal(h.lib.settings.size,23);assert.equal(h.lib.history.length,1);assert(h.lib.cache.find(a=>a.id===article.id).saved);assert(disk.profile.seen.includes('known'));assert.equal(disk.profile.opens.known,1);
+  assert.equal(h.lib.onboardingError,'');assert(h.lib.onboarding.completed);assert.equal(h.lib.settings.themeMode,'dark');assert.equal(h.lib.settings.size,23);assert.equal(h.lib.history.length,1);assert(h.lib.cache.find(a=>a.id===article.id).saved);assert(disk.profile.seen.includes('known'));assert.equal(disk.profile.opens.known,1);
  }finally{h.dispose()}
 });
 test('SQLite initializes before seed/migrations, resumes, completes atomically and never reopens used installations',async()=>{

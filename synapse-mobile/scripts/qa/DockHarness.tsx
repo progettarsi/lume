@@ -1,12 +1,10 @@
+import {fontAssets} from '../../src/design-system/fonts';
 import {registerRootComponent} from 'expo';
 import {useState,useEffect} from 'react';
 import {View,ScrollView,useWindowDimensions} from 'react-native';
 import {GestureHandlerRootView} from 'react-native-gesture-handler';
 import {useSharedValue} from 'react-native-reanimated';
 import {useFonts} from 'expo-font';
-import {Newsreader_500Medium} from '@expo-google-fonts/newsreader/500Medium';
-import {SourceSans3_400Regular} from '@expo-google-fonts/source-sans-3/400Regular';
-import {SourceSans3_600SemiBold} from '@expo-google-fonts/source-sans-3/600SemiBold';
 import {Dock} from '../../src/components/Dock';
 import {StatusMessage} from '../../src/components/StatusMessage';
 import {Label,Button,ThemeContext} from '../../src/components/Atoms';
@@ -21,7 +19,7 @@ const states:ReaderStatus[]=[
  {kind:'content',message:'Il testo della voce è insufficiente. Puoi consultare la fonte.',action:'source'}
 ];
 function Harness(){
- const [fonts]=useFonts({Newsreader_500Medium,SourceSans3_400Regular,SourceSans3_600SemiBold}),{width}=useWindowDimensions();
+ const [fonts]=useFonts(fontAssets),{width}=useWindowDimensions();
  const [route,setRoute]=useState<'home'|'profile'>('home'),[isDark,setDark]=useState(false),[large,setLarge]=useState(false),[reduced,setReduced]=useState(false),[status,setStatus]=useState(0),[action,setAction]=useState(0);
  const progress=useSharedValue(0),palette=isDark?dark:light;useEffect(()=>{progress.value=isDark?1:0},[isDark]);
  if(!fonts)return <View/>;

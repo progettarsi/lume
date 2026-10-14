@@ -1,12 +1,10 @@
+import {fontAssets} from '../../src/design-system/fonts';
 import {registerRootComponent} from 'expo';
 import {useState} from 'react';
 import {View,useWindowDimensions} from 'react-native';
 import {GestureHandlerRootView} from 'react-native-gesture-handler';
 import {useSharedValue} from 'react-native-reanimated';
 import {useFonts} from 'expo-font';
-import {SourceSans3_400Regular} from '@expo-google-fonts/source-sans-3/400Regular';
-import {SourceSans3_600SemiBold} from '@expo-google-fonts/source-sans-3/600SemiBold';
-import {Newsreader_500Medium} from '@expo-google-fonts/newsreader/500Medium';
 import {Reader} from '../../src/components/Reader';
 import type {Article} from '../../src/content/types';
 import {StatusMessage} from '../../src/components/StatusMessage';
@@ -15,7 +13,7 @@ import {dark} from '../../src/theme';
 const lead='Il sentiero segue la riva tra alberi e prati. Le persone attraversano il ponte e osservano il paesaggio.';
 const fixture:Article={id:'qa:notice-reader',title:'Il sentiero lungo il fiume',source:'https://it.wikipedia.org/wiki/Fiume',category:'science',preview:[lead],paragraphs:[lead,...Array.from({length:6},(_,i)=>`Tratto ${i+1}. ${lead} La luce cambia nel corso della giornata, mentre il rumore dell’acqua accompagna la passeggiata.`)],complete:true,fetchedAt:1,textVersion:3};
 function Harness(){
- const [fonts]=useFonts({SourceSans3_400Regular,SourceSans3_600SemiBold,Newsreader_500Medium}),[revision,setRevision]=useState(0),[waiting,setWaiting]=useState(true),[reduced,setReduced]=useState(false),[actions,setActions]=useState(0),[reader,setReader]=useState(false),[readerOpen,setReaderOpen]=useState(false),progress=useSharedValue(1),{width,height}=useWindowDimensions();
+ const [fonts]=useFonts(fontAssets),[revision,setRevision]=useState(0),[waiting,setWaiting]=useState(true),[reduced,setReduced]=useState(false),[actions,setActions]=useState(0),[reader,setReader]=useState(false),[readerOpen,setReaderOpen]=useState(false),progress=useSharedValue(1),{width,height}=useWindowDimensions();
  if(!fonts)return <View/>;
  return <GestureHandlerRootView style={{flex:1}}><ThemeContext.Provider value={{palette:dark,progress}}><View style={{flex:1,backgroundColor:dark.paper,padding:24,paddingTop:60,gap:16}}>
   <Label strong>Errori · QA isolata, nessuna rete</Label>

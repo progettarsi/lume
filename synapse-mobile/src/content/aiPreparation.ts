@@ -1,4 +1,5 @@
 import type {Article} from './types';
+import {isVerified} from './edition';
 import {validRevision,revisionInput,revisedArticle} from './revision';
 import {continuation} from './text';
 import {SimplificationError} from './simplifier';
@@ -16,15 +17,15 @@ export const emptyAIMetrics=():AIMetrics=>({preparations:0,adoptedPreparations:0
 export function parseAIMetrics(value:string|null):AIMetrics{const clean=emptyAIMetrics();try{const x=JSON.parse(value||'null');for(const k of ['preparations','adoptedPreparations','specStarted','usedInFlight','usedCached','unused','cancelled','failures'] as const)if(Number.isSafeInteger(x?.[k])&&x[k]>=0)clean[k]=x[k];clean.opens=(Array.isArray(x?.opens)?x.opens:[]).filter((s:{classicMs:number;aiMs:number;mode:string})=>s&&Number.isFinite(s.classicMs)&&Number.isFinite(s.aiMs)&&s.classicMs>=0&&s.aiMs>=0&&['cache','inflight','explicit','fallback'].includes(s.mode)).slice(-40).map((s:{classicMs:number;aiMs:number;mode:string})=>({classicMs:s.classicMs,aiMs:s.aiMs,mode:s.mode}));}catch{}return clean}
 type Job={id:string;input:string;abort:AbortController;claimed:boolean;spec:boolean;generated:boolean;epoch:number;original?:Article;full:Promise<Article>;result:Promise<Article|undefined>};
 export class AIPreparation{
- private key='';private enabled=false;private epoch=0;private job?:Job;private starts:number[]=[];
+ private unpublished?:AbortController;private key='';private enabled=false;private epoch=0;private job?:Job;private starts:number[]=[];
  private attempted=new Set<string>();private pauseUntil=0;private blocked=false;private failed=new Map<string,Error>();
  private opening?:{at:number;classic:number;mode:string};
  metrics=emptyAIMetrics();
  constructor(private full:(a:Article,s:AbortSignal)=>Promise<Article>,private generate:(a:Article,key:string,s:AbortSignal)=>Promise<string[]|undefined>,private save:(a:Article)=>Promise<void>,private report:(m:AIMetrics)=>void=()=>{},private now=Date.now){}
  configure(key:string,enabled:boolean){key=key.trim();if(key===this.key&&enabled===this.enabled)return false;this.cancel(true);this.key=key;this.enabled=enabled;this.epoch++;this.attempted.clear();this.failed.clear();this.pauseUntil=0;this.blocked=false;return true}
  available(){return this.enabled&&!!this.key}
- canPrepare(a:Article){this.starts=this.starts.filter(t=>this.now()-t<60000);return this.available()&&!this.job&&!validRevision(a)&&!this.blocked&&this.now()>=this.pauseUntil&&this.starts.length<AI_SPEC_PER_MINUTE&&!this.attempted.has(revisionInput(a))}
- cancel(force=false){const j=this.job;if(j&&(!j.claimed||force)){j.abort.abort();if(j.generated&&!j.claimed){this.metrics.unused++;this.metrics.cancelled++}this.job=undefined;this.emit()}}
+ canPrepare(a:Article){this.starts=this.starts.filter(t=>this.now()-t<60000);return !isVerified(a)&&this.available()&&!this.job&&!this.unpublished&&!validRevision(a)&&!this.blocked&&this.now()>=this.pauseUntil&&this.starts.length<AI_SPEC_PER_MINUTE&&!this.attempted.has(revisionInput(a))}
+ cancel(force=false){this.unpublished?.abort();this.unpublished=undefined;const j=this.job;if(j&&(!j.claimed||force)){j.abort.abort();if(j.generated&&!j.claimed){this.metrics.unused++;this.metrics.cancelled++}this.job=undefined;this.emit()}}
  claim(id:string){const j=this.job;if(j?.id===id&&!j.abort.signal.aborted){if(j.spec&&!j.claimed){this.metrics.adoptedPreparations++;if(j.generated)this.metrics.usedInFlight++;this.emit()}j.claimed=true;return true}this.cancel();return false}
  fullInFlight(a:Article){const j=this.job;if(j?.id===a.id&&!j.abort.signal.aborted){if(JSON.stringify(JSON.parse(j.input)[6])===JSON.stringify(a.preview)&&(!a.complete||revisionInput(a)===(j.original?revisionInput(j.original):j.input)))return j.full;this.cancel(true)}return undefined}
  beginOpen(){this.opening={at:this.now(),classic:0,mode:'explicit'}}
@@ -32,7 +33,18 @@ export class AIPreparation{
  originalReady(){if(this.opening)this.opening.classic=this.now()-this.opening.at}
  finishOpen(mode:string,opening=this.opening){if(this.opening&&opening===this.opening){this.metrics.opens.push({classicMs:this.opening.classic,aiMs:this.now()-this.opening.at,mode});this.metrics.opens=this.metrics.opens.slice(-40);this.opening=undefined;this.emit()}}
  async prepare(a:Article,signal:AbortSignal){if(!this.canPrepare(a)||signal.aborted)return;this.starts.push(this.now());this.attempted.add(revisionInput(a));this.metrics.preparations++;this.emit();return this.start(a,true,signal)}
+
+ /** Uses the same speculative allowance; never saves or changes a published card. */
+ async prepareDiscovery(a:Article,signal:AbortSignal,generate:(a:Article,key:string,s:AbortSignal)=>Promise<Article>){
+  if(!a.complete||!this.canPrepare(a)||signal.aborted)return a;
+  const abort=new AbortController(),epoch=this.epoch;this.unpublished=abort;this.starts.push(this.now());this.attempted.add(revisionInput(a));
+  const cancel=()=>abort.abort();signal.addEventListener('abort',cancel,{once:true});
+  try{const result=await generate(a,this.key,abort.signal);return abort.signal.aborted||epoch!==this.epoch?a:result;}
+  catch(error){if(!abort.signal.aborted){const kind=error instanceof SimplificationError?error.kind:'network';this.pauseUntil=this.now()+(kind==='quota'?600000:60000);if(kind==='auth')this.blocked=true;}return a;}
+  finally{signal.removeEventListener('abort',cancel);if(this.unpublished===abort)this.unpublished=undefined;}
+ }
  async request(a:Article,signal:AbortSignal,retry=false):Promise<Article|undefined>{
+  if(isVerified(a)){this.cancel(true);this.finishOpen('cache');return {...a,simplified:undefined}}
   const opening=this.opening,epoch=this.epoch;if(!this.available()||signal.aborted)return;
   if(validRevision(a)){if(a.simplifiedPrepared){this.metrics.usedCached++;this.metrics.unused=Math.max(0,this.metrics.unused-1);this.emit();a={...a,simplifiedPrepared:false};await this.save(a)}if(signal.aborted||epoch!==this.epoch)return;this.finishOpen('cache',opening);return a}
   const existing=this.job;if(existing?.id===a.id&&revisionInput(await existing.full)!==revisionInput(a)&&this.job===existing)this.cancel(true);if(this.job&&this.job.id!==a.id)this.cancel(true);if(signal.aborted||epoch!==this.epoch||!this.available())return;
@@ -47,9 +59,10 @@ export class AIPreparation{
   j.full=a.complete&&a.textVersion===3?Promise.resolve(a):this.full(a,abort.signal);
   j.result=(async()=>{let input=j.input;try{
    const full=await j.full;if(abort.signal.aborted||epoch!==this.epoch)return;j.original=full;input=revisionInput(full);this.attempted.add(input);if(this.attempted.size>200)this.attempted.delete(this.attempted.values().next().value!);if(abort.signal.aborted||epoch!==this.epoch)return;
+   if(isVerified(full))return {...full,simplified:undefined};
    if(!full.complete)throw new SimplificationError('Approfondimento originale non disponibile.');
    if(validRevision(full))return full;
-   if(!continuation(full.paragraphs,full.preview).length)return full;
+   if(!(full.edition?.continuation??continuation(full.paragraphs,full.preview)).length)return full;
    if(spec&&!j.claimed){j.generated=true;this.metrics.specStarted++;this.emit()}const text=await this.generate(full,key,abort.signal);if(!text||abort.signal.aborted||epoch!==this.epoch)return;
    const revised={...revisedArticle(full,text),simplifiedPrepared:spec&&!j.claimed};await this.save(revised);if(abort.signal.aborted||epoch!==this.epoch)return;
    this.failed.delete(input);this.pauseUntil=0;this.blocked=false;

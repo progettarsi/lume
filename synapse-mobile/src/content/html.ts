@@ -1,9 +1,9 @@
 import {DOMParser} from '@xmldom/xmldom';
 import {paragraphsFromExtract} from './text';
 /** Read semantic paragraphs, never flatten sidebars/tables/captions into article prose. */
-export function paragraphsFromHtml(html:string):string[]{
+export function paragraphsFromHtml(html:string,sections?:RegExp,onParagraph?:(text:string,section:string)=>void):string[]{
   const parser=new DOMParser({errorHandler:{warning:()=>{},error:()=>{},fatalError:()=>{}}});
-  const document=parser.parseFromString(html,'text/html'),lines:string[]=[];
+  const document=parser.parseFromString('<div>'+html+'</div>','text/html'),lines:string[]=[];let section='';
   const ignored=(node:Element)=>/^(?:table|figure|figcaption|ul|ol|dl|sup|script|style|math|nav|aside)$/i.test(node.tagName)||/(?:^|\s)(?:infobox|sinottico|navbox|vertical-navbox|hatnote|dablink|ambox|tmbox|metadata|noprint|mw-editsection|mw-empty-elt|mw-ref|reference|reflist|thumb|toc|gallery|mwe-math-element)(?:\s|$)/i.test(node.getAttribute('class')||'');
   const text=(node:Node):string=>{
     if(node.nodeType===3)return node.nodeValue||'';
@@ -15,11 +15,12 @@ export function paragraphsFromHtml(html:string):string[]{
   const walk=(node:Node)=>{
     if(node.nodeType===1){const el=node as Element;if(ignored(el))return;
       const tag=el.tagName.toLowerCase();
-      if(/^h[2-6]$/.test(tag)){const marks='='.repeat(Number(tag[1]));lines.push(`${marks} ${text(el).trim()} ${marks}`);return}
+      if(/^h[2-6]$/.test(tag)){section=text(el).trim();const marks='='.repeat(Number(tag[1]));lines.push(`${marks} ${text(el).trim()} ${marks}`);return}
       if(tag==='p'){
+        if(sections&&!sections.test(section))return;
         // A missing formula can destroy the meaning of a paragraph: omit the paragraph as a unit.
         if(el.getElementsByTagName('math').length||el.getElementsByTagName('img').length||/mwe-math-element/.test(el.toString()))return;
-        lines.push(text(el).replace(/\s+/g,' ').trim());return;
+        const paragraph=text(el).replace(/\s+/g,' ').trim();onParagraph?.(paragraph,section||'Introduzione');lines.push(paragraph);return;
       }
     }
     for(let child=node.firstChild;child;child=child.nextSibling)walk(child);

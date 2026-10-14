@@ -1,3 +1,4 @@
+import {isDarkPalette} from '../../theme';
 import React from 'react';
 import { View, Image, StyleSheet, useWindowDimensions } from 'react-native';
 import { Label, Button, Icon, useTheme } from '../Atoms';
@@ -21,7 +22,7 @@ export function PreparationStage({ binding: b, motion }: PreparationStageProps) 
   const canEnter = prep.canEnter;
   const canRetry = prep.canRetry;
 
-  const isLight = palette.paper === '#f7f4ee';
+  const isLight = !isDarkPalette(palette);
   const titleSize = width < 360 ? 32 : 36;
   const titleLine = width < 360 ? 39 : 43;
 

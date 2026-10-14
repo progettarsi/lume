@@ -29,7 +29,8 @@ function mountCategoryRail(extraProps={}){
   react.createElement=(type,p)=>jsx(type,p,p.key);
   const reanimated={
     __esModule:true,
-    default:{View:'AnimatedView'},
+    default:{View:'AnimatedView',ScrollView:'ScrollView'},
+    useAnimatedScrollHandler:fn=>e=>fn(e.nativeEvent),
     useAnimatedStyle:(fn)=>fn(),
     useSharedValue:(v)=>react.useRef({value:v}).current,
     withSpring:(v)=>v,
@@ -102,7 +103,8 @@ function mountGeminiSettings(extraProps={}){
   };
   const jsx=(_,p)=>({type:_,props:p});
   const reanimated={
-    default:{View:'AnimatedView'},
+    default:{View:'AnimatedView',ScrollView:'ScrollView'},
+    useAnimatedScrollHandler:fn=>e=>fn(e.nativeEvent),
     FadeIn:{duration:()=>undefined},
     FadeOut:{duration:()=>undefined},
     LinearTransition:{duration:()=>undefined},
@@ -113,12 +115,15 @@ function mountGeminiSettings(extraProps={}){
     module,
     exports:module.exports,
     require:name=>{
+      if(name.endsWith('/theme'))return require('./helpers/theme.cjs');
+      if(name.endsWith('/design-system/components'))return Object.fromEntries(['Action','Field','Section','Surface','ToggleRow'].map(n=>[n,n]));
       if(name==='react')return react;
       if(name==='react/jsx-runtime')return {jsx,jsxs:jsx};
       if(name==='react-native')return {
         Pressable:'Pressable',
         View:'View',
         TextInput:'TextInput',
+        Alert:{alert:(title,message,buttons)=>calls.push({type:'alert',title,message,buttons})},
         StyleSheet:{create:s=>s,hairlineWidth:1},
         Linking:{openURL:async(url)=>{calls.push({type:'openURL',url});if(extraProps.linkFailure)throw Error('No browser')}},
         Platform:{OS:'android'}
@@ -144,7 +149,7 @@ function mountGeminiSettings(extraProps={}){
 
   const findByLabel=(label,node)=>{
     if(!node||typeof node!=='object')return undefined;
-    if(node.props?.accessibilityLabel===label||node.props?.label===label)return node;
+    if(node.props?.accessibilityLabel===label||node.props?.label===label||node.props?.title===label)return node;
     const children=node.props?.children;
     if(Array.isArray(children)){
       for(const c of children){const f=findByLabel(label,c);if(f)return f;}
@@ -176,9 +181,9 @@ test('removed chips leave only inert inaccessible ghosts; rapid restoration cann
  const h=mountCategoryRail(),views=nodes(h.getTree(),n=>n.type==='AnimatedView'&&n.props.onLayout);
  assert.equal(views.length,7);views.forEach((v,i)=>v.props.onLayout({nativeEvent:{layout:{x:i*100,y:0,width:94,height:44}}}));
  const items=categoryRailItems(emptyRegistry(),'all',true,{});h.update({items:items.filter(c=>c.id!=='science')});
- const ghosts=nodes(h.getTree(),n=>n.props?.importantForAccessibility==='no-hide-descendants');assert.equal(ghosts.length,1);assert.equal(ghosts[0].props.pointerEvents,'none');assert(ghosts[0].props.accessibilityElementsHidden);
+ const ghosts=nodes(h.getTree(),n=>n.props?.importantForAccessibility==='no-hide-descendants'&&nodes(n,c=>c.type==='Pressable').length>0);assert.equal(ghosts.length,1);assert.equal(ghosts[0].props.pointerEvents,'none');assert(ghosts[0].props.accessibilityElementsHidden);
  const button=nodes(ghosts[0],n=>n.type==='Pressable')[0];assert(button.props.disabled);assert.equal(button.props.accessible,false);assert.equal(button.props.focusable,false);
- assert(!h.getChips().some(c=>c.props.accessibilityLabel==='Scienza'));h.update({items});h.finishExits();assert(h.getChips().some(c=>c.props.accessibilityLabel==='Scienza'));assert.equal(nodes(h.getTree(),n=>n.props?.importantForAccessibility==='no-hide-descendants').length,0);
+ assert(!h.getChips().some(c=>c.props.accessibilityLabel==='Scienza'));h.update({items});h.finishExits();assert(h.getChips().some(c=>c.props.accessibilityLabel==='Scienza'));assert.equal(nodes(h.getTree(),n=>n.props?.importantForAccessibility==='no-hide-descendants'&&nodes(n,c=>c.type==='Pressable').length>0).length,0);
 });
 test('touch release during drag/momentum cannot settle the registry under the scrolling finger',()=>{
  let ends=0;const h=mountCategoryRail({onInteractionEnd:()=>ends++}),scroll=()=>nodes(h.getTree(),n=>n.type==='ScrollView')[0].props;
@@ -188,8 +193,8 @@ test('touch release during drag/momentum cannot settle the registry under the sc
 test('rail content changes preserve offset when computing the end fade, with text never scaled by touch',()=>{
  const h=mountCategoryRail(),scroll=nodes(h.getTree(),n=>n.type==='ScrollView')[0].props,root=h.getTree().props;
  root.onLayout({nativeEvent:{layout:{width:200}}});scroll.onContentSizeChange(600);scroll.onScroll({nativeEvent:{contentOffset:{x:400}}});h.frame();
- nodes(h.getTree(),n=>n.type==='ScrollView')[0].props.onContentSizeChange(620);h.frame();assert.equal(nodes(h.getTree(),n=>n.type==='LinearGradient').length,1);
- nodes(h.getTree(),n=>n.type==='ScrollView')[0].props.onContentSizeChange(600);h.frame();assert.equal(nodes(h.getTree(),n=>n.type==='LinearGradient').length,0);
+ nodes(h.getTree(),n=>n.type==='ScrollView')[0].props.onContentSizeChange(620);h.frame();assert.equal(nodes(h.getTree(),n=>n.type==='LinearGradient').length,2);
+ nodes(h.getTree(),n=>n.type==='ScrollView')[0].props.onContentSizeChange(600);h.frame();assert.equal(nodes(h.getTree(),n=>n.type==='LinearGradient').length,1);
  assert(!fs.readFileSync('src/components/CategoryRail.tsx','utf8').includes('scale:press.value'));
 });
 
@@ -221,51 +226,32 @@ test('CategoryRail preserves supplied order and IDs across insertion/removal (na
   assert.equal(chips[3].props.accessibilityLabel,'Natura');
 });
 
-test('GeminiSettings displays title, subtitle, status card and guide accordion',()=>{
-  const h=mountGeminiSettings();
-  const tree=h.getTree();
-  assert(JSON.stringify(tree).includes('Integrazione Gemini'));
-  assert(JSON.stringify(tree).includes('Usa Gemini per rielaborare i testi'));
-  assert(JSON.stringify(tree).includes('Inserisci una chiave personale Gemini.'));
 
-  // Toggle guide
-  const guideBtn=h.findByLabel('Mostra o nascondi la guida alla configurazione');
-  assert(guideBtn);
-  guideBtn.props.onPress();
-  const updatedTree=h.getTree();
-  assert(JSON.stringify(updatedTree).includes('Guida rapida alla configurazione'));
-  assert(JSON.stringify(updatedTree).includes('aistudio.google.com/apikey'));
-  assert(JSON.stringify(updatedTree).includes('Facoltativa'));
+test('Gemini starts without an unusable toggle; setup guide expands and collapses',()=>{
+ const h=mountGeminiSettings();assert(JSON.stringify(h.getTree()).includes('Lume funziona anche senza Gemini'));
+ assert(JSON.stringify(h.getTree()).includes('Configura Gemini'));assert(!h.findByLabel('Abilita Gemini'));
+ assert.equal(h.findByLabel('Salva chiave').props.disabled,true);
+ assert(!h.findByLabel('Documentazione ufficiale'));
+ h.findByLabel('Come configurarla').props.onPress();assert(h.findByLabel('Documentazione ufficiale'));
+ h.findByLabel('Come configurarla').props.onPress();assert(!h.findByLabel('Documentazione ufficiale'));
 });
-
-test('GeminiSettings shows configured, active, disabled and remove button without revealing key',()=>{
-  const configuredState={status:'ready',configured:true,enabled:true,busy:false,message:'Gemini configurato. Wikipedia resta disponibile.',actions:['save','remove','disable']};
-  const h=mountGeminiSettings({state:configuredState,aiEnabled:true});
-  const tree=h.getTree();
-  assert(JSON.stringify(tree).includes('Configurato e attivo'));
-  assert(JSON.stringify(tree).includes('Gemini configurato. Wikipedia resta disponibile.'));
-  assert(!JSON.stringify(tree).includes('AIzaSy'));
-
-  const removeBtn=h.findByLabel('Rimuovi chiave Gemini');
-  assert(removeBtn);
-  removeBtn.props.onPress();
-  assert.equal(h.calls.at(-1).type,'removeKey');
+test('stored key is never rendered; replacement and removal are explicit, cancellation is harmless',()=>{
+ const h=mountGeminiSettings({state:{status:'ready',configured:true,enabled:true,busy:false,message:'Configurato',actions:[]},aiEnabled:true});
+ assert(h.findByLabel('Abilita Gemini'));assert(!h.findByLabel('Chiave API Gemini personale'));
+ h.findByLabel('Sostituisci chiave').props.onPress();assert(h.findByLabel('Chiave API Gemini personale').props.secureTextEntry);
+ h.findByLabel('Annulla sostituzione').props.onPress();assert(!h.findByLabel('Chiave API Gemini personale'));assert(!h.calls.some(c=>c.type==='saveKey'));
+ h.findByLabel('Rimuovi chiave').props.onPress();const confirmation=h.calls.at(-1);assert.equal(confirmation.type,'alert');assert(!h.calls.some(c=>c.type==='removeKey'));
+ confirmation.buttons.find(b=>b.style==='destructive').onPress();assert.equal(h.calls.at(-1).type,'removeKey');
 });
-
-test('GeminiSettings links to official AI Studio URL',()=>{
-  const h=mountGeminiSettings();
-  const linkBtn=h.findByLabel('Ottieni una chiave API su Google AI Studio');
-  assert(linkBtn);
-  linkBtn.props.onPress();
-  assert.equal(h.calls.at(-1).type,'openURL');
-  assert.equal(h.calls.at(-1).url,'https://aistudio.google.com/apikey');
+test('Gemini link points to official AI Studio and failures stay in the page',async()=>{
+ const h=mountGeminiSettings({linkFailure:true});h.findByLabel('Ottieni una chiave API').props.onPress();assert.equal(h.calls.at(-1).url,'https://aistudio.google.com/apikey');
+ await new Promise(setImmediate);assert(JSON.stringify(h.getTree()).includes('Impossibile aprire il collegamento'));
 });
-test('Gemini configuration statuses, actions and collapsed guide are accurate without claiming key validation',async()=>{
- const h=mountGeminiSettings();for(const status of ['loading','missing','ready','disabled','saving','error']){
-  const busy=['loading','saving'].includes(status),configured=['ready','disabled','saving'].includes(status);h.update({state:{status,busy,configured,enabled:status==='ready',message:'stato '+status,actions:[]},aiKey:'fixture',keyEdited:true});
-  assert(JSON.stringify(h.getTree()).includes('stato '+status));assert.equal(h.findByLabel('Salva chiave API').props.disabled,busy);
+test('configuration loading, saving and errors never imply service validation and offline is distinct',()=>{
+ const h=mountGeminiSettings();for(const status of ['loading','missing','saving','error']){
+ const busy=['loading','saving'].includes(status);h.update({state:{status,busy,configured:false,enabled:false,message:'stato '+status,actions:[]},aiKey:'fixture',keyEdited:true});
+ assert(JSON.stringify(h.getTree()).includes('stato '+status));assert.equal(h.findByLabel(busy?'Salvataggio…':'Salva chiave').props.disabled,busy);
  }
- h.findByLabel('Mostra o nascondi la guida alla configurazione').props.onPress();assert(h.findByLabel('Documentazione ufficiale chiavi API Gemini'));assert(JSON.stringify(h.getTree()).includes('fatturazione disattivata'));
- h.findByLabel('Mostra o nascondi la guida alla configurazione').props.onPress();assert(!h.findByLabel('Documentazione ufficiale chiavi API Gemini'));
- const failed=mountGeminiSettings({linkFailure:true});failed.findByLabel('Ottieni una chiave API su Google AI Studio').props.onPress();await new Promise(setImmediate);assert(JSON.stringify(failed.getTree()).includes('Impossibile aprire il collegamento'));
+ h.update({online:false});assert(JSON.stringify(h.getTree()).includes('Sei offline'));assert(JSON.stringify(h.getTree()).includes('stato error'));
+ h.update({state:{status:'ready',busy:false,configured:true,enabled:true,message:'Chiave custodita',actions:[]}});assert(!h.findByLabel('Chiave API Gemini personale'));
 });

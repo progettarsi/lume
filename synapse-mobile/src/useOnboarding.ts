@@ -3,6 +3,7 @@ import {Keyboard} from 'react-native';
 import {OnboardingController,initialOnboarding,interestOptions,preparationState,usablePreviewCount,TutorialDemo,type OnboardingStage} from './content/onboarding';
 import {LocalPhoto} from './content/onboardingPhoto';
 import {photoPort,cleanPhotos} from './onboardingPhoto';
+import {ProfileIdentitySession} from './content/profileIdentity';
 import type {useLibrary} from './useLibrary';
 export function useOnboarding(lib:ReturnType<typeof useLibrary>,reduced:boolean,appActive:boolean){
  const [,render]=useReducer(n=>n+1,0),live=useRef(lib);live.current=lib;
@@ -43,6 +44,7 @@ export function useOnboarding(lib:ReturnType<typeof useLibrary>,reduced:boolean,
   toggleInterest:(id:string)=>{if(!controller||controller.busy)return;const ids=controller.draftValue.interests;updateDraft({interests:ids.includes(id)?ids.filter(v=>v!==id):[...ids,id]})},
   reportPhotoUnavailable:()=>{setPhotoUri(undefined);setPhotoError('Questa foto non è più disponibile. Puoi sceglierne un’altra o rimuoverla.')},
   saveProfile:(name:string)=>controller?.profile({name}).catch(()=>{}),
+  createProfileEditor:()=>controller?new ProfileIdentitySession(photoPort,references,identity=>controller.profile(identity),controller.state.profile):undefined,
   replayTutorial:()=>{demo.current=new TutorialDemo();controller?.replay();render()},
   retryFeed:()=>{if(!lib.loading&&preparation.canRetry)void lib.checkConnection().then(()=>lib.retryFeed()).catch(()=>{})},
   devSandbox:!!sandbox.current,

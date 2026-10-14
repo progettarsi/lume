@@ -1,10 +1,13 @@
 import type {Article} from './types';
+import {isVerified} from './edition';
 import {classificationKey} from './classification';
 
 /** Downloaded text cannot overwrite a user's bookmark or downgrade a complete article. */
 export function mergeArticle(previous:Article|undefined,incoming:Article):Article{
+  if(previous&&isVerified(previous)&&!isVerified(incoming))return {...previous,category:incoming.category,topics:incoming.topics??previous.topics,classification:incoming.classification??previous.classification,saved:previous.saved??false,readAt:previous.readAt??incoming.readAt};
+  if(isVerified(incoming))return {...incoming,simplified:undefined,simplifiedInput:undefined,simplifiedVersion:undefined,simplifiedPrepared:undefined,saved:previous?.saved??incoming.saved??false,readAt:previous?.readAt??incoming.readAt};
   const content=previous?.complete&&!incoming.complete
-    ?{paragraphs:previous.paragraphs,preview:previous.preview,complete:true,simplified:previous.simplified,simplifiedVersion:previous.simplifiedVersion,simplifiedPreview:previous.simplifiedPreview,simplifiedInput:previous.simplifiedInput,simplifiedPrepared:previous.simplifiedPrepared,textVersion:previous.textVersion,contentIssue:previous.contentIssue,contentIssueKind:previous.contentIssueKind}:{};
+    ?{edition:previous.edition,provenance:previous.provenance,paragraphs:previous.paragraphs,preview:previous.preview,complete:true,simplified:previous.simplified,simplifiedVersion:previous.simplifiedVersion,simplifiedPreview:previous.simplifiedPreview,simplifiedInput:previous.simplifiedInput,simplifiedPrepared:previous.simplifiedPrepared,textVersion:previous.textVersion,contentIssue:previous.contentIssue,contentIssueKind:previous.contentIssueKind}:{};
   const simplified=incoming.simplified||(previous?.revision===incoming.revision&&previous?.textVersion===incoming.textVersion?previous?.simplified:undefined);
   const revisionMeta=incoming.simplified?{simplifiedVersion:incoming.simplifiedVersion,simplifiedPreview:incoming.simplifiedPreview,simplifiedInput:incoming.simplifiedInput,simplifiedPrepared:incoming.simplifiedPrepared}:simplified?{simplifiedVersion:previous?.simplifiedVersion,simplifiedPreview:previous?.simplifiedPreview,simplifiedInput:previous?.simplifiedInput,simplifiedPrepared:previous?.simplifiedPrepared}:{};
   const semantic=previous?.classification?.provider==='gemini'&&previous.classification.fingerprint===classificationKey(incoming)&&incoming.classification?.provider!=='gemini'?{category:previous.category,topics:previous.topics,classification:previous.classification}:{};

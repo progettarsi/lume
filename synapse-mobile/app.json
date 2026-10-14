@@ -1,8 +1,8 @@
 {
   "expo": {
-    "name": "Synapse",
+    "name": "Lume",
     "slug": "synapse-mobile",
-    "version": "0.1.13",
+    "version": "0.2.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
@@ -27,11 +27,11 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/android-icon-foreground.png",
         "monochromeImage": "./assets/android-icon-monochrome.png",
-        "backgroundColor": "#f7f4ee"
+        "backgroundColor": "#F7F1E3"
       },
       "softwareKeyboardLayoutMode": "resize",
       "predictiveBackGestureEnabled": true,
-      "versionCode": 18
+      "versionCode": 19
     },
     "plugins": [
       "expo-sqlite",

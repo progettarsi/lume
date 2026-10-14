@@ -40,7 +40,7 @@ export function OnboardingTitleSlot({title,titleKey,motion,center=false,minLines
  const [paint,setPaint]=useState({title,count:Array.from(title).length}),[pending,setPending]=useState<{from:string;to:string}|null>(null),[slotWidth,setSlotWidth]=useState(0);
  const [layouts,setLayouts]=useState<Record<string,TitleLine[]>>({});
  const size=width<360?32:36,line=width<360?39:43;
- const layoutKey=(text:string)=>JSON.stringify([text,slotWidth,fontScale,size,center]);
+ const layoutKey=(text:string)=>JSON.stringify([text,slotWidth,fontScale,size,center,text==='Benvenuto!'?'Newsreader_500Medium':'Newsreader_400Regular']);
  const fromLines=pending?(pending.from?layouts[layoutKey(pending.from)]:EMPTY_TITLE_LINES):undefined,toLines=layouts[layoutKey(title)];
  useLayoutEffect(()=>{
   let cancelled=false;
@@ -64,7 +64,7 @@ export function OnboardingTitleSlot({title,titleKey,motion,center=false,minLines
   timer=setTimeout(erase,M.titles.eraseInterval);
   return()=>{cancelled=true;if(timer)clearTimeout(timer)};
  },[pending,fromLines,toLines]);
- const font={fontFamily:'Newsreader_400Regular',fontSize:size,lineHeight:line,letterSpacing:-.35,color:palette.ink,textAlign:center?'center' as const:'left' as const};
+ const fontFor=(text:string)=>({fontFamily:text==='Benvenuto!'?'Newsreader_500Medium':'Newsreader_400Regular',fontSize:size,lineHeight:line,letterSpacing:-.35,color:palette.ink,textAlign:center?'center' as const:'left' as const});
  const measure=(text:string,lines:TitleLine[])=>{onTitleMeasure?.(text,lines);const key=layoutKey(text);setLayouts(old=>JSON.stringify(old[key])===JSON.stringify(lines)?old:{...old,[key]:lines})};
  const hidden={accessible:false,accessibilityElementsHidden:true,importantForAccessibility:'no-hide-descendants' as const};
  const painted=layouts[layoutKey(paint.title)];
@@ -75,8 +75,9 @@ export function OnboardingTitleSlot({title,titleKey,motion,center=false,minLines
  useEffect(()=>{if(painted&&motion.visible)onPaintHeight?.(heightOf(painted))},[painted,paint.title,motion.visible,onPaintHeight]);
  const reserved=Math.max(center?line:line*minLines,heightOf(toLines),pending?heightOf(fromLines):line);
  return <View ref={node} testID="onboarding-title-slot" accessible accessibilityRole="header" accessibilityLabel={title.replace(/\n/g,' ')} onLayout={e=>setSlotWidth(e.nativeEvent.layout.width)} style={{minHeight:reserved,overflow:'hidden'}}>
-  <Text {...hidden} key={layoutKey(title)} onTextLayout={e=>measure(title,e.nativeEvent.lines)} style={[font,{opacity:0}]}>{title}</Text>
-  {pending&&pending.from!==title&&<Text {...hidden} key={layoutKey(pending.from)} onTextLayout={e=>measure(pending.from,e.nativeEvent.lines)} style={[font,{position:'absolute',left:0,right:0,top:0,opacity:0}]}>{pending.from}</Text>}
-  {painted&&revealedTitleLines(paint.title,painted,paint.count).map((row,i)=><Text {...hidden} key={i} numberOfLines={1} style={[font,{textAlign:'left',position:'absolute',left:row.x,top:row.y,width:Math.max(1,row.width+2)}]}>{row.text}</Text>)}
+  <Text {...hidden} key={layoutKey(title)} onTextLayout={e=>measure(title,e.nativeEvent.lines)} style={[fontFor(title),{opacity:0}]}>{title}</Text>
+  {pending&&pending.from!==title&&<Text {...hidden} key={layoutKey(pending.from)} onTextLayout={e=>measure(pending.from,e.nativeEvent.lines)} style={[fontFor(pending.from),{position:'absolute',left:0,right:0,top:0,opacity:0}]}>{pending.from}</Text>}
+  {painted&&revealedTitleLines(paint.title,painted,paint.count).map((row,i)=><Text {...hidden} key={i} numberOfLines={1} style={[fontFor(paint.title),{textAlign:'left',position:'absolute',left:row.x,top:row.y,width:Math.max(1,row.width+2)}]}>{row.text}</Text>)}
  </View>;
 }
+

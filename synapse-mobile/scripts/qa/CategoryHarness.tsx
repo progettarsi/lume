@@ -1,10 +1,10 @@
+import {useFonts} from 'expo-font';
+import {fontAssets} from '../../src/design-system/fonts';
 // Isolated native fixture. This entry is never imported by the product.
 import 'react-native-gesture-handler';
 import React,{useEffect,useRef,useState} from 'react';
 import {ScrollView,View} from 'react-native';
 import {registerRootComponent} from 'expo';
-import {useFonts,Newsreader_400Regular,Newsreader_500Medium} from '@expo-google-fonts/newsreader';
-import {SourceSans3_400Regular,SourceSans3_600SemiBold} from '@expo-google-fonts/source-sans-3';
 import {SafeAreaProvider,SafeAreaView} from 'react-native-safe-area-context';
 import {GestureHandlerRootView} from 'react-native-gesture-handler';
 import {useSharedValue} from 'react-native-reanimated';
@@ -15,7 +15,7 @@ import {GeminiIntegration,type GeminiConfigurationState} from '../../src/content
 import {categoryRailItems,emptyRegistry} from '../../src/content/categoryRegistry';
 import {light,dark} from '../../src/theme';
 function Fixture(){
- const [fonts]=useFonts({Newsreader_400Regular,Newsreader_500Medium,SourceSans3_400Regular,SourceSans3_600SemiBold});
+ const [fonts]=useFonts(fontAssets);
  const [ids,setIds]=useState(['science','technology','history','nature','geography','arts']),[selected,setSelected]=useState('all'),[online,setOnline]=useState(true),[exhausted,setExhausted]=useState(false),[night,setNight]=useState(false),[reduced,setReduced]=useState(false),[log,setLog]=useState('Pronto'),[key,setKey]=useState(''),[fail,setFail]=useState(false);
  const failure=useRef(fail);failure.current=fail;const [state,setState]=useState<GeminiConfigurationState>({status:'loading',configured:false,enabled:false,busy:true,message:'Carichiamo la configurazione…',actions:[]});
  const controller=useRef<GeminiIntegration|null>(null),timers=useRef<ReturnType<typeof setTimeout>[]>([]);

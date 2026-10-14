@@ -1,10 +1,11 @@
+import {motion as motionTokens} from '../theme';
 import {useEffect,useState} from 'react';
 import {View,Pressable,StyleSheet,useWindowDimensions} from 'react-native';
 import Animated,{useSharedValue,useAnimatedStyle,withSpring} from 'react-native-reanimated';
 import {useMotionPreference} from '../useMotionPreference';
 import {Icon,Label,Button,useTheme} from './Atoms';
 type Destination='home'|'profile';
-const motion={stiffness:380,damping:24,mass:.8};
+const motion=motionTokens.dock;
 function visibility(p:number){'worklet';const t=Math.max(0,Math.min(1,p));return t*t*(3-2*t)}
 // One continuous coordinate governs pill, tracks, icons and text. Text is laid
 // out at its final intrinsic width; only its parent clips and its paint fades.

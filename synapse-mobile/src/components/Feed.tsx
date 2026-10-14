@@ -1,3 +1,4 @@
+import {typography} from '../theme';
 import { useRef,useState,useEffect,useLayoutEffect,useCallback,useMemo,memo } from 'react';
 import { View,StyleSheet,type LayoutRectangle } from 'react-native';
 import { Gesture,GestureDetector } from 'react-native-gesture-handler';
@@ -6,6 +7,7 @@ import {useMotionPreference} from '../useMotionPreference';
 import * as Haptics from 'expo-haptics';
 import {LinearGradient} from 'expo-linear-gradient';
 import type { Article } from '../content/types';
+import {isVerified} from '../content/edition';
 import { categoryLabel } from '../content/categories';
 import { heading,spring } from '../theme';
 import { Label,Icon,useTheme } from './Atoms';
@@ -18,7 +20,7 @@ export function FeedBottomFade({height}:{height:number}){
  const {palette}=useTheme();
  return <LinearGradient pointerEvents="none" accessible={false} accessibilityElementsHidden importantForAccessibility="no-hide-descendants" colors={[palette.paper+'00',palette.paper,palette.paper]} locations={[0,Math.min(1,90/height),1]} style={{position:'absolute',bottom:0,left:0,right:0,height}}/>;
 }
-export function Feed({articles,height,size,saved,onOpen,onSave,onIndex,onDirection,onVisible,onEndReached,covered,readerOpen,entry=0,position=0,reducedOverride,cardInsets,showTopFade=false}:{articles:Article[];height:number;size:number;saved:Set<string>;onOpen:OpenArticle;onSave:(a:Article,only?:boolean)=>void;onIndex:(index:number)=>void;onDirection:(hidden:boolean)=>void;onVisible?:(index:number)=>void;onEndReached?:()=>void;covered?:string;readerOpen:boolean;entry?:number;position?:number;reducedOverride?:boolean;cardInsets?:number[];showTopFade?:boolean}){
+export function Feed({articles,height,size,saved,onOpen,onSave,onIndex,onDirection,onVisible,onEndReached,covered,readerOpen,entry=0,position=0,reducedOverride,cardInsets,showTopFade=true}:{articles:Article[];height:number;size:number;saved:Set<string>;onOpen:OpenArticle;onSave:(a:Article,only?:boolean)=>void;onIndex:(index:number)=>void;onDirection:(hidden:boolean)=>void;onVisible?:(index:number)=>void;onEndReached?:()=>void;covered?:string;readerOpen:boolean;entry?:number;position?:number;reducedOverride?:boolean;cardInsets?:number[];showTopFade?:boolean}){
   const {palette}=useTheme(),upward=useSharedValue(0),fadePresence=useSharedValue(0);
   const systemReduced=useMotionPreference(),reduced=reducedOverride??systemReduced;
   const [visible,setVisible]=useState(position),reportedPosition=useRef(position),offset=useSharedValue(position*height),target=useSharedValue(position),anchor=useSharedValue(position),start=useSharedValue(0),direction=useSharedValue(0),lastTranslation=useSharedValue(0),x=useSharedValue(entry);
@@ -75,13 +77,13 @@ export const FeedCard=memo(function FeedCard({article,height,size,saved,hidden,h
   const double=Gesture.Tap().numberOfTaps(2).maxDistance(7).maxDuration(200).maxDelay(280).runOnJS(true).onEnd((_,ok)=>{if(ok){onSave(article,true);setConfirmed(true);feedback.value=reduced?1:withSpring(1,spring);void Haptics.selectionAsync().catch(()=>{})}});
   const single=Gesture.Tap().maxDistance(7).maxDuration(250).runOnJS(true).onBegin(()=>{press.value=reduced?1:withTiming(.985,{duration:80})}).onEnd((_,ok)=>{press.value=reduced?1:withSpring(1,spring);if(ok)onOpen(article,node.current,'home')}).onFinalize(()=>press.value=reduced?1:withSpring(1,spring));
   return <View style={{height:natural?undefined:height,minHeight:natural?height:undefined,paddingHorizontal:24,paddingTop:4}}>
-    <View style={[styles.meta,{opacity:hideMeta?0:1}]}><View style={[styles.badge,{backgroundColor:palette.surface}]}><Icon name="tag-outline" size={17}/><Label style={{fontSize:14}}>{categoryLabel(article.category)}</Label></View><View style={{flex:1}}/><SaveButton gestureManaged saved={saved} onPress={()=>onSave(article)}/></View>
+    <View style={[styles.meta,{opacity:hideMeta?0:1}]}><View style={[styles.badge,{backgroundColor:palette.surface}]}><Icon name="tag-outline" size={17}/><Label style={{fontSize:14}}>{categoryLabel(article.category)}</Label>{isVerified(article)&&<View accessible accessibilityLabel="Selezione Lume, controlli automatici"><Icon name="check-decagram" size={17} color={palette.accent}/></View>}</View><View style={{flex:1}}/><SaveButton gestureManaged saved={saved} onPress={()=>onSave(article)}/></View>
     <GestureDetector gesture={Gesture.Exclusive(double,single)}><Animated.View ref={node} style={[natural?styles.naturalReading:styles.reading,style,{opacity:hidden?0:1}]} accessible accessibilityRole="button" accessibilityLabel={`Approfondisci: ${article.title}`} accessibilityActions={[{name:'activate',label:'Apri articolo'},{name:'longpress',label:'Salva articolo'}]} onAccessibilityAction={e=>e.nativeEvent.actionName==='longpress'?onSave(article,true):onOpen(article,node.current,'home')}>
       <Label accessibilityRole="header" style={styles.title}>{article.title}</Label>{article.preview.map((p,i)=><Label key={i} style={{fontSize:size,lineHeight:size*1.47,marginBottom:22}}>{p}</Label>)}
       <Animated.View pointerEvents="none" style={[styles.confirmation,{backgroundColor:palette.active},bookmark]}><Icon name="bookmark" size={36}/></Animated.View>
     </Animated.View></GestureDetector>
   </View>;
 });
-const styles=StyleSheet.create({meta:{flexDirection:'row',gap:7,alignItems:'center',marginBottom:16},badge:{flexDirection:'row',gap:6,alignItems:'center',borderRadius:24,paddingVertical:8,paddingHorizontal:10},reading:{flex:1,overflow:'hidden'},naturalReading:{overflow:'visible'},title:{fontFamily:heading,fontSize:40,lineHeight:44,letterSpacing:-.8,marginBottom:22},fade:{position:'absolute',bottom:0,left:0,right:0,height:145},confirmation:{position:'absolute',top:'40%',left:'50%',marginLeft:-32,width:64,height:64,borderRadius:24,alignItems:'center',justifyContent:'center'}});
+const styles=StyleSheet.create({meta:{flexDirection:'row',gap:7,alignItems:'center',marginBottom:16},badge:{flexDirection:'row',gap:6,alignItems:'center',borderRadius:24,paddingVertical:8,paddingHorizontal:10},reading:{flex:1,overflow:'hidden'},naturalReading:{overflow:'visible'},title:{...typography.feed,letterSpacing:-.7,marginBottom:22},fade:{position:'absolute',bottom:0,left:0,right:0,height:145},confirmation:{position:'absolute',top:'40%',left:'50%',marginLeft:-32,width:64,height:64,borderRadius:24,alignItems:'center',justifyContent:'center'}});
 
 

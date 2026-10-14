@@ -1,7 +1,8 @@
 import {useEffect,useLayoutEffect,useRef,useState,useMemo} from 'react';
-import {Pressable,View,ScrollView,StyleSheet} from 'react-native';
+import {Pressable,View,StyleSheet} from 'react-native';
 import Animated,{
   useAnimatedStyle,
+  useAnimatedScrollHandler,
   useSharedValue,
   withSpring,
   LinearTransition,
@@ -37,6 +38,7 @@ export function CategoryRail({
   const {palette}=useTheme(),systemReduced=useMotionPreference();
   const reduced=reducedOverride??systemReduced;
   const width=useRef(0),content=useRef(0),[atEnd,setAtEnd]=useState(false);
+  const scrollX=useSharedValue(0);
   const offset=useRef(0),touch=useRef(false),drag=useRef(false),momentum=useRef(false),endFrame=useRef<number|undefined>(undefined);
   const begin=()=>{if(endFrame.current!==undefined)cancelAnimationFrame(endFrame.current);onInteractionStart?.()};
   const end=()=>{if(endFrame.current!==undefined)cancelAnimationFrame(endFrame.current);endFrame.current=requestAnimationFrame(()=>{endFrame.current=undefined;if(!touch.current&&!drag.current&&!momentum.current)onInteractionEnd?.()})};
@@ -69,9 +71,15 @@ export function CategoryRail({
     previous.current=railItems;
   },[membership,reduced]);
   const exited=(token:number)=>setGhosts(old=>old.filter(g=>g.token!==token));
+  const updateOffset=(x:number)=>{offset.current=x;setAtEnd(x+width.current>=content.current-4)};
+  const scroll=useAnimatedScrollHandler(e=>{scrollX.value=e.contentOffset.x;runOnJS(updateOffset)(e.contentOffset.x)});
+  const leftFade=useAnimatedStyle(()=>{
+    const progress=Math.max(0,Math.min(1,scrollX.value/32));
+    return {opacity:progress*progress*(3-2*progress)};
+  });
 
   return <View style={styles.rail} onLayout={e=>{width.current=e.nativeEvent.layout.width;setAtEnd(offset.current+width.current>=content.current-4)}}>
-    <ScrollView
+    <Animated.ScrollView
       horizontal
       showsHorizontalScrollIndicator={false}
       contentContainerStyle={styles.scrollContent}
@@ -83,8 +91,8 @@ export function CategoryRail({
       onMomentumScrollEnd={()=>{momentum.current=false;end()}}
       onScrollEndDrag={()=>{drag.current=false;end()}}
       onContentSizeChange={w=>{content.current=w;setAtEnd(offset.current+width.current>=w-4)}}
-      onScroll={e=>{offset.current=e.nativeEvent.contentOffset.x;setAtEnd(offset.current+width.current>=content.current-4)}}
-      scrollEventThrottle={32}
+      onScroll={scroll}
+      scrollEventThrottle={16}
     >
       {railItems.map(c=>(
         <RailChip
@@ -101,7 +109,8 @@ export function CategoryRail({
         />
       ))}
       {ghosts.map(g=><RailChip {...g.item} key={`exit:${g.item.id}:${g.token}`} selected={selected===g.item.id} disabled reduced={reduced} onPress={()=>{}} ghost={g.rect} onExited={()=>exited(g.token)}/>)}
-    </ScrollView>
+    </Animated.ScrollView>
+    <Animated.View pointerEvents="none" accessible={false} accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={[styles.fade,{right:undefined,left:-1},leftFade]}><LinearGradient colors={[palette.paper,palette.paper+'00']} start={{x:0,y:.5}} end={{x:1,y:.5}} style={StyleSheet.absoluteFill}/></Animated.View>
     {!atEnd&&<LinearGradient pointerEvents="none" colors={[palette.paper+'00',palette.paper]} start={{x:0,y:.5}} end={{x:1,y:.5}} style={styles.fade}/>}
   </View>;
 }

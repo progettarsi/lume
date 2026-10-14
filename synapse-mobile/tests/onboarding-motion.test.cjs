@@ -1,13 +1,10 @@
 const {test}=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm'),ts=require('typescript');
 const {organicPath}=require('../.test-build/onboardingMotion'),{ORGANIC_POINTS}=require('../.test-build/onboardingShapes');
-test('brand preserves every original vector and switches both logo and rays between theme palettes',()=>{
+test('brand preserves supplied Lume paths and follows both theme palettes',()=>{
  const {onboardingBrand}=require('../.test-build/onboardingBrand');
  const paths=xml=>[...xml.matchAll(/\bd="([^"]+)"/g)].map(m=>m[1]);
- for(const [ink,paper] of [['#282621','#f7f4ee'],['#efe9df','#1d1b19']]){
-  const brand=onboardingBrand(ink,paper);
-  for(const part of ['bulb','rays']){assert.deepEqual(paths(brand[part]),paths(fs.readFileSync(`assets/onboarding/${part}.svg`,'utf8')));assert(!brand[part].includes('#F0E9DF'));assert(brand[part].includes(ink));}
-  assert(brand.bulb.includes(`stroke="${paper}"`));
- }
+ const original=fs.readFileSync('assets/logo-lume.svg','utf8');
+ for(const ink of ['#302820','#F7EFE5']){const {logo}=onboardingBrand(ink,'#ffffff');assert.deepEqual(paths(logo),paths(original));assert(logo.includes(ink));assert(logo.includes('0 0 867.4 746.7'));}
 });
 test('organic morph has compatible closed geometry throughout both directions of its cycle',()=>{
  const shapes=Object.values(ORGANIC_POINTS);for(const a of shapes)for(const b of shapes){

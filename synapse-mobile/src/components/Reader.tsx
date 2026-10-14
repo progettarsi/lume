@@ -1,3 +1,5 @@
+import {sourceInfo,sourceName} from '../content/edition';
+import {typography} from '../theme';
 import {useEffect,useLayoutEffect,useRef,useState,useMemo} from 'react';
 import {View,Linking,StyleSheet,ActivityIndicator,AccessibilityInfo} from 'react-native';
 import Animated,{useAnimatedStyle,useSharedValue,withSpring,withTiming,withSequence,cancelAnimation,runOnJS,runOnUI,useReducedMotion,useAnimatedReaction,useAnimatedScrollHandler,useAnimatedRef,scrollTo,interpolateColor,type SharedValue} from 'react-native-reanimated';
@@ -130,7 +132,7 @@ export function Reader({article:incomingArticle,origin,open,width,height,top,bot
                 <ReaderReveal paragraphs={paragraphs} size={size} scroll={scroll} viewport={viewport} scrolled={scrolled} bodyY={bodyY} expandedY={expandedY} progress={progress} active={active} reduced={motionReduced}/>
                 {notice&&<View onLayout={e=>{noticeY.value=e.nativeEvent.layout.y;noticeHeight.value=e.nativeEvent.layout.height}}><ReaderNotice status={notice} onArticle={onRetryArticle} onAI={onRetryAI} onSource={()=>void Linking.openURL(article.source)} timeoutEnabled={noticeVisible&&open}/></View>}
                 {!notice&&aiMessage&&<View style={{marginBottom:18}}>{aiBusy&&<ActivityIndicator size="small" color={palette.accent} style={{alignSelf:'flex-start',marginBottom:8}}/>}<Label muted accessibilityLiveRegion="polite" style={{fontSize:13,lineHeight:18}}>{aiMessage}</Label>{!aiBusy&&!revision&&article.complete&&readerContinuation({...article,simplified:undefined}).length>0&&onRetryAI&&<Button label="Riprova revisione Gemini" onPress={onRetryAI}><Label style={{fontSize:14,color:palette.accent}}>Riprova con Gemini</Label></Button>}</View>}
-                <View style={{borderTopWidth:1,borderColor:palette.line,marginTop:16,paddingTop:20}}>{revision&&!aiBusy&&<View style={{flexDirection:'row',gap:8,alignItems:'flex-start',marginBottom:10}}><Icon name="auto-fix" size={16} color={palette.muted}/><Label muted style={{flex:1,fontSize:13,lineHeight:18}}>Approfondimento revisionato con Gemini. Verifica la fonte per i dettagli.</Label></View>}<Button label="Apri la fonte Wikipedia" onPress={()=>void Linking.openURL(article.source)}><Label style={{color:palette.accent}}>Approfondisci su Wikipedia ↗</Label></Button><Label muted style={{fontSize:12,lineHeight:18}}>Fonte: Wikipedia e suoi contributori · CC BY-SA. {article.revision?`Revisione ${article.revision}. `:''}Selezione divulgativa del testo; consulta la fonte per la voce completa.</Label><Button label="Licenza del testo" onPress={()=>void Linking.openURL('https://creativecommons.org/licenses/by-sa/4.0/')}><Label muted style={{fontSize:12}}>Licenza e attribuzione ↗</Label></Button></View>
+                <View style={{borderTopWidth:1,borderColor:palette.line,marginTop:16,paddingTop:20}}>{revision&&!aiBusy&&<View style={{flexDirection:'row',gap:8,alignItems:'flex-start',marginBottom:10}}><Icon name="auto-fix" size={16} color={palette.muted}/><Label muted style={{flex:1,fontSize:13,lineHeight:18}}>Approfondimento revisionato con Gemini. Verifica la fonte per i dettagli.</Label></View>}<Button label={"Apri la fonte "+sourceName(article)} onPress={()=>void Linking.openURL(article.source)}><Label style={{color:palette.accent}}>Approfondisci su {sourceName(article)} ↗</Label></Button><Label muted style={{fontSize:12,lineHeight:18}}>Fonte: {sourceInfo(article).attribution} · CC BY-SA. {article.revision?`Revisione ${article.revision}. `:''}Selezione divulgativa del testo; consulta la fonte per la voce completa.</Label><Button label="Licenza del testo" onPress={()=>void Linking.openURL(sourceInfo(article).license)}><Label muted style={{fontSize:12}}>Licenza e attribuzione ↗</Label></Button></View>
                 </ReaderExit>
               </Animated.View>
             </View>
@@ -143,7 +145,7 @@ export function Reader({article:incomingArticle,origin,open,width,height,top,bot
     </Animated.View>
     {row&&<>
       {!titleLayout&&<View style={{position:'absolute',left:origin.x,top:origin.y+(origin.title?.y??48),width:origin.width-30}}><TitleWords title={article.title} size={25}/></View>}
-      <View pointerEvents="none" accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={{position:'absolute',left:24,top:destinationY,width:width-48,opacity:0}}><TitleWords title={article.title} size={40} onGeometry={setTitleLayout}/></View>
+      <View pointerEvents="none" accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={{position:'absolute',left:24,top:destinationY,width:width-48,opacity:0}}><TitleWords title={article.title} size={36} onGeometry={setTitleLayout}/></View>
       <Animated.View pointerEvents="box-none" style={[{position:'absolute',left:0,right:0,bottom:0,overflow:'hidden'},titleClip,rowHandoff]}><Animated.View pointerEvents="box-none" style={[StyleSheet.absoluteFill,titleScroll]}>{titleLayout?.words.map((box,i)=><MorphWord key={`${article.id}:${i}`} text={article.title.split(/\s+/)[i]} source={origin.title?.words[i]||box} destination={box} origin={origin} destinationY={destinationY} progress={progress} onReopen={()=>{if(!open)onReopen()}}/>)}</Animated.View></Animated.View>
       <Animated.View pointerEvents="none" style={[{position:'absolute',left:origin.x,top:origin.y+21},metaStyle,rowHandoff]}><Label muted numberOfLines={1} style={{fontSize:12,lineHeight:18}}>{categoryLabel(article.category)}</Label></Animated.View>
     </>}
@@ -152,10 +154,10 @@ export function Reader({article:incomingArticle,origin,open,width,height,top,bot
 }
 function MorphWord({text,source,destination,origin,destinationY,progress,onReopen}:{text:string;source:{x:number;y:number};destination:{x:number;y:number;width:number};origin:Origin;destinationY:number;progress:SharedValue<number>;onReopen:()=>void}){
   const animated=useAnimatedStyle(()=>{const p=Math.max(0,Math.min(1,progress.value)),q=phase(p,.22,.77),sourceX=origin.x+(origin.title?.x||0)+source.x,sourceY=origin.y+(origin.title?.y??48)+source.y;
-    return {left:sourceX+(24+destination.x-sourceX)*q,top:sourceY+(destinationY+destination.y-sourceY)*phase(p,0,1)-phase(p,.88,1)*(destinationY-16),fontSize:25+15*q,lineHeight:29+15*q,letterSpacing:-.5-.3*q};
+    return {left:sourceX+(24+destination.x-sourceX)*q,top:sourceY+(destinationY+destination.y-sourceY)*phase(p,0,1)-phase(p,.88,1)*(destinationY-16),fontSize:25+11*q,lineHeight:29+11*q,letterSpacing:-.5-.2*q};
   });
   return <Label accessible={false} onPress={onReopen} style={[styles.morph,{width:destination.width+4},animated]}>{text}</Label>;
 }
-const styles=StyleSheet.create({surface:{position:'absolute',overflow:'hidden'},header:{flexDirection:'row',alignItems:'center',gap:8,paddingHorizontal:24,paddingBottom:8},title:{fontFamily:heading,fontSize:40,lineHeight:44,letterSpacing:-.8,marginBottom:22},morph:{position:'absolute',fontFamily:heading,includeFontPadding:false}});
+const styles=StyleSheet.create({surface:{position:'absolute',overflow:'hidden'},header:{flexDirection:'row',alignItems:'center',gap:8,paddingHorizontal:24,paddingBottom:8},title:{...typography.feed,letterSpacing:-.7,marginBottom:22},morph:{position:'absolute',fontFamily:heading,includeFontPadding:false}});
 
 

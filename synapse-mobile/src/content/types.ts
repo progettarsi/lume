@@ -1,4 +1,8 @@
 export type Article = {
+  feedSequence?:{order:number;lastPathStart:number};
+  provenance?: {provider:'wikipedia'|'wikivoyage';title:string;url:string;revision?:number;section?:string;license:string;attribution:string};
+  edition?: {version:1;continuation:string[];sourcePassages:string[];related:string[]};
+  verification?: {version:1;fingerprint:string;reviewId:string};
   id: string; title: string; category: string; paragraphs: string[]; preview: string[];
   source: string; revision?: number; fetchedAt: number; saved?: boolean; readAt?: number;
   simplified?: string[];
@@ -16,5 +20,6 @@ export type Article = {
   classification?: {version:number;fingerprint:string;provider:'local'|'gemini';confidence:number};
 };
 export type Category = { id: string; label: string; wiki: string; seeds: string[]; aliases?:string[]; icon?:string; parent?:string };
-export type Settings = { dark: boolean; size: number; categories: string[]; aiEnabled: boolean };
-export const DEFAULT_SETTINGS: Settings = { dark: false, size: 20, categories: [], aiEnabled: false };
+export type ThemeMode = 'automatic'|'light'|'dark';
+export type Settings = { themeMode: ThemeMode; size: number; categories: string[]; aiEnabled: boolean; autoHideCategories: boolean; linkDiscoveries?:boolean };
+export const DEFAULT_SETTINGS: Settings = { themeMode: 'automatic', size: 20, categories: [], aiEnabled: false, autoHideCategories: true, linkDiscoveries:true };

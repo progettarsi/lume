@@ -2,6 +2,7 @@
 /*
 !/.gitignore
 !/GIT-COLLABORATION.md
+!/AGENTS.md
 !/synapse-mobile/
 !/synapse/
 
@@ -45,6 +46,7 @@ coverage/
 test-results/
 playwright-report/
 *.log
+/synapse-mobile/tools/agent-orchestration/.runtime/
 *.apk
 *.aab
 *.ipa
@@ -99,3 +101,12 @@ Thumbs.db
 /synapse-mobile/scripts/qa/final-device.ps1
 /synapse-mobile/scripts/qa/measure-navigation.ps1
 /synapse-mobile/scripts/qa/verify-saved-motion.ps1
+
+# Local exports for the Lume design-system verification.
+/synapse-mobile/.design-preview/
+/synapse-mobile/.design-android-export/
+
+# Local development exports and task checkpoints.
+/synapse-mobile/.theme-export/
+/synapse-mobile/.discovery-export/
+/synapse-mobile/docs/DISCOVERY-PROGRESS.md

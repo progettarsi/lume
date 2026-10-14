@@ -19,12 +19,12 @@ function fixture({stage='interests',reduced=false,appActive=true,count=9}={}){
  };
  const module={exports:{}},code=ts.transpileModule(fs.readFileSync('src/components/onboarding/ApprovedOnboardingScene.tsx','utf8'),{compilerOptions:{jsx:ts.JsxEmit.ReactJSX,module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText;
  vm.runInNewContext(code,{module,exports:module.exports,Math,require(id){
-  if(id==='react')return react;if(id==='react/jsx-runtime')return {jsx,jsxs:jsx};if(id==='react-native-reanimated')return reanimated;
+  if(id==='../../theme')return require('./helpers/theme.cjs');if(id==='react')return react;if(id==='react/jsx-runtime')return {jsx,jsxs:jsx};if(id==='react-native-reanimated')return reanimated;
   if(id==='react-native')return {View:'View',ScrollView:'ScrollView',Pressable:'Pressable',Keyboard:{dismiss(){}},Platform:{OS:'android'},StyleSheet:{create:x=>x,absoluteFill:{},hairlineWidth:1},useWindowDimensions:()=>({width:393,height:852,fontScale:1})};
   if(id==='react-native-safe-area-context')return {useSafeAreaInsets:()=>({top:24,bottom:24})};if(id==='react-native-svg')return {__esModule:true,default:'Svg',Path:'Path',SvgXml:'SvgXml'};
   if(id==='../../useKeyboardLift')return {useKeyboardLift:()=>({value:0})};if(id==='../../content/onboarding')return require('../.test-build/onboarding');
-  if(id==='../../content/onboardingBrand')return {onboardingBrand:()=>({bulb:'<svg/>',rays:'<svg/>'})};
-  if(id==='../Atoms')return {useTheme:()=>({palette:{paper:'#1d1b19',ink:'#efe9df',muted:'#b6aea2',active:'#804e3b',accent:'#df9878',surface:'#35302c',line:'#474139'}}),Label:'Label',Button:'Button',Icon:'Icon'};
+  if(id==='../../content/onboardingBrand')return {onboardingBrand:()=>({logo:'<svg/>'})};
+  if(id==='../Atoms')return {useTheme:()=>({palette:{paper:require('./helpers/theme.cjs').dark.paper,ink:'#efe9df',muted:'#b6aea2',active:'#804e3b',accent:'#df9878',surface:'#35302c',line:'#474139'}}),Label:'Label',Button:'Button',Icon:'Icon'};
   if(id==='../OnboardingMotionSlots')return {OnboardingTitleContext:{Provider:'TitleProvider'},OnboardingTitleSlot:'Title',OrganicShapeSlot:'Shape'};
   const name=id.split('/').at(-1);return {[name]:name};
  }});
@@ -85,3 +85,4 @@ test('failed durable entry restores readable preparation with a manual retry and
  f.change({error:'Non riesco a salvare sul telefono. Riprova.'});assert.equal(zoom.value,0);assert.equal(find(f,'approved-onboarding').props.style[2].read().opacity,1);assert.equal(ofType(f,'AnimatedPath')[0].props.transform,'rotate(14 50 50)');
  f.render();f.flush();assert.deepEqual(f.navigations,['enter']);const retry=ofType(f,'Button').find(n=>n.props.label==='Riprova ingresso nella Home');assert(retry&&!retry.props.disabled);retry.props.onPress();assert.deepEqual(f.navigations,['enter','enter']);
 });
+

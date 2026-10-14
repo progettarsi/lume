@@ -7,8 +7,8 @@ const intro='La luce del Sole contiene diversi colori. Le molecole dell’atmosf
 const page=(id,title='Il cielo',index=1)=>({pageid:id,title,index,extract:intro+'\n\n'+intro,fullurl:'https://it.wikipedia.org/wiki/Cielo_'+id,revisions:[{revid:900}]});
 const mock=pages=>async()=>new Response(JSON.stringify({query:{pages}}));
 const article=(id,extra={})=>({id,title:id,category:'science',paragraphs:[intro],preview:[intro],source:'https://it.wikipedia.org',fetchedAt:Number(id)||1,...extra});
-test('native requests identify Synapse instead of the blocked generic okhttp agent',async()=>{
- const wiki=new Wikipedia(async(url,options)=>{assert.match(options.headers['User-Agent'],/^Synapse\/0\.1\.3 /);assert.match(options.headers['Api-User-Agent'],/^Synapse\//);assert.equal(options.headers.Accept,'application/json');assert.equal(new URL(url).protocol,'https:');return new Response(JSON.stringify({query:{pages:[page(1)]}}))});
+test('native requests identify Lume instead of the blocked generic okhttp agent',async()=>{
+ const wiki=new Wikipedia(async(url,options)=>{assert(options.headers['User-Agent'].startsWith('Lume/'+require('../package.json').version+' '));assert.match(options.headers['Api-User-Agent'],/^Lume\//);assert.equal(options.headers.Accept,'application/json');assert.equal(new URL(url).protocol,'https:');return new Response(JSON.stringify({query:{pages:[page(1)]}}))});
  assert.equal((await wiki.search('cielo')).length,1);
 });
 test('HTTP refusal retains its status rather than masquerading as an offline connection',async()=>{
@@ -101,9 +101,17 @@ const {parseSettings}=require('../.test-build/settings.js');
 
 test('invalid persisted preferences recover without breaking startup or enabling AI',()=>{
  for(const input of ['{','null','[]','{"categories":null,"size":-2,"aiEnabled":"false","dark":1}']){
-  const settings=parseSettings(input);assert.equal(settings.aiEnabled,false);assert.equal(settings.size,20);assert.equal(settings.dark,false);assert.equal(settings.categories.length,CATEGORIES.length);
+  const settings=parseSettings(input);assert.equal(settings.aiEnabled,false);assert.equal(settings.size,20);assert.equal(settings.themeMode,'automatic');assert.equal(settings.categories.length,CATEGORIES.length);
  }
- assert.deepEqual(parseSettings('{"size":23,"dark":true,"aiEnabled":true,"categories":["food","food",null]}'),{size:23,dark:true,aiEnabled:true,categories:categoryOrder(['food'])});
+ assert.deepEqual(parseSettings('{"size":23,"dark":true,"aiEnabled":true,"categories":["food","food",null]}'),{size:23,themeMode:'dark',aiEnabled:true,autoHideCategories:true,linkDiscoveries:true,categories:categoryOrder(['food'])});
+});
+test('category auto-hide defaults on for old settings and preserves explicit choices',()=>{
+ for(const input of [null,'{}','{"autoHideCategories":"false"}','{"autoHideCategories":0}'])assert.equal(parseSettings(input).autoHideCategories,true);
+ for(const enabled of [false,true]){
+  const settings=parseSettings(JSON.stringify({autoHideCategories:enabled}));
+  assert.equal(settings.autoHideCategories,enabled);
+  assert.equal(parseSettings(JSON.stringify({...settings,size:23,dark:true})).autoHideCategories,enabled);
+ }
 });
 test('fast and long swipes advance only one article',()=>{
  assert.equal(swipeTarget(3,-2600,-12000,800,12),4);

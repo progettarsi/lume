@@ -7,8 +7,8 @@ function reader(embedded,kind='home'){
   if(id==='react')return react;if(id==='react/jsx-runtime')return {jsx,jsxs:jsx};
   if(id==='react-native')return {View:'View',StyleSheet:{create:x=>x,absoluteFill:{}},AccessibilityInfo:{}};
   if(id==='react-native-reanimated')return {__esModule:true,default:{View:'AnimatedView',ScrollView:'AnimatedScrollView'},useSharedValue:shared,useDerivedValue:fn=>({get value(){return fn()}}),interpolateColor:(p,range,colors)=>p===0?colors[0]:colors[1],useAnimatedStyle:fn=>({read:fn}),useReducedMotion:()=>false,useAnimatedReaction(){},useAnimatedRef:()=>null,useAnimatedScrollHandler:fn=>fn};
-  if(id==='../content/text')return require('../.test-build/text');if(id==='../content/categories')return require('../.test-build/categories');if(id==='../content/readerReturn')return require('../.test-build/readerReturn');
-  if(id==='../theme')return {heading:'Newsreader',spring:{}};return {useTheme:()=>({palette:{paper:'#eee',active:'#aaa'}})};
+  if(id==='../content/edition')return require('../.test-build/edition');if(id==='../content/text')return require('../.test-build/text');if(id==='../content/categories')return require('../.test-build/categories');if(id==='../content/readerReturn')return require('../.test-build/readerReturn');
+  if(id==='../theme')return require('./helpers/theme.cjs');return {useTheme:()=>({palette:{paper:'#eee',active:'#aaa'}})};
  }});
  const tree=module.exports.Reader({article:{id:'demo',title:'Aurora',preview:['Testo breve'],paragraphs:['Testo breve','Dettagli'],complete:true},origin:{x:40,y:260,width:300,height:250,kind},open:true,width:384,height:832,top:24,bottom:24,size:20,saved:false,onClose(){},onReopen(){},onClosed(){},onSave(){},returnPaper:embedded?'#26211f':undefined,onDoubleTapSave:()=>saves++});
  const touch=find(tree,n=>!!n.props?.onTouchStart);

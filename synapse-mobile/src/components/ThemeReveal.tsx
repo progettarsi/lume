@@ -1,3 +1,4 @@
+import {motion} from '../theme';
 import {useEffect,useRef} from 'react';
 import {StyleSheet,View} from 'react-native';
 import Animated,{Easing,useAnimatedStyle,useSharedValue,withTiming,runOnJS,cancelAnimation} from 'react-native-reanimated';
@@ -9,7 +10,7 @@ export function ThemeReveal({snapshot,width,height,topInset,onReady,onDone}:{sna
   useEffect(()=>()=>cancelAnimation(opacity),[]);
   const reveal=()=>{
     if(started.current)return;started.current=true;onReady();
-    opacity.value=withTiming(0,{duration:220,easing:Easing.inOut(Easing.quad)},finished=>{if(finished)runOnJS(onDone)()});
+    opacity.value=withTiming(0,{duration:motion.theme.duration,easing:Easing.inOut(Easing.quad)},finished=>{if(finished)runOnJS(onDone)()});
   };
   return <View pointerEvents="none" accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={[StyleSheet.absoluteFill,{zIndex:100}]}>
     <Animated.View style={[{position:'absolute',left:0,right:0,top:topInset,bottom:0,overflow:'hidden'},fade]}>
