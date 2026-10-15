@@ -77,6 +77,7 @@ export class OnboardingController{
  private tail:Promise<unknown>=Promise.resolve();
  private pendingDraft:Partial<OnboardingDraft>|undefined;
  private tutorialIntent=0;
+ private draftIntent=0;
  get draftValue(){return {...this.state.draft,...this.pendingDraft}}
  constructor(state:OnboardingState,private commit:OnboardingCommit,private notify:()=>void=()=>{}){this.state=state.tutorialIndex>=TUTORIAL.length?{...state,tutorialIndex:TUTORIAL.length-1}:state}
  private write(update:(s:OnboardingState)=>OnboardingState,interests=false){
@@ -84,8 +85,9 @@ export class OnboardingController{
  }
  draft(patch:Partial<OnboardingDraft>){
   const clean={...patch,...(patch.name!==undefined?{name:normalizeName(patch.name)}:{}),...(patch.interests?{interests:validInterests(patch.interests)}:{})};
-  const pending={...this.pendingDraft,...(clean.name!==undefined?{name:clean.name}:{}),...(clean.interests?{interests:clean.interests}:{})};this.pendingDraft=pending;this.notify();
-  return this.write(s=>({...s,revision:s.revision+1,draft:{...s.draft,...pending,...clean}})).then(()=>{if(this.pendingDraft===pending)this.pendingDraft=undefined});
+  const pending={...this.pendingDraft,...clean};this.pendingDraft=pending;this.notify();
+  const intent=++this.draftIntent;
+  return this.write(s=>intent!==this.draftIntent?s:{...s,revision:s.revision+1,draft:{...s.draft,...pending,...clean}}).then(()=>{if(this.pendingDraft===pending)this.pendingDraft=undefined});
  }
  profile(patch:Partial<LocalIdentity>){return this.write(s=>{const profile={...s.profile,...patch,...(patch.name!==undefined?{name:normalizeName(patch.name)}:{})};return {...s,revision:s.revision+1,profile,draft:s.completed?{...s.draft,...profile,photoUri:profile.photoUri}:s.draft}})}
  seekTutorial(index:number){

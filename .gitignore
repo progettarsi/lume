@@ -110,3 +110,10 @@ Thumbs.db
 /synapse-mobile/.theme-export/
 /synapse-mobile/.discovery-export/
 /synapse-mobile/docs/DISCOVERY-PROGRESS.md
+
+# Local source dumps and personal-device capture helpers.
+/synapse-mobile/codice-lume.txt
+/synapse-mobile/synapse-mobile-src-only.txt
+/synapse-mobile/scripts/qa/capture-profile-c02.ps1
+/synapse-mobile/scripts/qa/capture-profile-frames.py
+/synapse-mobile/scripts/qa/record-profile-motion.py

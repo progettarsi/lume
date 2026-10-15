@@ -9,7 +9,7 @@ function mount(extra={}){
  const source=ts.transpileModule(fs.readFileSync('src/components/Feed.tsx','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX,esModuleInterop:true}}).outputText;
  vm.runInNewContext(source,{module,exports:module.exports,require:name=>name.endsWith('/theme')?require('./helpers/theme.cjs'):name==='react'?react:name==='react/jsx-runtime'?{jsx,jsxs:jsx}:name==='react-native'?{View:'View',StyleSheet:{create:x=>x}}:name==='react-native-reanimated'?{...reanimated,__esModule:true}:name==='react-native-gesture-handler'?{Gesture:{Pan:()=>{chain=gesture();return chain}},GestureDetector:'GestureDetector'}:name.includes('useMotionPreference')?{useMotionPreference:()=>false}:name.endsWith('/paging')?require('../.test-build/paging'):name.endsWith('/Atoms')?{useTheme:()=>({palette:{paper:'#f7f4ee'}})}:name.endsWith('/categories')?{CATEGORIES:[]}:{} });
  const render=()=>{cursor=0;tree=module.exports.Feed(props);while(effects.length)effects.shift()()};render();
- return {get tree(){return tree},shared:shared.slice(2),reports,directions,render,update(position){props.position=position;render()},start(){handlers.onStart()},move(y){handlers.onUpdate({translationY:y})},end(y,v){handlers.onEnd({translationY:y,velocityY:v})}};
+ return {get tree(){return tree},shared:shared.slice(2),reports,directions,render,update(position){props.position=position;render()},resize(count){props.articles=props.articles.slice(0,count);render()},start(){handlers.onStart()},move(y){handlers.onUpdate({translationY:y})},end(y,v){handlers.onEnd({translationY:y,velocityY:v})}};
 }
 test('interrupted spring anchors to the visible page and preserves its finger position',()=>{
  const f=mount();f.start();f.move(-200);f.end(-200,-900);assert.deepEqual(f.reports,[1]);
@@ -21,6 +21,24 @@ test('acknowledgement from JS does not reset a gesture already in progress',()=>
  const f=mount();f.start();f.move(-200);f.end(-200,-900);f.start();f.move(-75);
  const current=f.shared[0].value;f.update(1);assert.equal(f.shared[0].value,current);
  f.update(0);assert.equal(f.shared[1].value,0); // External trim/refresh correction still applies.
+});
+
+test('trimming while the next swipe is underway rebases its start and anchor without a jump',()=>{
+ const f=mount({articles:Array.from({length:50},(_,i)=>({id:String(i)})),position:23});
+ f.start();f.move(-200);f.end(-200,-900);f.render();f.start();f.move(-100);
+ f.update(8);f.render();assert.equal(f.shared[0].value,8*800+100);
+ f.move(-120);assert.equal(f.shared[0].value,8*800+120);f.end(-200,-900);assert.equal(f.reports.at(-1),9);
+});
+
+test('native paging never enters an unmounted card while React is catching up',()=>{
+ const f=mount({articles:Array.from({length:30},(_,i)=>({id:String(i)}))});
+ for(let i=0;i<8;i++){f.start();f.move(-200);f.end(-200,-900)}
+ assert.equal(f.reports.at(-1),3);assert.equal(f.shared[0].value,3*800);
+ f.render();f.start();f.move(-200);f.end(-200,-900);assert.equal(f.reports.at(-1),4);
+});
+
+test('a shortened feed clamps the native target and mounted window onto an existing card',()=>{
+ const f=mount({articles:Array.from({length:20},(_,i)=>({id:String(i)})),position:12});f.resize(5);f.render();assert.equal(f.shared[1].value,4);assert.equal(f.shared[0].value,4*800);
 });
 test('direction follows finger reversal before crossing the gesture origin',()=>{
  const f=mount();f.start();f.move(-140);f.move(-100);assert.deepEqual(f.directions,[true,false]);

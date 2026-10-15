@@ -2,7 +2,7 @@
   "expo": {
     "name": "Lume",
     "slug": "synapse-mobile",
-    "version": "0.2.1",
+    "version": "0.2.2",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
@@ -32,7 +32,7 @@
       },
       "softwareKeyboardLayoutMode": "resize",
       "predictiveBackGestureEnabled": true,
-      "versionCode": 20
+      "versionCode": 24
     },
     "plugins": [
       "expo-sqlite",

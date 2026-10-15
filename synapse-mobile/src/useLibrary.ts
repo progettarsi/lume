@@ -48,6 +48,7 @@ export function useLibrary(options:{wikipedia?:Wikipedia;onlineOverride?:boolean
   const wiki=useRef(new DiscoverySources(options.wikipedia??new Wikipedia())),cacheRef=useRef(cache),feedsRef=useRef(feeds),readyRef=useRef(ready),onlineRef=useRef(online);
   const bookmarkWrites=useRef(new BookmarkWriter()),retryAfter=useRef(new Map<string,number>());
   const profileWrites=useRef(serialWrites()),refreshRevision=useRef(0),refreshedRevision=useRef(0);
+  const reorderJob=useRef<{kind:'idle'|'timer';id:number}|null>(null),liveReorder=useRef<()=>void>(()=>{});
   const busy=useRef(false),controller=useRef<AbortController|null>(null),requestId=useRef(0),foreground=useRef(0);
   const active=useRef<Article|undefined>(undefined),categoryRef=useRef('all'),positionRef=useRef(0),discovery=useRef(true),awake=useRef(AppState.currentState!=='background');
   const fullJobs=useRef(new Map<string,{promise:Promise<Article>;signal:AbortSignal}>()),pendingFull=useRef(new Map<string,Article>());
@@ -58,7 +59,9 @@ export function useLibrary(options:{wikipedia?:Wikipedia;onlineOverride?:boolean
   const pool=(category=categoryRef.current)=>views.current.reserve(cacheRef.current,learningRef.current,served.current,consumedRevision.current,category);
   const cachedFeed=(category:string)=>category==='all'?pool(category):pool(category).filter(a=>a.category===category);
   const reorderFuture=()=>commitFeeds(old=>{const next={...old};for(const [key,rows] of Object.entries(old))next[key]=refreshFuture(rows,key==='all'?cacheRef.current:cacheRef.current.filter(a=>a.category===key),learningRef.current,served.current,key===categoryRef.current?positionRef.current:-1,settings.linkDiscoveries!==false);return next});
-  const commitLearning=(next:Learning)=>{const changed=next.categories!==learningRef.current.categories;learningRef.current=next;setLearning(next);if(changed){if(discoveryAnchor(next,()=>.5)){refreshRevision.current++;scheduler.current?.reset()}reorderFuture()}scheduler.current?.wake()};
+  liveReorder.current=reorderFuture;
+  const queueReorder=()=>{if(reorderJob.current)return;const work=()=>{reorderJob.current=null;if(boot.current.alive)liveReorder.current()};reorderJob.current=typeof requestIdleCallback==='function'?{kind:'idle',id:requestIdleCallback(work,{timeout:1000})}:{kind:'timer',id:setTimeout(work,0) as unknown as number}};
+  const commitLearning=(next:Learning)=>{const changed=next.categories!==learningRef.current.categories;learningRef.current=next;setLearning(next);if(changed){if(discoveryAnchor(next,()=>.5)){refreshRevision.current++;scheduler.current?.reset()}queueReorder()}scheduler.current?.wake()};
   const track=(a:Article,event:'open'|'save'|'unsave'|'seen')=>profileWrites.current(async()=>{const canonical=cacheRef.current.find(row=>row.id===a.id)??a;const next=learn(learningRef.current,canonical,event);await storage.putLearning(next);commitLearning(next)});
   // Passing a card consumes its identity without inventing an engagement weight.
   const consume=(rows:Article[])=>{
@@ -103,7 +106,7 @@ export function useLibrary(options:{wikipedia?:Wikipedia;onlineOverride?:boolean
     // leave it disabled until the next app lifecycle event.
     for(const id of new Set(candidates.map(a=>a.category)))if(availabilityRef.current[id]?.exhausted){stateFor(id,{phase:'ready'});retryAfter.current.delete(id);if(recheck.current===id)recheck.current=null}
     await remember(candidates);restoreCategories();
-    if(!signal.aborted)reorderFuture();
+    if(!signal.aborted)queueReorder();
     return added;
   };
   const recovery=async(category:string,signal:AbortSignal,limit:number,preferInterest=false)=>{
@@ -156,18 +159,19 @@ export function useLibrary(options:{wikipedia?:Wikipedia;onlineOverride?:boolean
   const boot=useRef({alive:true,busy:false});
   const hydrateLibrary=async()=>{
     if(boot.current.busy)return;boot.current.busy=true;readyRef.current=false;
+    const started=Date.now(),timings:Record<string,number>={};
     try{
-    await storage.initStorage();const welcome=await storage.initOnboarding();let articles=await storage.getArticles();
+    await storage.initStorage();const welcome=await storage.initOnboarding();let articles=await storage.getArticles();timings.disk=Date.now()-started;
     if(!catalogueSize&&!articles.some(a=>a.preview?.some(p=>p.trim()))){await storage.putArticles(seeds as Article[]);articles=await storage.getArticles()}
     const prefs=await storage.getSettings();prefs.categories=categoryOrder(prefs.categories);
     let visits=await storage.getHistory(articles),profile=await storage.getLearning();
     if(profile.version!==3||profile.categoryVersion!==1){await storage.migrateProfile(articles,visits);profile=await storage.migrateCategories();articles=await storage.getArticles();visits=await storage.getHistory(articles)}
     ai.current!.metrics=await storage.getAIMetrics();classification.current!.cache=await storage.getClassificationCache();const changes:Article[]=[];articles=articles.map(a=>{const next=classification.current!.cached(ensureClassification(a));if(next!==a)changes.push(next);return next});if(changes.length){profile=reconcileCategories(profile,changes);await storage.putClassifiedArticles(changes,profile)}if(changes.length){const byId=new Map(articles.map(a=>[a.id,a]));visits=visits.map(a=>({...byId.get(a.id)||a,readAt:a.readAt}))}const storedRegistry=await storage.getCategoryRegistry();
-    articles=withCatalogue(articles);
-    if(boot.current.alive){setOnboarding(welcome);setOnboardingError('');setError('');learningRef.current=profile;setLearning(profile);cacheRef.current=articles;setCache(articles);setHistory(visits);setSettings(prefs);commitRegistry(settleRegistry(observeTopics(storedRegistry,articles),profile,articles,{},'all',onlineRef.current));commitFeeds(()=>({all:onlineRef.current?reserveArticles(articles,profile,served.current):offlineReserve(articles,profile,served.current)}));readyRef.current=true;setReady(true);classification.current!.enqueue(articles.filter(a=>!isVerified(a)))}
+    timings.hydration=Date.now()-started;articles=withCatalogue(articles);
+    if(boot.current.alive){setOnboarding(welcome);setOnboardingError('');setError('');learningRef.current=profile;setLearning(profile);cacheRef.current=articles;setCache(articles);setHistory(visits);setSettings(prefs);commitRegistry(settleRegistry(observeTopics(storedRegistry,articles),profile,articles,{},'all',onlineRef.current));commitFeeds(()=>({all:onlineRef.current?reserveArticles(articles,profile,served.current,'all',1):offlineReserve(articles,profile,served.current)}));readyRef.current=true;setReady(true);classification.current!.enqueue(articles.filter(a=>!isVerified(a)));if(typeof process!=='undefined'&&process.env.EXPO_PUBLIC_LUME_PERF==='1')console.info('[Lume boot]',JSON.stringify({...timings,total:Date.now()-started,articles:articles.length}))}
     }catch{if(boot.current.alive){setOnboardingError('Non riesco a leggere la configurazione locale. Riprova: i tuoi dati sono conservati.');const local=withCatalogue((seeds as Article[]).map(ensureClassification));cacheRef.current=local;setCache(local);commitFeeds(()=>({all:offlineReserve(local,learningRef.current,served.current)}));setReady(true);setError('Non è stato possibile aprire la raccolta salvata.')}}finally{boot.current.busy=false}
   };
-  useEffect(()=>{boot.current.alive=true;void hydrateLibrary();return()=>{boot.current.alive=false;controller.current?.abort();scheduler.current?.dispose();ai.current?.cancel(true);classification.current?.dispose();dwell.current?.clear()}},[]);
+  useEffect(()=>{boot.current.alive=true;void hydrateLibrary();return()=>{boot.current.alive=false;if(reorderJob.current){if(reorderJob.current.kind==='idle')cancelIdleCallback(reorderJob.current.id);else clearTimeout(reorderJob.current.id);reorderJob.current=null}controller.current?.abort();scheduler.current?.dispose();ai.current?.cancel(true);classification.current?.dispose();dwell.current?.clear()}},[]);
   const trimFeed=(category:string,position:number)=>{
     consume((feedsRef.current[category]||[]).slice(0,position));
     const remove=feedTrimCount(position);if(remove)commitFeeds(old=>old[category]?{...old,[category]:old[category].slice(remove)}:old);
@@ -175,7 +179,7 @@ export function useLibrary(options:{wikipedia?:Wikipedia;onlineOverride?:boolean
   };
   const persistOnboarding=(next:OnboardingState,interests:boolean)=>profileWrites.current(async()=>{
     const profile=await storage.putOnboarding(next,interests);setOnboarding(next);
-    if(profile){commitLearning(profile);refreshRevision.current++;scheduler.current?.reset(false);reorderFuture()}
+    if(profile){commitLearning(profile);refreshRevision.current++;scheduler.current?.reset(false);queueReorder()}
   });
   const retryOnboarding=hydrateLibrary;
   const setDiscovery=(enabled:boolean)=>{discovery.current=enabled;if(!enabled){controller.current?.abort();scheduler.current?.interrupt()}};
@@ -229,7 +233,7 @@ export function useLibrary(options:{wikipedia?:Wikipedia;onlineOverride?:boolean
   };
   const save=(a:Article,onlySave=false)=>setSaved(a,onlySave||!cacheRef.current.find(row=>row.id===a.id)?.saved);
   const read=async(a:Article)=>{await track(a,'open');const current=mergeArticle(cacheRef.current.find(row=>row.id===a.id),a);await storage.putArticles([current]);await storage.markRead(a.id);commitCache(rows=>rows.some(row=>row.id===a.id)?rows.map(row=>row.id===a.id?{...mergeArticle(row,a),readAt:Date.now()}:row):[...rows,{...current,readAt:Date.now()}]);setHistory(await storage.getHistory())};
-  useEffect(()=>{if(readyRef.current)reorderFuture()},[settings.linkDiscoveries]);
+  useEffect(()=>{if(readyRef.current)queueReorder()},[settings.linkDiscoveries]);
   const updateSettings=(patch:Partial<Settings>)=>setSettings(old=>{const next={...old,...patch};void storage.putSettings(next).catch(()=>setError('Preferenza non salvata'));return next});
   const search=async(query:string,signal:AbortSignal)=>interactive(async()=>{const rows=onlineRef.current?await wiki.current.search(query,signal):rankLocal(query,cacheRef.current);if(signal.aborted)return [];const prepared=rows.map(a=>classification.current!.cached(ensureClassification(a)));classification.current!.enqueue(prepared);if(onlineRef.current)await remember(prepared);return prepared});
   const lastRandom=useRef('');

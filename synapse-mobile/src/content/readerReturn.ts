@@ -15,7 +15,10 @@ export function localReturnReorder<T extends {id:string}>(snapshot:readonly T[],
 }
 export function returnFinished(progress:number,scroll:number):boolean{
   'worklet';
-  return progress<=0&&scroll<=.5;
+  // A spring can remain a fraction above its endpoint after native rounding.
+  // Release the covering surface once its residual geometry is imperceptible;
+  // requiring exact zero can strand a closed reader above every other control.
+  return progress<=.001&&scroll<=.5;
 }
 export function exitCut(height:number,scroll:number,viewport:number,start:number,exit:number,lineHeight:number):number{
   'worklet';

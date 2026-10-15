@@ -40,7 +40,7 @@ export function generalAudienceScore(title: string, paragraphs: string[]): numbe
   const text = paragraphs.slice(0,2).join(' ');
   // Short, complete definitions can be useful; characters alone do not establish sufficiency.
   if ((text.match(/[\p{L}\p{N}]+/gu)||[]).length < 24 || !/[.!?][”»"')\]]?\s*$/u.test(text) || /disambiguazione|può riferirsi a|lista di|elenco di|glossario/i.test(title+' '+text)) return -1;
-  const lead=paragraphs[0]?.toLocaleLowerCase('it')||'',anchors=title.toLocaleLowerCase('it').match(/[\p{L}]{4,}/gu)||[];
+  const lead=paragraphs[0]?.toLowerCase()||'',anchors=title.toLowerCase().match(/[\p{L}]{4,}/gu)||[];
   if(anchors.length&&!anchors.some(word=>lead.includes(word))&&/^[\p{L} '-]+,\s*oggi\b/u.test(lead))return -1;
   // Catalogue entries are valid encyclopedia pages but poor everyday discoveries.
   if(/semiasse maggiore|classificazione spettrale/i.test(text))return -1;
@@ -78,7 +78,7 @@ export function continuation(paragraphs:string[],preview:string[]):string[]{
   });
 }
 export function rankLocal(query:string, articles:Article[]):Article[]{
-  const words=query.toLocaleLowerCase('it').trim().split(/\s+/).filter(Boolean);
-  return articles.map(article=>{const title=article.title.toLocaleLowerCase('it'),body=article.paragraphs.join(' ').toLocaleLowerCase('it');return {article,score:words.reduce((s,w)=>s+(title.includes(w)?5:body.includes(w)?1:0),0)}})
+  const words=query.toLowerCase().trim().split(/\s+/).filter(Boolean);
+  return articles.map(article=>{const title=article.title.toLowerCase(),body=article.paragraphs.join(' ').toLowerCase();return {article,score:words.reduce((s,w)=>s+(title.includes(w)?5:body.includes(w)?1:0),0)}})
     .filter(row=>!words.length||row.score>0).sort((a,b)=>b.score-a.score).map(row=>row.article);
 }

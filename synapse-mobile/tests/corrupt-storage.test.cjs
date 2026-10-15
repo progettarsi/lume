@@ -32,6 +32,11 @@ test('corrupted sqlite rows in articles and visits are safely ignored without fa
   const rawDb=new DatabaseSync(file);
   rawDb.prepare('INSERT INTO articles(id,json,saved,read_at,touched) VALUES(?,?,?,?,?)').run('corrupt:1','{not-valid-json',0,null,50);
   rawDb.prepare('INSERT INTO visits(id,json,read_at) VALUES(?,?,?)').run('corrupt:v1','INVALID JSON',60);
+  const malformed=[{},[],null,{...validArticle,preview:null},{...validArticle,paragraphs:[42]},{...validArticle,simplified:'text'},{...validArticle,topics:{}},{...validArticle,edition:{version:1,continuation:null}},{...validArticle,provenance:{provider:'wikipedia'}},{...validArticle,title:17}];
+  for(const [i,value] of malformed.entries()){
+   rawDb.prepare('INSERT INTO articles(id,json,saved,read_at,touched) VALUES(?,?,?,?,?)').run('broken:'+i,JSON.stringify(value),1,null,50);
+   rawDb.prepare('INSERT INTO visits(id,json,read_at) VALUES(?,?,?)').run('broken:'+i,JSON.stringify(value),60);
+  }
   rawDb.close();
 
   // 1. getArticles() must skip corrupt rows without throwing
@@ -43,7 +48,7 @@ test('corrupted sqlite rows in articles and visits are safely ignored without fa
   // Verify corrupt row was not deleted from DB
   const rawDb2=new DatabaseSync(file);
   const countArticles=rawDb2.prepare('SELECT COUNT(*) as n FROM articles').get().n;
-  assert.equal(countArticles,2,'Corrupt article row must not be deleted');
+  assert.equal(countArticles,2+malformed.length,'Corrupt article rows must not be deleted');
 
   // 2. getHistory() must skip corrupt rows without throwing
   const history=await storage.getHistory();
@@ -51,7 +56,7 @@ test('corrupted sqlite rows in articles and visits are safely ignored without fa
   assert.equal(history[0].id,'valid:1');
 
   const countVisits=rawDb2.prepare('SELECT COUNT(*) as n FROM visits').get().n;
-  assert.equal(countVisits,2,'Corrupt visit row must not be deleted');
+  assert.equal(countVisits,2+malformed.length,'Corrupt visit rows must not be deleted');
   rawDb2.close();
 
   // 3. migrateProfile must handle corrupt rows gracefully

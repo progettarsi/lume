@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "projectId": "synapse",
+  "readPaths": [
+    "synapse-mobile/src",
+    "synapse-mobile/tests",
+    "synapse-mobile/docs",
+    "synapse-mobile/AGENTS.md"
+  ],
+  "writePaths": [
+    "synapse-mobile/src/components",
+    "synapse-mobile/src/content/onboarding.ts",
+    "synapse-mobile/src/content/onboardingLayout.ts",
+    "synapse-mobile/src/content/onboardingBrand.ts",
+    "synapse-mobile/tests",
+    "synapse-mobile/docs"
+  ],
+  "protectedPaths": [
+    "synapse-mobile/src/components/Feed.tsx",
+    "synapse-mobile/src/content/personalization.ts",
+    "synapse-mobile/src/content/cache.ts",
+    "synapse-mobile/src/content/wikipedia.ts",
+    "synapse-mobile/src/content/categoryMigration.ts",
+    "synapse-mobile/src/content/recommendations.ts",
+    "synapse-mobile/src/content/reserve.ts",
+    "synapse-mobile/src/content/geminiIntegration.ts"
+  ]
+}

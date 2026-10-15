@@ -11,7 +11,7 @@ export function assessEditorial(a:Article):EditorialAssessment{
  if(!EDITORIAL_TUNING.enabled)return {eligible:true,preferred:true,score:1,reasons:['Filtro divulgativo precedente; taratura editoriale disattivata']};
  const sentences=text.split(/[.!?]+(?:\s|$)/u).filter(s=>s.trim());
  if(words.length<24||!/[.!?][”»"')\]]?\s*$/u.test(text))return {eligible:false,preferred:false,score:-1,reasons:['Anteprima senza contesto sufficiente o frase conclusa']};
- const definition=(preview[0]||'').slice(0,450).toLocaleLowerCase('it');
+ const definition=(preview[0]||'').slice(0,450).toLowerCase();
  const discipline=/(?:^|[\s)])è\s+(?:[\p{L}'’]+\s+){0,3}(?:disciplina|scienz[ae]|branca|ramo|campo di studi)\b/u.test(definition);
  const study=/\b(?:studia|studio|si occupa|comprende|insieme|conoscenz|tutti|tutte)\w*/u.test(definition);
  const wide=/\b(?:in senso (?:ampio|generale)|insieme (?:delle|di tutte|di attività)|vasta gamma|ogni forma|numerosi (?:campi|settori)|complesso (?:delle|di))\b/u.test(definition);
@@ -40,7 +40,7 @@ export function assessEditorial(a:Article):EditorialAssessment{
 }
 
 const stop=new Set('della delle degli nella nelle dello dalla dello questo questa questi queste essere stato stata sono anche parte viene viene come quale quali stato stati anni prima dopo fenomeno effetto processo fisico fisica chiamato detto termine indica attraverso mediante infatti origine'.split(' '));
-function topic(a:Article){return new Set((a.title+' '+(a.preview[0]||a.paragraphs[0]||'').split(/[.!?]/)[0]).toLocaleLowerCase('it').match(/[\p{L}]{5,}/gu)?.filter(w=>!stop.has(w))||[])}
+function topic(a:Article){return new Set((a.title+' '+(a.preview[0]||a.paragraphs[0]||'').split(/[.!?]/)[0]).toLowerCase().match(/[\p{L}]{5,}/gu)?.filter(w=>!stop.has(w))||[])}
 function overlap(a:Set<string>,b:Set<string>){let common=0;for(const t of a)if(b.has(t))common++;return common<2?0:common/Math.max(3,Math.min(a.size,b.size))}
 export function editorialRepetition(a:Article,recent:Article[]){if(!EDITORIAL_TUNING.enabled)return 0;const terms=topic(a);return Math.max(0,...recent.slice(-3).map(old=>overlap(terms,topic(old))))*EDITORIAL_TUNING.topicPenalty}
 // Scope this cache to a single ranking: no persistent assumptions about mutable

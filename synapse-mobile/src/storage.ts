@@ -4,6 +4,7 @@ import { parseSettings } from './content/settings';
 import { evictable } from './content/cache';
 import {mergeArticle} from './content/articleState';
 import {databaseQueue} from './content/databaseQueue';
+import {storedArticle} from './content/storedArticle';
 import {parseLearning,migrateLearning,type Learning} from './content/recommendations';
 import {parseAIMetrics,type AIMetrics} from './content/aiPreparation';
 import {categoryMigration} from './content/categoryMigration';
@@ -11,7 +12,7 @@ import {parseRegistry,type CategoryRegistry} from './content/categoryRegistry';
 import {parseClassificationCache,type ClassificationCache} from './content/classification';
 import {recoverOnboarding,parseOnboarding,setInitialInterests,type OnboardingState} from './content/onboarding';
 type Row={id:string;json:string;saved:number;read_at:number|null;touched:number};
-const decode=(r:Row):Article|undefined=>{try{const o=JSON.parse(r.json);return o&&typeof o==='object'?{...o,saved:!!r.saved,readAt:r.read_at||undefined,fetchedAt:r.touched}:undefined}catch{return undefined}};
+const decode=(r:Row):Article|undefined=>{try{const o=storedArticle(JSON.parse(r.json));return o?{...o,saved:!!r.saved,readAt:r.read_at||undefined,fetchedAt:r.touched}:undefined}catch{return undefined}};
 const run=databaseQueue(async()=>{
   const db=await SQLite.openDatabaseAsync('synapse.db',{useNewConnection:true});
   try{
@@ -79,7 +80,7 @@ export function markRead(id:string){const stamp=Date.now();return run(async db=>
   const article={...d,paragraphs:[],preview:[],simplified:undefined,simplifiedInput:undefined,simplifiedPrepared:undefined,complete:false,readAt:stamp};
   await db.withTransactionAsync(async()=>{await db.runAsync('UPDATE articles SET read_at=? WHERE id=?',stamp,id);await db.runAsync('INSERT OR REPLACE INTO visits(id,json,read_at) VALUES(?,?,?)',id,JSON.stringify(article),stamp);await db.runAsync('DELETE FROM visits WHERE id NOT IN (SELECT id FROM visits ORDER BY read_at DESC LIMIT 500)')});
 })}
-export function getHistory(knownArticles?:Article[]){return run(async db=>{const rows=await db.getAllAsync<{json:string}>('SELECT json FROM visits ORDER BY read_at DESC');const cached=new Map((knownArticles??await articles(db)).map(a=>[a.id,a]));const out:Article[]=[];for(const r of rows){try{const a=JSON.parse(r.json) as Article;if(a&&typeof a==='object'&&a.id)out.push({...cached.get(a.id)||a,readAt:a.readAt})}catch{}}return out})}
+export function getHistory(knownArticles?:Article[]){return run(async db=>{const rows=await db.getAllAsync<{json:string}>('SELECT json FROM visits ORDER BY read_at DESC');const cached=new Map((knownArticles??await articles(db)).map(a=>[a.id,a]));const out:Article[]=[];for(const r of rows){try{const a=storedArticle(JSON.parse(r.json));if(a)out.push({...cached.get(a.id)||a,readAt:a.readAt})}catch{}}return out})}
 export function setSaved(id:string,saved:boolean){return run(db=>db.runAsync('UPDATE articles SET saved=? WHERE id=?',saved?1:0,id))}
 export function getSettings():Promise<Settings>{return run(async db=>{const r=await db.getFirstAsync<{value:string}>('SELECT value FROM preferences WHERE key=?','settings');return parseSettings(r?.value)})}
 export function putSettings(settings:Settings){return run(db=>db.runAsync('INSERT OR REPLACE INTO preferences(key,value) VALUES(?,?)','settings',JSON.stringify(settings)))}
@@ -102,7 +103,7 @@ export function migrateCategories(){return run(async db=>{
  const raw=await db.getFirstAsync<{value:string}>('SELECT value FROM preferences WHERE key=?','learning'),profile=parseLearning(raw?.value||null);
  if(profile.categoryVersion===1)return profile;
  const rows=await articles(db),visits=await db.getAllAsync<{id:string;json:string}>('SELECT id,json FROM visits');
- const validVisits:Article[]=[];for(const r of visits){try{const a=JSON.parse(r.json) as Article;if(a&&typeof a==='object'&&a.id)validVisits.push(a)}catch{}}
+ const validVisits:Article[]=[];for(const r of visits){try{const a=storedArticle(JSON.parse(r.json));if(a)validVisits.push(a)}catch{}}
  const next=categoryMigration(profile,rows,validVisits);
  await db.withTransactionAsync(async()=>{
   await db.runAsync('INSERT OR IGNORE INTO preferences(key,value) VALUES(?,?)','category-pre-v1-backup',JSON.stringify({learning:raw?.value||null,articles:rows,visits}));

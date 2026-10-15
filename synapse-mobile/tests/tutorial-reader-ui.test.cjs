@@ -1,16 +1,16 @@
 const {test}=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm'),ts=require('typescript');
-function reader(embedded,kind='home'){
+function reader(embedded,kind='home',options={}){
  let time=0,saves=0;const values=[],jsx=(type,props)=>({type,props}),shared=value=>{const v={value};values.push(v);return v};
  const code=ts.transpileModule(fs.readFileSync('src/components/Reader.tsx','utf8'),{compilerOptions:{jsx:ts.JsxEmit.ReactJSX,module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,module={exports:{}};
- const react={useEffect(){},useLayoutEffect(){},useRef:current=>({current}),useState:value=>[value,()=>{}],useMemo:fn=>fn()};
+ const react={useEffect(){},useLayoutEffect(){},useRef:current=>({current}),useState:value=>[value,next=>options.onState?.(next)],useMemo:fn=>fn()};
  vm.runInNewContext(code,{module,exports:module.exports,Math,JSON,Date:{now:()=>time},require(id){
   if(id==='react')return react;if(id==='react/jsx-runtime')return {jsx,jsxs:jsx};
-  if(id==='react-native')return {View:'View',StyleSheet:{create:x=>x,absoluteFill:{}},AccessibilityInfo:{}};
+  if(id==='react-native')return {View:'View',StyleSheet:{create:x=>x,absoluteFill:{}},AccessibilityInfo:{},Linking:{openURL:options.openURL}};
   if(id==='react-native-reanimated')return {__esModule:true,default:{View:'AnimatedView',ScrollView:'AnimatedScrollView'},useSharedValue:shared,useDerivedValue:fn=>({get value(){return fn()}}),interpolateColor:(p,range,colors)=>p===0?colors[0]:colors[1],useAnimatedStyle:fn=>({read:fn}),useReducedMotion:()=>false,useAnimatedReaction(){},useAnimatedRef:()=>null,useAnimatedScrollHandler:fn=>fn};
-  if(id==='../content/edition')return require('../.test-build/edition');if(id==='../content/text')return require('../.test-build/text');if(id==='../content/categories')return require('../.test-build/categories');if(id==='../content/readerReturn')return require('../.test-build/readerReturn');
+  if(id==='../content/edition')return require('../.test-build/edition');if(id==='../content/text')return require('../.test-build/text');if(id==='../content/categories')return require('../.test-build/categories');if(id==='../content/readerReturn')return require('../.test-build/readerReturn');if(id==='../content/safeSourceUrl')return require('../.test-build/safeSourceUrl');
   if(id==='../theme')return require('./helpers/theme.cjs');return {useTheme:()=>({palette:{paper:'#eee',active:'#aaa'}})};
  }});
- const tree=module.exports.Reader({article:{id:'demo',title:'Aurora',preview:['Testo breve'],paragraphs:['Testo breve','Dettagli'],complete:true},origin:{x:40,y:260,width:300,height:250,kind},open:true,width:384,height:832,top:24,bottom:24,size:20,saved:false,onClose(){},onReopen(){},onClosed(){},onSave(){},returnPaper:embedded?'#26211f':undefined,onDoubleTapSave:()=>saves++});
+ const tree=module.exports.Reader({article:{id:'demo',title:'Aurora',preview:['Testo breve'],paragraphs:['Testo breve','Dettagli'],complete:true,source:'https://it.wikipedia.org/wiki/Aurora'},origin:{x:40,y:260,width:300,height:250,kind},open:true,width:384,height:832,top:24,bottom:24,size:20,saved:false,onClose(){},onReopen(){},onClosed(){},onSave(){},returnPaper:embedded?'#26211f':undefined,onDoubleTapSave:()=>saves++});
  const touch=find(tree,n=>!!n.props?.onTouchStart);
  return {tree,progress:values[0],time:t=>time=t,saves:()=>saves,tap(x=10,y=10){touch.props.onTouchStart({nativeEvent:{pageX:x,pageY:y}});touch.props.onTouchEnd()},drag(){touch.props.onTouchStart({nativeEvent:{pageX:10,pageY:10}});touch.props.onTouchMove({nativeEvent:{pageX:10,pageY:50}});touch.props.onTouchEnd()}};
 }
@@ -29,6 +29,14 @@ test('reader double tap saves once, while distant taps and scroll gestures never
  demo.time(1300);demo.tap();assert.equal(demo.saves(),1);demo.time(1700);demo.tap();assert.equal(demo.saves(),1);
  demo.time(1800);demo.tap(100,100);assert.equal(demo.saves(),1);demo.drag();demo.time(1900);demo.tap(100,100);assert.equal(demo.saves(),1);
  demo.time(2000);demo.tap(100,100);assert.equal(demo.saves(),2);
+});
+
+test('reader source and license failures are handled, and a successful retry clears the notice',async()=>{
+ let fail=true;const notices=[],urls=[],demo=reader(false,'home',{onState:value=>notices.push(value),openURL:async url=>{urls.push(url);if(fail)throw Error('No browser')}});
+ const source=find(demo.tree,n=>n.props?.label==='Apri la fonte Wikipedia'),license=find(demo.tree,n=>n.props?.label==='Licenza del testo');
+ await source.props.onPress();assert.equal(notices.at(-1).kind,'network');
+ license.props.onPress();await new Promise(setImmediate);assert.equal(notices.length,2);assert.equal(notices.at(-1).kind,'network');
+ fail=false;await source.props.onPress();assert.equal(notices.at(-1),null);assert.deepEqual(urls,['https://it.wikipedia.org/wiki/Aurora','https://creativecommons.org/licenses/by-sa/4.0/','https://it.wikipedia.org/wiki/Aurora']);
 });
 
 test('tutorial row returns its title while withdrawing the preview before it hits the shrinking bounds',()=>{

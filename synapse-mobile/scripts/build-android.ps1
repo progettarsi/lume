@@ -4,7 +4,11 @@ $taskProject=Split-Path -Parent $PSScriptRoot
 $taskSecrets=Join-Path $taskProject '.credentials'
 $taskKeyStore=Join-Path $taskSecrets 'synapse-release.p12'
 if(-not (Test-Path -LiteralPath $taskKeyStore)){throw 'File di firma mancante: .credentials/synapse-release.p12 non trovato.'}
-if(-not $env:SYNAPSE_STORE_PASSWORD){throw 'Variabile di ambiente SYNAPSE_STORE_PASSWORD non impostata.'}
+$taskOriginalPassword=$env:SYNAPSE_STORE_PASSWORD
+$taskSigningPassword=$taskOriginalPassword
+$taskSigningFile=Join-Path $taskSecrets 'signing.json'
+if(-not $taskSigningPassword -and (Test-Path -LiteralPath $taskSigningFile)){$taskSigningPassword=(Get-Content -LiteralPath $taskSigningFile -Raw | ConvertFrom-Json).password}
+if(-not $taskSigningPassword){throw 'Password di firma non disponibile: ripristinare la copia privata o SYNAPSE_STORE_PASSWORD.'}
 $taskVersion=(Get-Content -LiteralPath (Join-Path $taskProject 'app.json') -Raw | ConvertFrom-Json).expo.version
 $taskTools=Join-Path (Split-Path -Parent $taskProject) '.mobile-tools'
 $taskJava=Get-ChildItem (Join-Path $taskTools 'java') -Directory | Select-Object -First 1
@@ -22,6 +26,7 @@ $env:PATH="$env:JAVA_HOME\bin;"+$env:PATH
 if(-not (Test-Path (Join-Path $env:ANDROID_HOME 'licenses/android-sdk-license'))){throw 'Prima della compilazione occorre accettare la licenza Android SDK.'}
 Push-Location $taskProject
 try{
+  $env:SYNAPSE_STORE_PASSWORD=$taskSigningPassword
   if(-not $SkipPrebuild){
     node node_modules/expo/bin/cli prebuild --platform android --no-install
     if($LASTEXITCODE -ne 0){throw 'Preparazione Android non riuscita.'}
@@ -41,9 +46,9 @@ try{
     }
   }
   Push-Location android
-  try{ & ./gradlew.bat assembleRelease --no-daemon '-PreactNativeArchitectures=arm64-v8a,x86_64';if($LASTEXITCODE -ne 0){throw 'Compilazione Android non riuscita.'} }finally{Pop-Location}
+  try{ & ./gradlew.bat assembleRelease --no-daemon '-PreactNativeArchitectures=arm64-v8a,x86_64';if($LASTEXITCODE -ne 0){throw 'Compilazione Android non riuscita.'} }finally{if($null -eq $taskOriginalPassword){Remove-Item Env:SYNAPSE_STORE_PASSWORD -ErrorAction SilentlyContinue}else{$env:SYNAPSE_STORE_PASSWORD=$taskOriginalPassword};$taskSigningPassword=$null;Pop-Location}
   New-Item -ItemType Directory -Force releases | Out-Null
   Copy-Item -LiteralPath android/app/build/outputs/apk/release/app-release.apk -Destination "releases/Synapse-$taskVersion.apk" -Force
   'Gradle cache uses the short workspace junction.' | Set-Content -LiteralPath $taskMigration
   Write-Output "APK pronto in releases/Synapse-$taskVersion.apk"
-}finally{Pop-Location}
+}finally{if($null -eq $taskOriginalPassword){Remove-Item Env:SYNAPSE_STORE_PASSWORD -ErrorAction SilentlyContinue}else{$env:SYNAPSE_STORE_PASSWORD=$taskOriginalPassword};$taskSigningPassword=$null;Pop-Location}

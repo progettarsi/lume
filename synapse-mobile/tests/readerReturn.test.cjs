@@ -28,7 +28,9 @@ test('visual handoff and unmount require scroll to have returned, and use differ
  assert.equal(nearReturn(.11,4000),false);
  assert.equal(nearReturn(.13,0),false);
  assert.equal(nearReturn(.11,0),true);
- assert.equal(returnFinished(.001,0),false);
+ assert.equal(returnFinished(.002,0),false);
+ assert.equal(returnFinished(.001,0),true);
+ assert.equal(returnFinished(.0005,0),true);
  assert.equal(returnFinished(0,4000),false);
  assert.equal(returnFinished(0,0),true);
 });

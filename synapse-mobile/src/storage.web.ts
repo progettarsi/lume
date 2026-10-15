@@ -2,6 +2,7 @@
 import type { Article,Settings } from './content/types';
 import { parseSettings } from './content/settings';
 import {mergeArticle} from './content/articleState';
+import {storedArticle} from './content/storedArticle';
 import { evictable } from './content/cache';
 import {parseLearning,migrateLearning,type Learning} from './content/recommendations';
 import {parseAIMetrics,type AIMetrics} from './content/aiPreparation';
@@ -12,7 +13,10 @@ import {recoverOnboarding,parseOnboarding,setInitialInterests,type OnboardingSta
 let rows:Article[]=[];
 let visits:Article[]=[];
 const write=()=>localStorage.setItem('synapse-native-articles',JSON.stringify(rows));
-export async function initStorage(){try{rows=JSON.parse(localStorage.getItem('synapse-native-articles')||'[]');visits=JSON.parse(localStorage.getItem('synapse-native-visits')||'[]')}catch{rows=[];visits=[]}}
+export async function initStorage(){
+ const read=(key:string):Article[]=>{try{const value:unknown=JSON.parse(localStorage.getItem(key)||'[]');return Array.isArray(value)?value.map(storedArticle).filter((a):a is Article=>!!a):[]}catch{return []}};
+ rows=read('synapse-native-articles');visits=read('synapse-native-visits');
+}
 export async function getArticles(){return [...rows].sort((a,b)=>b.fetchedAt-a.fetchedAt)}
 export async function initOnboarding(){
  // Recover a multi-key preview write before reading the authoritative state.

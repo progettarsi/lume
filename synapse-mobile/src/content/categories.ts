@@ -30,8 +30,12 @@ if(EDITORIAL_TUNING.enabled)for(const category of CATEGORIES)category.seeds=[...
 // The registry is larger than the rail. Retrieval always has bounded seeds and links.
 const icons:Record<string,string>={science:'flask-outline',technology:'chip',history:'pillar',geography:'earth',nature:'leaf',arts:'palette-outline',music:'music-note',cinema:'movie-outline',biology:'dna',politics:'bank-outline',economics:'chart-line',astronomy:'star-outline',philosophy:'thought-bubble-outline',psychology:'head-outline',food:'food-apple-outline',sport:'basketball',society:'account-group-outline',literature:'book-open-outline',medicine:'medical-bag',mathematics:'calculator',curiosity:'compass-outline',entertainment:'drama-masks'};
 for(const c of CATEGORIES){c.icon=icons[c.id]||'tag-outline';c.aliases=[...(c.aliases||[]),c.id,c.label,...(c.id==='arts'?['Arte e cultura']:c.id==='entertainment'?['Intrattenimento']:[])]}
-export const normalizeTopic=(value:string)=>value.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('it').replace(/[^a-z0-9]+/g,' ').trim();
-export function categoryId(value:string){const key=normalizeTopic(value);return CATEGORIES.find(c=>c.aliases?.some(a=>normalizeTopic(a)===key))?.id}
+export const normalizeTopic=(value:string)=>value.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
+// Italian casing uses the default Unicode mapping. Resolve the immutable aliases
+// once rather than normalising the whole catalogue on every restored signal.
+const categoryAliases=new Map<string,string>();
+for(const c of CATEGORIES)for(const alias of c.aliases||[]){const key=normalizeTopic(alias);if(!categoryAliases.has(key))categoryAliases.set(key,c.id)}
+export function categoryId(value:string){return categoryAliases.get(normalizeTopic(value))}
 export function categoryLabel(id:string){return CATEGORIES.find(c=>c.id===id)?.label||'Enciclopedia'}
 export const categoryOrder = (ids: string[]) => {
   const valid = [...new Set(ids.map(id=>categoryId(id)).filter((id):id is string=>!!id))];

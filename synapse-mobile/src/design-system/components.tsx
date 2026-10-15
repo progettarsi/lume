@@ -52,7 +52,7 @@ export function Action({title,onPress,disabled=false,secondary=false}:{title:str
 }
 /** The non-collapsible host owns accessibility; transforms alone do not hide a scene. */
 export function ScreenLayer({active,style,children}:{active:boolean;style?:React.ComponentProps<typeof Animated.View>['style'];children:React.ReactNode}){
-  return <View collapsable={false} pointerEvents={active?'box-none':'none'} accessibilityElementsHidden={!active} importantForAccessibility={active?'auto':'no-hide-descendants'} style={StyleSheet.absoluteFill}><Animated.View style={style}>{children}</Animated.View></View>;
+  return <View collapsable={false} pointerEvents={active?'box-none':'none'} accessibilityElementsHidden={!active} importantForAccessibility={active?'auto':'no-hide-descendants'} aria-hidden={!active} style={[StyleSheet.absoluteFill,{zIndex:active?1:0,overflow:'hidden'}]}><Animated.View collapsable={false} pointerEvents={active?'box-none':'none'} accessibilityElementsHidden={!active} importantForAccessibility={active?'auto':'no-hide-descendants'} style={style}>{children}</Animated.View></View>;
 }
 export function PageHeader({title,onBack,backLabel,top=0,active=true}:{title:string;onBack:()=>void;backLabel:string;top?:number;active?:boolean}){
   const {palette}=useTheme(),titleRef=useRef<View>(null);
@@ -60,7 +60,7 @@ export function PageHeader({title,onBack,backLabel,top=0,active=true}:{title:str
   return <View style={[styles.header,{paddingTop:top}]}><Button label={backLabel} onPress={onBack} style={{width:48,height:48,borderRadius:24,backgroundColor:palette.surface}}><Icon name="arrow-left"/></Button><View ref={titleRef} accessible accessibilityRole="header" accessibilityLabel={title} style={{flex:1}}><Label accessible={false} style={typography.collection}>{title}</Label></View></View>;
 }
 export function PageScroll({children,bottom=16,...props}:React.ComponentProps<typeof ScrollView>&{bottom?:number}){
-  return <ScrollView {...props} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false} contentContainerStyle={[{paddingHorizontal:metrics.pageInset,paddingTop:8,paddingBottom:bottom+24},props.contentContainerStyle]}>{children}</ScrollView>;
+  return <ScrollView {...props} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false} style={[{flex:1},props.style]} contentContainerStyle={[{paddingHorizontal:metrics.pageInset,paddingTop:8,paddingBottom:bottom+24},props.contentContainerStyle]}>{children}</ScrollView>;
 }
 export function PageKeyboard({children}:{children:React.ReactNode}){
   return <KeyboardAvoidingView style={{flex:1}} behavior={Platform.OS==='ios'?'padding':undefined}>{children}</KeyboardAvoidingView>;

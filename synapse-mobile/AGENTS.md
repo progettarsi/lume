@@ -1,5 +1,7 @@
 # Synapse native app
 
+- Android automation: use the persistent `Lume_API_36` emulator (`emulator-5580`) by default for authorized Lume device tests. `scripts/adb-emulator.ps1 <adb arguments>` automatically boots it on demand and explicitly targets that emulator; never implicitly select a USB phone. `scripts/start-emulator.ps1` prepares the session for other Android tools. See `docs/ANDROID-EMULATOR.md`. Setup/start alone never authorizes running tests, building, installing or opening the app; honor the current user's scope. Do not wipe the AVD data without explicit authorization.
+
 - React Native / Expo, Android first with iOS-compatible application code. This is separate from the approved `../synapse` browser prototype; do not alter its protected runtime.
 - Lume palette revised 2026-10-14 (olive and cream, warm charcoal dark background #1B1915), Newsreader headings, local Google Sans Flex body/controls; Newsreader ExtraBold Italic for lowercase «lume»; Newsreader Medium 500 upright for the onboarding welcome heading. Shared tokens, primitives and controls live in src/design-system; theme.ts and Atoms.tsx are compatibility exports. Follow docs/DESIGN-SYSTEM.md for the current palette; it supersedes the colors in docs/LUME-04-IMPLEMENTATION-HANDOFF.md. No article illustrations or account.
 - All categories in a horizontally scrolling rail, fading at the right edge; no drag or long-press reordering (removed at user request after device testing). Per te stays first.
@@ -15,3 +17,5 @@
 - Typecheck, test feed/network/cache contracts and export Android bundle before handoff. Clearly distinguish these from an actual APK/device verification.
 
 - Discovery editions keep complete 40–80-word briefs and explicit continuations. The 150 bundled, source-backed editions have automatic selection checks bound to exact text/provenance; never rewrite verified editions with Gemini. Catalogue and dynamic reserve remain separate. See docs/DISCOVERY-RELEASE.md.
+
+- Signing material in .credentials (including signing.json and private backup folders) must never be committed, printed, deleted or regenerated without explicit user authorization. Preserve both keystore and password. The key was replaced with user consent on 2026-10-14 for a clean v0.2.1 installation; future updates must retain that new key.

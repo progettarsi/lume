@@ -1,7 +1,7 @@
 import {motion as motionTokens} from '../theme';
-import {useEffect,useState} from 'react';
+import {useLayoutEffect,useState} from 'react';
 import {View,Pressable,StyleSheet,useWindowDimensions} from 'react-native';
-import Animated,{useSharedValue,useAnimatedStyle,withSpring} from 'react-native-reanimated';
+import Animated,{cancelAnimation,useSharedValue,useAnimatedStyle,withSpring} from 'react-native-reanimated';
 import {useMotionPreference} from '../useMotionPreference';
 import {Icon,Label,Button,useTheme} from './Atoms';
 type Destination='home'|'profile';
@@ -14,7 +14,7 @@ export function Dock({selected,onNavigate,onSearch,bottom,availableWidth,disable
  const fontScale=fontScaleOverride??window.fontScale,p=useSharedValue(selected==='home'?0:1);
  const [labels,setLabels]=useState({home:32*fontScale,profile:40*fontScale,homeReady:false,profileReady:false});
  const noMotion=reducedOverride??reduced;
- useEffect(()=>{p.value=noMotion?(selected==='home'?0:1):withSpring(selected==='home'?0:1,motion)},[selected,noMotion]);
+ useLayoutEffect(()=>{cancelAnimation(p);p.value=noMotion?(selected==='home'?0:1):withSpring(selected==='home'?0:1,motion);return()=>cancelAnimation(p)},[selected,noMotion]);
  const navHeight=Math.max(60,Math.ceil(18*fontScale+28)),pillHeight=Math.max(40,Math.ceil(18*fontScale+16));
  // Concentric capsules: the horizontal inset equals the vertical gap, including
  // text scaling. Budget both insets before distributing the two touch tracks.
@@ -36,18 +36,20 @@ export function Dock({selected,onNavigate,onSearch,bottom,availableWidth,disable
  return <View testID="synapse-dock" style={[styles.dock,{opacity:labels.homeReady&&labels.profileReady?1:0,bottom:bottom+14,width:total,marginLeft:-total/2,height:navHeight,zIndex:closing?45:20}]} pointerEvents={disabled?'none':'auto'} aria-hidden={disabled} accessibilityElementsHidden={disabled} importantForAccessibility={disabled?'no-hide-descendants':'auto'}>
   <View testID="dock-capsule" style={[styles.nav,{width:navWidth,height:navHeight,borderRadius:navHeight/2,backgroundColor:palette.surface}]}>
    <Animated.View testID="dock-pill" pointerEvents="none" accessible={false} style={[styles.pill,{left:inset,top:inset,height:pillHeight,borderRadius:pillHeight/2,backgroundColor:palette.active},pill]}/>
-   <Animated.View style={[styles.cell,{left:inset,height:navHeight-8},homeCell]}>
-    <Pressable accessibilityRole="tab" accessibilityState={{selected:selected==='home'}} aria-selected={selected==='home'} accessibilityLabel="Home, due tocchi rapidi per aggiornare" onPress={()=>onNavigate('home')} style={styles.hit}>
+   <Animated.View pointerEvents="none" accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={[styles.cell,{left:inset,height:navHeight-8},homeCell]}>
+    <View style={styles.hit}>
      <Animated.View style={[styles.icon,homeIcon]}><Icon name="home-outline"/></Animated.View>
      <Label allowFontScaling={fontScaleOverride===undefined} accessible={false} strong numberOfLines={1} style={[styles.label,{fontSize:textSize,lineHeight:textLine,width:labels.home},homeText]}>Home</Label>
-    </Pressable>
+    </View>
    </Animated.View>
-   <Animated.View style={[styles.cell,{left:inset,height:navHeight-8},profileCell]}>
-    <Pressable accessibilityRole="tab" accessibilityState={{selected:selected==='profile'}} aria-selected={selected==='profile'} accessibilityLabel="Profilo" onPress={()=>onNavigate('profile')} style={styles.hit}>
+   <Animated.View pointerEvents="none" accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={[styles.cell,{left:inset,height:navHeight-8},profileCell]}>
+    <View style={styles.hit}>
      <Animated.View style={[styles.icon,profileIcon]}><Icon name="account-outline"/></Animated.View>
      <Label allowFontScaling={fontScaleOverride===undefined} accessible={false} strong numberOfLines={1} style={[styles.label,{fontSize:textSize,lineHeight:textLine,width:labels.profile},profileText]}>Profilo</Label>
-    </Pressable>
+    </View>
    </Animated.View>
+   <Pressable accessibilityRole="tab" accessibilityState={{selected:selected==='home'}} aria-selected={selected==='home'} accessibilityLabel="Home, due tocchi rapidi per aggiornare" onPress={()=>onNavigate('home')} style={[styles.hit,{position:'absolute',left:inset,top:4,height:navHeight-8,width:selected==='home'?home:inner-profile}]}/>
+   <Pressable accessibilityRole="tab" accessibilityState={{selected:selected==='profile'}} aria-selected={selected==='profile'} accessibilityLabel="Profilo" onPress={()=>onNavigate('profile')} style={[styles.hit,{position:'absolute',left:inset+(selected==='home'?home:inner-profile),top:4,height:navHeight-8,width:selected==='home'?inner-home:profile}]}/>
    <View pointerEvents="none" accessible={false} aria-hidden accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={[styles.measure,{width:navWidth,height:navHeight}]}>
     {(['home','profile'] as const).map(id=><Label allowFontScaling={fontScaleOverride===undefined} key={`${id}:${fontScale}`} strong numberOfLines={1} onLayout={e=>measure(id,e.nativeEvent.layout.width)} style={{alignSelf:'flex-start',fontSize:textSize,lineHeight:textLine}}>{id==='home'?'Home':'Profilo'}</Label>)}
    </View>

@@ -60,6 +60,14 @@ test('failed draft and failed navigation retain intent; retry commits it before 
  fail=false;await c.navigate('next',c.navigationRevision);assert.equal(c.state.draft.name,'Zoë 李');assert.equal(c.state.stage,'interests');assert.equal(c.error,'');
  await c.draft({name:'🙂'.repeat(60)});assert.equal(Array.from(c.state.draft.name).length,48);assert(!c.state.draft.name.includes('\ud800'));
 });
+
+test('coalesced name and interest edits preserve photo selection and explicit removal',async()=>{
+ const writes=[],c=new OnboardingController({...fresh(),stage:'identity'},async next=>writes.push(next));
+ await Promise.all([c.draft({photoUri:'local:new'}),c.draft({name:'Ada'}),c.draft({interests:['science']})]);
+ assert.equal(c.state.draft.photoUri,'local:new');assert.equal(c.state.draft.name,'Ada');assert.deepEqual(c.state.draft.interests,['science']);assert.equal(writes.length,1);
+ await Promise.all([c.draft({photoUri:undefined}),c.draft({name:'Ada Lovelace'})]);
+ assert.equal(c.state.draft.photoUri,undefined);assert.equal(c.state.draft.name,'Ada Lovelace');assert.equal(writes.length,2);
+});
 test('initial preferences replace idempotently, preserve real ledgers and decay by subsequent interaction order',()=>{
  const original=emptyLearning(),p=setInitialInterests(original,['music','music','science','unknown']);assert.deepEqual(p.initialInterests.ids,['music','science']);assert.equal(setInitialInterests(p,['music','science']),p);assert.deepEqual(p.seen,[]);assert.deepEqual(p.categories,{});assert.deepEqual(p.opens,{});assert.deepEqual(p.bookmarks,{});
  let next=p;for(let i=0;i<24;i++)next=learn(next,a(i),'open',i+1);assert.equal(initialInterestWeight(next,'music'),1);assert.equal(initialInterestWeight(p,'music'),2);assert(explainRecommendation(a(99),p).interest>explainRecommendation(a(99),original).interest);

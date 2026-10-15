@@ -106,6 +106,7 @@ function Synapse({fontsReady}:{fontsReady:boolean}){
   const collectionReturn=useReturnRows(liveRows),searchReturn=useReturnRows(results);
   const saved=useMemo(()=>new Set(lib.cache.filter(a=>a.saved).map(a=>a.id)),[lib.cache]);
   const feedArticles=lib.getFeed(category),visibleArticle=feedArticles[index],feedState=lib.availability[category]??{phase:'idle' as const};
+  useLayoutEffect(()=>{if(feedArticles.length&&index>=feedArticles.length){const next=feedArticles.length-1;setIndex(next);previousIndex.current=next}},[feedArticles.length,index]);
   const [endedCategory,setEndedCategory]=useState(''),[offlineRepeated,setOfflineRepeated]=useState(false);
   const centralFeed=!visibleArticle||(!lib.online&&category!=='all')||(endedCategory===category&&feedState.phase==='exhausted');
   useEffect(()=>{if(lib.online)setOfflineRepeated(false);else if(visibleArticle&&lib.isRepeated(visibleArticle))setOfflineRepeated(true)},[lib.online,visibleArticle?.id,lib.cache]);
@@ -124,11 +125,11 @@ function Synapse({fontsReady}:{fontsReady:boolean}){
   const themeContext=useMemo(()=>({palette,progress:theme}),[palette,theme]);
   const paper=useMemo(()=>({backgroundColor:palette.paper}),[palette]);
   const homeStyle=useAnimatedStyle(()=>({transform:[{translateX:-page.value*width}]})),profileStyle=useAnimatedStyle(()=>({transform:[{translateX:(1-page.value)*width}]})),collectionStyle=useAnimatedStyle(()=>({transform:[{translateX:(1-collectionP.value)*width}]})),searchStyle=useAnimatedStyle(()=>({transform:[{translateY:(1-searchP.value)*height}]})),chipStyle=useAnimatedStyle(()=>({transform:[{translateY:-48*Math.max(0,Math.min(1,chips.value))}]})),feedStyle=useAnimatedStyle(()=>({transform:[{translateY:48*(1-Math.max(0,Math.min(1,chips.value)))}]}));
-  useEffect(()=>{page.value=reduced?(route==='home'?0:1):withSpring(route==='home'?0:1,spring)},[route,reduced]);
+  useLayoutEffect(()=>{page.value=reduced?(route==='home'?0:1):withSpring(route==='home'?0:1,spring)},[route,reduced]);
   useEffect(()=>{const restore=()=>{if(!collection&&lastCollection.current==='settings')setProfileFocus(n=>n+1)};if(reduced){collectionP.value=collection?1:0;restore()}else collectionP.value=withSpring(collection?1:0,spring,finished=>{if(finished)runOnJS(restore)()})},[collection,reduced]);
   useEffect(()=>{searchP.value=reduced?(searchOpen?1:0):withSpring(searchOpen?1:0,spring);if(searchOpen){const timer=setTimeout(()=>input.current?.focus(),30);return()=>clearTimeout(timer)}},[searchOpen,reduced]);
   const composerLift=useAnimatedStyle(()=>({bottom:Math.max(keyboardLift.value+12,bottom+16)})),searchViewport=useAnimatedStyle(()=>({marginBottom:Math.max(keyboardLift.value,0)+100}));
-  useEffect(()=>{const enabled=!!onboarding.state&&!onboarding.bootError&&route==='home'&&!searchOpen&&!collection;lib.setDiscovery(enabled);if(lib.ready&&enabled&&!reader)void lib.load(category,index)},[lib.ready,!!onboarding.state,onboarding.bootError,category,index,lib.online,lib.loading,route,searchOpen,collection,reader]);
+  useEffect(()=>{const enabled=!!onboarding.state&&!onboarding.bootError&&route==='home'&&!searchOpen&&!collection;lib.setDiscovery(enabled);if(lib.ready&&enabled&&!reader)void lib.load(category,index)},[lib.ready,!!onboarding.state,onboarding.bootError,category,index,lib.online,route,searchOpen,collection,reader]);
   useEffect(()=>{void gemini.current!.load()},[]);
   useEffect(()=>{
     const abort=new AbortController();if(!searchOpen)return()=>abort.abort();
@@ -154,6 +155,7 @@ function Synapse({fontsReady}:{fontsReady:boolean}){
       void loadReader(article,abort);
     };
     if(node&&frame.current){frame.current.measureInWindow((fx,fy)=>node.measureInWindow((x,y,w,h)=>{
+      if(![x,y,w,h,fx,fy].every(Number.isFinite)||w<=0||h<=0){show({x:24,y:top+100,width:width-48,height:120,kind,title});return}
       const scale=kind==='home'?w/(width-48):1,normalHeight=h/scale;
       show({x:kind==='home'?24:x-fx,y:y-fy-normalHeight/2*(1-scale),width:kind==='home'?width-48:w,height:normalHeight,kind,title});
     }))}
@@ -217,7 +219,7 @@ function Synapse({fontsReady}:{fontsReady:boolean}){
     {!fontsReady||!lib.ready?<View style={[styles.loader,{backgroundColor:palette.paper}]}><ActivityIndicator color={palette.accent}/><Label>{lib.error}</Label></View>:!onboarding.state||onboarding.bootError?<OnboardingScreen key={onboarding.devSandbox?'sandbox':onboarding.replay?'replay':'onboarding'} binding={onboarding}/>:<>
       <View pointerEvents={onboarding.active||editIdentity?'none':'box-none'} accessibilityElementsHidden={onboarding.active||editIdentity} importantForAccessibility={onboarding.active||editIdentity?'no-hide-descendants':'auto'} style={{flex:1}}>
       <ScreenLayer active={route==='home'&&!searchOpen&&!collection&&!readerOpen} style={[StyleSheet.absoluteFill,paper,homeStyle]}>
-        <View style={{paddingTop:top+8,paddingHorizontal:24,paddingBottom:10,zIndex:2}}><View style={{flexDirection:'row',alignItems:'center',justifyContent:'space-between'}}><Label style={styles.wordmark}>lume</Label></View><View pointerEvents="box-none" style={{height:48,overflow:'hidden'}}><Animated.View style={chipStyle}><CategoryRail selected={category} onSelect={selectCategory} items={lib.categoryRail} onInteractionStart={lib.beginCategoryInteraction} onInteractionEnd={lib.endCategoryInteraction}/></Animated.View></View></View>
+        <View pointerEvents="box-none" style={{paddingTop:top+8,paddingHorizontal:24,paddingBottom:10,zIndex:2}}><View pointerEvents="none" style={{flexDirection:'row',alignItems:'center',justifyContent:'space-between'}}><Label style={styles.wordmark}>lume</Label></View><View pointerEvents="box-none" style={{height:48,overflow:'hidden'}}><Animated.View pointerEvents="box-none" style={chipStyle}><CategoryRail selected={category} onSelect={selectCategory} items={lib.categoryRail} onInteractionStart={lib.beginCategoryInteraction} onInteractionEnd={lib.endCategoryInteraction}/></Animated.View></View></View>
         <Animated.View style={[{position:'absolute',top:top+84,left:0,right:0,height:homeHeight},feedStyle]}>{homeHeight>0&&!centralFeed&&<Feed key={`${category}:${feedRevision}`} articles={feedArticles} height={homeHeight} size={lib.settings.size} saved={saved} readerOpen={readerOpen} entry={categoryEntry.current} onOpen={open} onSave={save} covered={reader?.origin.kind==='home'?reader.article.id:undefined} position={index} onIndex={next=>setIndex(lib.trimFeed(category,next))} onEndReached={()=>{if(category!=='all'&&feedState.phase==='exhausted')setEndedCategory(category);else lib.retryFeed()}} onVisible={setSettledIndex} onDirection={hidden=>{const hide=lib.settings.autoHideCategories&&hidden;chips.value=reduced?(hide?1:0):withSpring(hide?1:0,spring)}}/>}</Animated.View>
         {!centralFeed&&<FeedBottomFade height={fadeHeight}/>}
         {lib.loading&&<View pointerEvents="none" style={{position:'absolute',right:24,top:top+19}}><FeedSpinner active={appActive&&route==='home'&&!collection&&!searchOpen&&!readerOpen&&!onboarding.active}/></View>}
@@ -227,7 +229,7 @@ function Synapse({fontsReady}:{fontsReady:boolean}){
       </ScreenLayer>
       <ScreenLayer active={route==='profile'&&!collection&&!searchOpen&&!readerOpen} style={[StyleSheet.absoluteFill,paper,profileStyle]}>
         <ProfileHeader name={onboarding.state?.profile.name} photoUri={onboarding.photoUri} top={top+12} reduced={reduced||!appActive||route!=='profile'||!!collection||searchOpen} onEdit={()=>setEditIdentity(true)}/>
-        <ScrollView contentContainerStyle={{flexGrow:1,justifyContent:'center',paddingTop:24,paddingBottom:bottom+110}}>
+        <ScrollView style={{flex:1}} contentContainerStyle={{flexGrow:1,justifyContent:'center',paddingTop:24,paddingBottom:bottom+110}}>
         <View style={{marginHorizontal:24,borderRadius:24,overflow:'hidden',gap:2}}>{([{id:'saved',title:'Articoli salvati',icon:'bookmark-outline',count:lib.cache.filter(a=>a.saved).length},{id:'history',title:'Cronologia',icon:'history',count:lib.history.length},{id:'settings',title:'Impostazioni',icon:'tune',count:undefined}] as const).map(row=><ProfileMenuRow focusRequest={row.id==='settings'?profileFocus:0} key={row.id} icon={row.icon} title={row.title} count={row.count} onPress={()=>{setSettingsPage('main');setSettingsFocus(0);setCollection(row.id)}}/>)}</View></ScrollView>
       </ScreenLayer>
       <ScreenLayer active={!!collection&&!searchOpen&&!readerOpen} style={[StyleSheet.absoluteFill,paper,collectionStyle]}>

@@ -1,7 +1,7 @@
 import {isVerified} from './edition';
 import type {Article} from './types';
-import type {Learning} from './recommendations';
-import {reserveArticles} from './reserve';
+import {seenArticle,type Learning} from './recommendations';
+import {reserveArticles,RESERVE_LOW} from './reserve';
 
 /** Derived views of immutable library snapshots. UI state (keyboard, toast,
  * navigation, request indicator) cannot invalidate ranking or reader editions.
@@ -14,9 +14,12 @@ export class LibraryViews{
  private indexed?:Article[];private byId=new Map<string,Article>();
  constructor(private rank:typeof reserveArticles=reserveArticles){}
  reserve(cache:Article[],learning:Learning,served:Set<string>,revision:number,category='all'){
-  if(cache!==this.cache||learning!==this.learning||revision!==this.consumed){this.cache=cache;this.learning=learning;this.consumed=revision;this.reserves.clear()}
+  const sameScores=this.learning&&(['categories','topics','bookmarks','opens','recent','sequence','initialInterests','version','categoryVersion'] as const).every(key=>this.learning![key]===learning[key]);
+  if(cache!==this.cache||!sameScores)this.reserves.clear();
+  else if(learning!==this.learning||revision!==this.consumed){for(const [key,rows] of this.reserves){const remaining=rows.filter(a=>!served.has(a.id)&&!seenArticle(a,learning));if(remaining.length<RESERVE_LOW)this.reserves.delete(key);else this.reserves.set(key,remaining)}}
+  this.cache=cache;this.learning=learning;this.consumed=revision;
   let rows=this.reserves.get(category);
-  if(!rows){rows=this.rank(cache,learning,served,category);if(this.reserves.size>=24)this.reserves.clear();this.reserves.set(category,rows)}
+  if(!rows){rows=this.rank(category==='all'?cache:cache.filter(a=>a.category===category),learning,served);if(this.reserves.size>=24)this.reserves.clear();this.reserves.set(category,rows)}
   return rows;
  }
  feed(category:string,rows:Article[],cache:Article[],ai:boolean){

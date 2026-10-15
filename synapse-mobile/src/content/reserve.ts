@@ -12,13 +12,14 @@ export const BACKGROUND_JOBS_PER_MINUTE=6,BACKGROUND_GAP=1800;
 export function previewOnly(a:Article):Article{if(isVerified(a)||a.edition&&a.complete)return a;return {...a,paragraphs:a.preview,complete:false,simplified:undefined,simplifiedVersion:undefined,simplifiedPreview:undefined,simplifiedInput:undefined,simplifiedPrepared:undefined,contentIssue:undefined,contentIssueKind:undefined}}
 /** Immutable bundled text is shared, not a downloaded reserve payload. */
 export const reserveArticleBytes=(a:Article)=>isVerified(a)?JSON.stringify([a.id,a.title,a.preview,a.category]).length*2:articleBytes(previewOnly(a));
-export function reserveArticles(rows:Article[],learning:Learning,served:Set<string>,category='all'):Article[]{
+export function reserveArticles(rows:Article[],learning:Learning,served:Set<string>,category='all',limit=RESERVE_TARGET):Article[]{
   const ids=new Set<string>(),sources=new Set<string>();let bytes=0;
-  const ranked=rankRecommendations(rows.filter(a=>a.preview.length&&!seenArticle(a,learning)&&!served.has(a.id)&&generalAudienceScore(a.title,a.paragraphs)>=.45&&assessEditorial(a).eligible),learning,()=>.5);
+  const candidates=rows.filter(a=>a.preview.length&&!seenArticle(a,learning)&&!served.has(a.id)&&assessEditorial(a).eligible&&reserveArticleBytes(a)<=PREVIEW_BYTES);
+  const ranked=rankRecommendations(candidates,learning,()=>.5,[],Date.now(),category==='all'?limit:candidates.length);
   if(category!=='all')ranked.sort((a,b)=>Number(b.category===category)-Number(a.category===category));
   return ranked.filter(a=>{
     const source=identity(a),size=reserveArticleBytes(a);
-    if(ids.has(a.id)||sources.has(source)||size>PREVIEW_BYTES||bytes+size>RESERVE_BYTES||ids.size>=RESERVE_TARGET)return false;
+    if(ids.has(a.id)||sources.has(source)||size>PREVIEW_BYTES||bytes+size>RESERVE_BYTES||ids.size>=limit)return false;
     ids.add(a.id);sources.add(source);bytes+=size;return true;
   });
 }
@@ -34,7 +35,7 @@ export function appendDiscoveries(current:Article[],incoming:Article[],learning:
 export function refreshFuture(current:Article[],incoming:Article[],learning:Learning,served:Set<string>,position:number,linked=false){
   const prefix=current.slice(0,Math.max(0,position+1)),ids=new Set(prefix.map(identity));
   const future=[...current.slice(prefix.length),...incoming].filter(a=>{const id=identity(a);if(!a.preview.length||!assessEditorial(a).eligible||generalAudienceScore(a.title,a.paragraphs)<.45||ids.has(id)||served.has(a.id)||seenArticle(a,learning))return false;ids.add(id);return true});
-  return [...prefix,...connectDiscoveries(rankRecommendations(future,learning,()=>.5,prefix.slice(-3)),prefix,linked)].slice(0,FEED_WINDOW);
+  return [...prefix,...connectDiscoveries(rankRecommendations(future,learning,()=>.5,prefix.slice(-3),Date.now(),Math.max(0,FEED_WINDOW-prefix.length)+3),prefix,linked)].slice(0,FEED_WINDOW);
 }
 export type ReserveContext={enabled:boolean;category:string;pool:Article[];pendingFull:boolean;refresh?:boolean};
 export function reserveContext(enabled:boolean,category:string,pool:()=>Article[],pendingFull:boolean):ReserveContext{
