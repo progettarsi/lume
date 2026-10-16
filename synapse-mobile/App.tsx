@@ -73,6 +73,7 @@ function Synapse({fontsReady}:{fontsReady:boolean}){
   if(!gemini.current)gemini.current=new GeminiIntegration(getAIKey,putAIKey,(key,enabled)=>lib.configureAI(key,enabled),setGeminiState);
   const [aiStatus,setAIStatus]=useState<{id:string;message:string;busy:boolean;notice?:ReaderStatus}>({id:'',message:'',busy:false}),[feedRevision,setFeedRevision]=useState(0);
   const lastHomeTap=useRef(0);
+  const [dockIconRevision,setDockIconRevision]=useState({home:0,profile:0});
   const [removedSaved,setRemovedSaved]=useState<{article:Article;token:number}[]>([]),removalToken=useRef(0),removalVersions=useRef(new Map<string,number>());
   useEffect(()=>{const sub=AppState.addEventListener('change',state=>{setAppActive(state==='active');});return()=>sub.remove()},[]);
   const revise=async(full:Article,abort:AbortController,retry=false)=>{
@@ -211,7 +212,8 @@ function Synapse({fontsReady}:{fontsReady:boolean}){
   const dismissSearch=()=>{Keyboard.dismiss();randomRequest.current?.abort();setRandomBusy(false);setSearchOpen(false)};
   const refreshHome=()=>{lib.settleCategories();setEndedCategory('');setIndex(0);previousIndex.current=0;setFeedRevision(n=>n+1);chips.value=reduced?0:withSpring(0,spring);void lib.refresh(category)};
   const navigate=(next:'home'|'profile')=>{
-    const now=Date.now();if(next==='home'&&route==='home'&&!readerOpen&&!collection&&!searchOpen){if(now-lastHomeTap.current<350){lastHomeTap.current=0;refreshHome();return}lastHomeTap.current=now}else lastHomeTap.current=0;
+    const now=Date.now();if(next==='home'&&route==='home'&&!readerOpen&&!collection&&!searchOpen){if(now-lastHomeTap.current<350){lastHomeTap.current=0;setDockIconRevision(old=>({...old,home:old.home+1}));refreshHome();return}lastHomeTap.current=now}else lastHomeTap.current=0;
+    if(next!==route)setDockIconRevision(old=>({...old,[next]:old[next]+1}));
     if(next==='home'&&route!=='home')lib.settleCategories();Keyboard.dismiss();randomRequest.current?.abort();setRandomBusy(false);readerRequest.current?.abort();setSearchOpen(false);setCollection(null);setRoute(next)};
   const sourceRows=collectionReturn.rows,searchRows=searchReturn.rows;
   return <ThemeContext.Provider value={themeContext}><View style={styles.webFrame}><Animated.View ref={frame} collapsable={false} onLayout={e=>setViewportHeight(e.nativeEvent.layout.height)} style={[{width,flex:1,overflow:Platform.OS==='web'?'clip' as 'hidden':'hidden'},paper]}>
@@ -261,7 +263,7 @@ function Synapse({fontsReady}:{fontsReady:boolean}){
           <View ref={shuffleNode} collapsable={false} style={{width:56,height:56,borderRadius:28,backgroundColor:palette.active}}><ShuffleButton busy={randomBusy} onPress={()=>void random()}/></View>
         </Animated.View>
       </ScreenLayer>
-      {!searchOpen&&collection!=='settings'&&<Dock selected={route} onNavigate={navigate} onSearch={()=>{setSearchOpen(true);input.current?.focus()}} bottom={bottom} availableWidth={width-32} disabled={readerOpen} closing={!!reader&&!readerOpen}/>}
+      {!searchOpen&&collection!=='settings'&&<Dock selected={route} iconRevision={dockIconRevision} active={appActive} onNavigate={navigate} onSearch={()=>{setSearchOpen(true);input.current?.focus()}} bottom={bottom} availableWidth={width-32} disabled={readerOpen} closing={!!reader&&!readerOpen}/>}
       {reader&&<Reader key={reader.session} article={readerArticle!} aiMessage={aiStatus.id===reader.article.id?aiStatus.message:''} aiBusy={aiStatus.busy} onRetryAI={lib.settings.aiEnabled?retryAI:undefined} onRetryArticle={retryAI} notice={aiStatus.id===reader.article.id?aiStatus.notice:undefined} origin={reader.origin} open={readerOpen} width={width} height={height} top={top} bottom={bottom} size={lib.settings.size} saved={saved.has(reader.article.id)} onClose={close} onReopen={reopen} onClosed={closed} onReturnNear={returnNear} returnDetached={collectionReturn.changed||searchReturn.changed||reader.context!==`${route}:${collection}:${searchOpen}`||reader.origin.kind==='home'&&visibleArticle?.id!==reader.article.id} onSave={()=>save(reader.article)}/>}
       {snapshot&&<ThemeReveal key={snapshot.id} snapshot={snapshot} width={width} height={height} topInset={insets.top} onReady={()=>{if(snapshotRef.current?.id===snapshot.id){pendingThemeMode.current=null;lib.updateSettings({themeMode:snapshot.themeMode})}}} onDone={()=>finishTheme(snapshot)}/>}
       {removedSaved.length>0&&collection==='saved'&&!reader&&<Animated.View entering={reduced?undefined:FadeInUp.duration(180)} exiting={reduced?undefined:FadeOutDown.duration(150)} accessibilityLiveRegion="polite" style={[styles.toast,{bottom:bottom+94,left:24,right:24,backgroundColor:palette.surface,borderRadius:18,flexDirection:'row',alignItems:'center',gap:8}]}><Label style={{flex:1,fontSize:14}}>{removedSaved.length===1?'Segnalibro rimosso':`${removedSaved.length} segnalibri rimossi`}</Label><Pressable accessibilityRole="button" accessibilityLabel="Annulla ultima rimozione dai salvati" onPress={undoSaved} style={{padding:12,minHeight:48}}><Label strong>Annulla</Label></Pressable><Pressable accessibilityRole="button" accessibilityLabel="Chiudi avviso di rimozione" onPress={()=>setRemovedSaved([])} style={{minWidth:48,minHeight:48,alignItems:'center',justifyContent:'center'}}><Icon name="close" size={18}/></Pressable></Animated.View>}

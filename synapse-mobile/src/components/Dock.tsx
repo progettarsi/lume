@@ -4,12 +4,13 @@ import {View,Pressable,StyleSheet,useWindowDimensions} from 'react-native';
 import Animated,{cancelAnimation,useSharedValue,useAnimatedStyle,withSpring} from 'react-native-reanimated';
 import {useMotionPreference} from '../useMotionPreference';
 import {Icon,Label,Button,useTheme} from './Atoms';
+import {DockIcon} from './DockIcon';
 type Destination='home'|'profile';
 const motion=motionTokens.dock;
 function visibility(p:number){'worklet';const t=Math.max(0,Math.min(1,p));return t*t*(3-2*t)}
 // One continuous coordinate governs pill, tracks, icons and text. Text is laid
 // out at its final intrinsic width; only its parent clips and its paint fades.
-export function Dock({selected,onNavigate,onSearch,bottom,availableWidth,disabled=false,closing=false,reducedOverride,fontScaleOverride}:{selected:Destination;onNavigate:(id:Destination)=>void;onSearch:()=>void;bottom:number;availableWidth:number;disabled?:boolean;closing?:boolean;reducedOverride?:boolean;fontScaleOverride?:number}){
+export function Dock({selected,onNavigate,onSearch,bottom,availableWidth,disabled=false,closing=false,reducedOverride,fontScaleOverride,iconRevision={home:0,profile:0},active=true}:{selected:Destination;onNavigate:(id:Destination)=>void;onSearch:()=>void;bottom:number;availableWidth:number;disabled?:boolean;closing?:boolean;reducedOverride?:boolean;fontScaleOverride?:number;iconRevision?:Record<Destination,number>;active?:boolean}){
  const {palette}=useTheme(),window=useWindowDimensions(),reduced=useMotionPreference();
  const fontScale=fontScaleOverride??window.fontScale,p=useSharedValue(selected==='home'?0:1);
  const [labels,setLabels]=useState({home:32*fontScale,profile:40*fontScale,homeReady:false,profileReady:false});
@@ -38,13 +39,13 @@ export function Dock({selected,onNavigate,onSearch,bottom,availableWidth,disable
    <Animated.View testID="dock-pill" pointerEvents="none" accessible={false} style={[styles.pill,{left:inset,top:inset,height:pillHeight,borderRadius:pillHeight/2,backgroundColor:palette.active},pill]}/>
    <Animated.View pointerEvents="none" accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={[styles.cell,{left:inset,height:navHeight-8},homeCell]}>
     <View style={styles.hit}>
-     <Animated.View style={[styles.icon,homeIcon]}><Icon name="home-outline"/></Animated.View>
+     <Animated.View style={[styles.icon,homeIcon]}><DockIcon name="home" revision={iconRevision.home} active={active&&!disabled&&selected==='home'} reduced={noMotion}/></Animated.View>
      <Label allowFontScaling={fontScaleOverride===undefined} accessible={false} strong numberOfLines={1} style={[styles.label,{fontSize:textSize,lineHeight:textLine,width:labels.home},homeText]}>Home</Label>
     </View>
    </Animated.View>
    <Animated.View pointerEvents="none" accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={[styles.cell,{left:inset,height:navHeight-8},profileCell]}>
     <View style={styles.hit}>
-     <Animated.View style={[styles.icon,profileIcon]}><Icon name="account-outline"/></Animated.View>
+     <Animated.View style={[styles.icon,profileIcon]}><DockIcon name="profile" revision={iconRevision.profile} active={active&&!disabled&&selected==='profile'} reduced={noMotion}/></Animated.View>
      <Label allowFontScaling={fontScaleOverride===undefined} accessible={false} strong numberOfLines={1} style={[styles.label,{fontSize:textSize,lineHeight:textLine,width:labels.profile},profileText]}>Profilo</Label>
     </View>
    </Animated.View>

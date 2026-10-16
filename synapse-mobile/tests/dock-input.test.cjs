@@ -5,7 +5,7 @@ test('navbar touch tracks do not move with the decorative spring and stay disjoi
  const jsx=(type,props)=>({type,props}),module={exports:{}},shared=[];
  const source=ts.transpileModule(fs.readFileSync('src/components/Dock.tsx','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX,esModuleInterop:true}}).outputText;
  vm.runInNewContext(source,{module,exports:module.exports,require:id=>{
-  if(id==='react')return react;if(id==='react/jsx-runtime')return {jsx,jsxs:jsx};
+  if(id==='react')return react;if(id==='react/jsx-runtime')return {jsx,jsxs:jsx};if(id==='./DockIcon')return {DockIcon:'DockIcon'};
   if(id==='react-native')return {View:'View',Pressable:'Pressable',StyleSheet:{create:x=>x},useWindowDimensions:()=>({fontScale:1})};
   if(id==='react-native-reanimated')return {__esModule:true,default:{View:'AnimatedView'},useSharedValue:value=>{const item=slot(()=>({value}));if(!shared.includes(item))shared.push(item);return item},useAnimatedStyle:fn=>{index++;return {read:fn}},withSpring:value=>value,cancelAnimation(){}};
   if(id.includes('useMotionPreference'))return {useMotionPreference:()=>false};if(id.endsWith('/theme'))return require('./helpers/theme.cjs');if(id==='./Atoms')return {Icon:'Icon',Label:'Label',Button:'Button',useTheme:()=>({palette:{}})};throw Error(id);

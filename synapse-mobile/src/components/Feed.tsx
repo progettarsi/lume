@@ -1,5 +1,5 @@
 import {typography} from '../theme';
-import { useRef,useState,useEffect,useLayoutEffect,useCallback,useMemo,memo } from 'react';
+import { useRef,useState,useEffect,useLayoutEffect,useCallback,useMemo,memo,type ComponentProps } from 'react';
 import { View,StyleSheet,type LayoutRectangle } from 'react-native';
 import { Gesture,GestureDetector } from 'react-native-gesture-handler';
 import Animated,{useAnimatedStyle,useAnimatedReaction,useSharedValue,withSpring,withTiming,withDelay,withSequence,cancelAnimation,runOnJS} from 'react-native-reanimated';
@@ -8,7 +8,7 @@ import * as Haptics from 'expo-haptics';
 import {LinearGradient} from 'expo-linear-gradient';
 import type { Article } from '../content/types';
 import {isVerified} from '../content/edition';
-import { categoryLabel } from '../content/categories';
+import { CATEGORIES,categoryLabel } from '../content/categories';
 import { heading,spring } from '../theme';
 import { Label,Icon,useTheme } from './Atoms';
 import type { TitleGeometry } from './TitleWords';
@@ -79,7 +79,7 @@ export const FeedCard=memo(function FeedCard({article,height,size,saved,hidden,h
   const double=Gesture.Tap().numberOfTaps(2).maxDistance(14).maxDuration(350).maxDelay(300).runOnJS(true).onEnd((_,ok)=>{if(ok){onSave(article,true);showConfirmed();void Haptics.selectionAsync().catch(()=>{})}});
   const single=Gesture.Tap().maxDistance(14).maxDuration(450).runOnJS(true).onBegin(()=>{press.value=reduced?1:withTiming(.985,{duration:80})}).onEnd((_,ok)=>{press.value=reduced?1:withSpring(1,spring);if(ok)onOpen(article,node.current,'home')}).onFinalize(()=>press.value=reduced?1:withSpring(1,spring));
   return <View style={{height:natural?undefined:height,minHeight:natural?height:undefined,paddingHorizontal:24,paddingTop:4}}>
-    <View style={[styles.meta,{opacity:hideMeta?0:1}]}><View style={[styles.badge,{backgroundColor:palette.surface}]}><Icon name="tag-outline" size={17}/><Label style={{fontSize:14}}>{categoryLabel(article.category)}</Label>{isVerified(article)&&<View accessible accessibilityLabel="Selezione Lume, controlli automatici"><Icon name="check-decagram" size={17} color={palette.accent}/></View>}</View><View style={{flex:1}}/><SaveButton saved={saved} onPress={()=>onSave(article)}/></View>
+    <View style={[styles.meta,{opacity:hideMeta?0:1}]}><View style={[styles.badge,{backgroundColor:palette.surface}]}><Icon name={(CATEGORIES.find(c=>c.id===article.category)?.icon||'tag-outline') as ComponentProps<typeof Icon>['name']} size={17}/><Label style={{fontSize:14}}>{categoryLabel(article.category)}</Label>{isVerified(article)&&<View accessible accessibilityLabel="Selezione Lume, controlli automatici"><Icon name="check-decagram" size={17} color={palette.accent}/></View>}</View><View style={{flex:1}}/><SaveButton saved={saved} onPress={()=>onSave(article)}/></View>
     <GestureDetector gesture={Gesture.Exclusive(double,single)}><Animated.View ref={node} collapsable={false} style={[natural?styles.naturalReading:styles.reading,style,{opacity:hidden?0:1}]} accessible accessibilityRole="button" accessibilityLabel={`Approfondisci: ${article.title}`} accessibilityActions={[{name:'activate',label:'Apri articolo'},{name:'longpress',label:'Salva articolo'}]} onAccessibilityAction={e=>e.nativeEvent.actionName==='longpress'?onSave(article,true):onOpen(article,node.current,'home')}>
       <Label accessibilityRole="header" style={styles.title}>{article.title}</Label>{article.preview.map((p,i)=><Label key={i} style={{fontSize:size,lineHeight:size*1.47,marginBottom:22}}>{p}</Label>)}
       <Animated.View pointerEvents="none" style={[styles.confirmation,{backgroundColor:palette.active},bookmark]}><Icon name="bookmark" size={36}/></Animated.View>
