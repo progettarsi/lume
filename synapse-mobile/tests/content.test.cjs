@@ -103,7 +103,7 @@ test('invalid persisted preferences recover without breaking startup or enabling
  for(const input of ['{','null','[]','{"categories":null,"size":-2,"aiEnabled":"false","dark":1}']){
   const settings=parseSettings(input);assert.equal(settings.aiEnabled,false);assert.equal(settings.size,20);assert.equal(settings.themeMode,'automatic');assert.equal(settings.categories.length,CATEGORIES.length);
  }
- assert.deepEqual(parseSettings('{"size":23,"dark":true,"aiEnabled":true,"categories":["food","food",null]}'),{size:23,themeMode:'dark',aiEnabled:true,autoHideCategories:true,linkDiscoveries:true,categories:categoryOrder(['food'])});
+ assert.deepEqual(parseSettings('{"size":23,"dark":true,"aiEnabled":true,"categories":["food","food",null]}'),{size:23,themeMode:'dark',aiEnabled:true,autoHideCategories:true,linkDiscoveries:true,hapticsEnabled:true,categories:categoryOrder(['food'])});
 });
 test('category auto-hide defaults on for old settings and preserves explicit choices',()=>{
  for(const input of [null,'{}','{"autoHideCategories":"false"}','{"autoHideCategories":0}'])assert.equal(parseSettings(input).autoHideCategories,true);

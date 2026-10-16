@@ -115,6 +115,7 @@ function mountGeminiSettings(extraProps={}){
     module,
     exports:module.exports,
     require:name=>{
+      if(name==='../haptics')return {haptics:{emit:()=>{}}};
       if(name.endsWith('/theme'))return require('./helpers/theme.cjs');
       if(name.endsWith('/design-system/components'))return Object.fromEntries(['Action','Field','Section','Surface','ToggleRow'].map(n=>[n,n]));
       if(name==='react')return react;

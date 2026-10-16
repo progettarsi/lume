@@ -1,9 +1,11 @@
 const {test}=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm'),ts=require('typescript');
 const tokens=require('./helpers/theme.cjs');
+const hapticCues=[];
 const jsx=(type,props)=>({type,props});
 const mod={exports:{}};
 vm.runInNewContext(ts.transpileModule(fs.readFileSync('src/design-system/components.tsx','utf8'),{compilerOptions:{jsx:ts.JsxEmit.ReactJSX,module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,{
  module:mod,exports:mod.exports,require(id){
+  if(id==='../haptics')return {haptics:{emit:cue=>hapticCues.push(cue)}};
   if(id==='react')return {forwardRef:fn=>props=>fn(props,null),useRef:()=>({current:null}),useState:v=>[v,()=>{}],useEffect:()=>{}};
   if(id==='react/jsx-runtime')return {jsx,jsxs:jsx};
   if(id==='react-native')return {View:'View',Pressable:'Pressable',Switch:'Switch',TextInput:'TextInput',ScrollView:'ScrollView',KeyboardAvoidingView:'KeyboardAvoidingView',Platform:{OS:'android'},useWindowDimensions:()=>({fontScale:1}),StyleSheet:{create:x=>x,absoluteFill:{position:'absolute'},hairlineWidth:1}};
@@ -14,11 +16,22 @@ vm.runInNewContext(ts.transpileModule(fs.readFileSync('src/design-system/compone
  }
 });
 const ui=mod.exports;
+
+test('settings dispatch one cue for accepted navigation, on/off and changed choices',()=>{
+ hapticCues.length=0;const changes=[];
+ ui.NavigationRow({title:'Gemini',icon:'auto-fix',onPress:()=>changes.push('page')}).props.onPress();
+ for(const value of [false,true])ui.ToggleRow({title:'Opzione',value,onChange:next=>changes.push(next)}).props.onPress();
+ ui.ToggleRow({title:'Disabilitata',value:false,disabled:true,onChange:()=>{throw Error('disabled')}}).props.onPress();
+ const group=ui.ChoiceGroup({label:'Tema',value:'light',options:[{value:'light',label:'Chiaro'},{value:'dark',label:'Scuro'}],onChange:v=>changes.push(v)}).props.children[1];
+ group.props.children[0].props.onPress();group.props.children[1].props.onPress();
+ assert.deepEqual(changes,['page',true,false,'dark']);assert.deepEqual(hapticCues,['tap','on','off','selection']);
+});
 test('disabled actions stay visibly disabled instead of the feedback animation overriding their opacity',()=>{
  const compiled={exports:{}},react={createContext:value=>({value}),useContext:context=>context.value,useEffect:fn=>fn()};react.default=react;
  vm.runInNewContext(ts.transpileModule(fs.readFileSync('src/design-system/primitives.tsx','utf8'),{compilerOptions:{jsx:ts.JsxEmit.ReactJSX,module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,{
   module:compiled,exports:compiled.exports,require(id){
-   if(id==='react')return react;if(id==='react/jsx-runtime')return {jsx,jsxs:jsx};
+   if(id==='../haptics')return {haptics:{emit:cue=>hapticCues.push(cue)}};
+  if(id==='react')return react;if(id==='react/jsx-runtime')return {jsx,jsxs:jsx};
    if(id==='react-native')return {Pressable:'Pressable',StyleSheet:{create:x=>x}};
    if(id==='react-native-reanimated')return {default:{View:'AnimatedView'},useSharedValue:value=>({value}),useAnimatedStyle:read=>({read}),withSpring:value=>value};
    if(id==='./tokens')return tokens;

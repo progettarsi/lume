@@ -1,3 +1,4 @@
+import {haptics} from '../haptics';
 import React,{useEffect,useState} from 'react';
 import {Alert,Linking,Pressable,View} from 'react-native';
 import {Label,Icon,useTheme} from './Atoms';
@@ -13,7 +14,7 @@ export function GeminiSettings({state,aiKey,keyEdited,onChangeKey,onSaveKey,onRe
  useEffect(()=>{if(!keyEdited)setReplace(false)},[keyEdited]);
  const open=(url:string)=>{setLinkError('');void Linking.openURL(url).catch(()=>setLinkError('Impossibile aprire il collegamento. Controlla che sia disponibile un browser.'))};
  const link=(title:string,url:string)=><Pressable accessibilityRole="link" accessibilityLabel={title} onPress={()=>open(url)} style={{minHeight:48,justifyContent:'center'}}><Label strong style={{color:palette.accent,fontSize:15}}>{title} ↗</Label></Pressable>;
- const disclosure=(title:string,value:boolean,set:(value:boolean)=>void)=><Pressable accessibilityRole="button" accessibilityLabel={title} accessibilityState={{expanded:value}} onPress={()=>set(!value)} style={{minHeight:56,flexDirection:'row',alignItems:'center',gap:12}}><Label strong style={{flex:1,fontSize:16}}>{title}</Label><Icon name={value?'chevron-up':'chevron-down'} size={20}/></Pressable>;
+ const disclosure=(title:string,value:boolean,set:(value:boolean)=>void)=><Pressable accessibilityRole="button" accessibilityLabel={title} accessibilityState={{expanded:value}} onPress={()=>{set(!value);haptics.emit('selection')}} style={{minHeight:56,flexDirection:'row',alignItems:'center',gap:12}}><Label strong style={{flex:1,fontSize:16}}>{title}</Label><Icon name={value?'chevron-up':'chevron-down'} size={20}/></Pressable>;
  return <View>
   <Label muted style={[typography.body,{marginBottom:24}]}>Rielabora i testi e aiuta a classificare gli articoli. È facoltativo: Lume funziona anche senza Gemini.</Label>
   <Section title="Stato"><Surface style={{padding:16,gap:8}}><View style={{flexDirection:'row',gap:10,alignItems:'center'}}><Icon name={state.status==='error'?'alert-circle-outline':state.configured?'check-circle-outline':'information-outline'} color={palette.accent}/><Label strong style={[typography.title,{flex:1}]}>{state.busy?'Aggiornamento in corso…':state.status==='error'?'Configurazione da controllare':!state.configured?'Da configurare':aiEnabled?'Attivo':'Disattivato'}</Label></View><Label muted accessibilityLiveRegion="polite" style={typography.detail}>{state.message}</Label>{state.status==='error'&&onRetryConfiguration&&<Action title="Rileggi configurazione" secondary onPress={onRetryConfiguration}/>}</Surface></Section>

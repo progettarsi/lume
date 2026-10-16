@@ -21,5 +21,5 @@ export type Article = {
 };
 export type Category = { id: string; label: string; wiki: string; seeds: string[]; aliases?:string[]; icon?:string; parent?:string };
 export type ThemeMode = 'automatic'|'light'|'dark';
-export type Settings = { themeMode: ThemeMode; size: number; categories: string[]; aiEnabled: boolean; autoHideCategories: boolean; linkDiscoveries?:boolean };
-export const DEFAULT_SETTINGS: Settings = { themeMode: 'automatic', size: 20, categories: [], aiEnabled: false, autoHideCategories: true, linkDiscoveries:true };
+export type Settings = { themeMode: ThemeMode; size: number; categories: string[]; aiEnabled: boolean; autoHideCategories: boolean; linkDiscoveries?:boolean; hapticsEnabled?:boolean };
+export const DEFAULT_SETTINGS: Settings = { themeMode: 'automatic', size: 20, categories: [], aiEnabled: false, autoHideCategories: true, linkDiscoveries:true, hapticsEnabled:true };

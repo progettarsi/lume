@@ -1,3 +1,4 @@
+import {haptics} from '../haptics';
 import {useEffect,type ReactNode} from 'react';
 import {AppState} from 'react-native';
 import {Gesture,GestureDetector} from 'react-native-gesture-handler';
@@ -8,6 +9,8 @@ import {removalArmed,settleDuration} from '../content/bookmark';
 
 export function SavedSwipe({children,onConfirm,onExited,removing,reduced,enabled=true}:{children:(confirm:()=>void)=>ReactNode;onConfirm:()=>void;onExited:()=>void;removing:boolean;reduced:boolean;enabled?:boolean}){
  const {palette}=useTheme(),x=useSharedValue(0),start=useSharedValue(0),width=useSharedValue(0),committed=useSharedValue(false),armed=useSharedValue(0),exit=useSharedValue(0);
+ const thresholdSent=useSharedValue(false);
+ const signalThreshold=()=>haptics.emit('threshold');
  const returnToRest=()=>{'worklet';x.value=reduced?0:withSpring(0,{...spring,overshootClamping:true})};
  useEffect(()=>{if(!removing&&committed.value){cancelAnimation(x);cancelAnimation(exit);committed.value=false;exit.value=reduced?0:withTiming(0,{duration:180});returnToRest();onExited()}},[removing]);
  useEffect(()=>{const sub=AppState.addEventListener('change',state=>{if(state!=='active'&&!committed.value){cancelAnimation(x);returnToRest()}});return()=>sub.remove()},[reduced]);
@@ -18,8 +21,8 @@ export function SavedSwipe({children,onConfirm,onExited,removing,reduced,enabled
   x.value=withTiming(-width.value,{duration,easing:Easing.out(Easing.cubic)},finished=>{if(finished)runOnJS(onExited)()});
  };
  const pan=Gesture.Pan().maxPointers(1).activeOffsetX(-12).failOffsetY([-9,9]).enabled(enabled&&!removing)
-  .onBegin(()=>{cancelAnimation(x);start.value=x.value})
-  .onUpdate(e=>{if(!committed.value)x.value=Math.min(0,Math.max(-width.value,start.value+e.translationX))})
+  .onBegin(()=>{cancelAnimation(x);start.value=x.value;thresholdSent.value=false})
+  .onUpdate(e=>{if(!committed.value)x.value=Math.min(0,Math.max(-width.value,start.value+e.translationX));if(!committed.value&&!thresholdSent.value&&removalArmed(x.value,width.value)){thresholdSent.value=true;runOnJS(signalThreshold)()}})
   .onEnd((e,success)=>{if(success&&removalArmed(x.value,width.value))confirm(e.velocityX)})
   .onFinalize(()=>{if(!committed.value)returnToRest()});
  // Uniform radii avoid Android's non-uniform background path at zero-size mount.

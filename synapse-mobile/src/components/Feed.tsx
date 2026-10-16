@@ -4,7 +4,6 @@ import { View,StyleSheet,type LayoutRectangle } from 'react-native';
 import { Gesture,GestureDetector } from 'react-native-gesture-handler';
 import Animated,{useAnimatedStyle,useAnimatedReaction,useSharedValue,withSpring,withTiming,withDelay,withSequence,cancelAnimation,runOnJS} from 'react-native-reanimated';
 import {useMotionPreference} from '../useMotionPreference';
-import * as Haptics from 'expo-haptics';
 import {LinearGradient} from 'expo-linear-gradient';
 import type { Article } from '../content/types';
 import {isVerified} from '../content/edition';
@@ -77,7 +76,7 @@ export const FeedCard=memo(function FeedCard({article,height,size,saved,hidden,h
 
   useEffect(()=>{if(reduced){cancelAnimation(press);cancelAnimation(feedback);press.value=1;feedback.value=0}return()=>{clearTimeout(confirmationTimer.current);cancelAnimation(feedback);cancelAnimation(press)}},[reduced]);
   const style=useAnimatedStyle(()=>({transform:[{scale:press.value}]})),bookmark=useAnimatedStyle(()=>({transform:[{scale:feedback.value}],opacity:feedback.value>0?1:0}));
-  const double=Gesture.Tap().numberOfTaps(2).maxDistance(14).maxDuration(350).maxDelay(300).runOnJS(true).onEnd((_,ok)=>{if(ok){onSave(article,true);setSaveRevision(n=>n+1);showConfirmed();void Haptics.selectionAsync().catch(()=>{})}});
+  const double=Gesture.Tap().numberOfTaps(2).maxDistance(14).maxDuration(350).maxDelay(300).runOnJS(true).onEnd((_,ok)=>{if(ok){onSave(article,true);setSaveRevision(n=>n+1);showConfirmed()}});
   const single=Gesture.Tap().maxDistance(14).maxDuration(450).runOnJS(true).onBegin(()=>{press.value=reduced?1:withTiming(.985,{duration:80})}).onEnd((_,ok)=>{press.value=reduced?1:withSpring(1,spring);if(ok)onOpen(article,node.current,'home')}).onFinalize(()=>press.value=reduced?1:withSpring(1,spring));
   return <View style={{height:natural?undefined:height,minHeight:natural?height:undefined,paddingHorizontal:24,paddingTop:4}}>
     <View style={[styles.meta,{opacity:hideMeta?0:1}]}><View style={[styles.badge,{backgroundColor:palette.surface}]}><Icon name={(CATEGORIES.find(c=>c.id===article.category)?.icon||'tag-outline') as ComponentProps<typeof Icon>['name']} size={17}/><Label style={{fontSize:14}}>{categoryLabel(article.category)}</Label>{isVerified(article)&&<View accessible accessibilityLabel="Selezione Lume, controlli automatici"><Icon name="check-decagram" size={17} color={palette.accent}/></View>}</View><View style={{flex:1}}/><SaveButton saved={saved} onPress={()=>onSave(article)} active={active&&!hideMeta} reduced={reduced} animationRevision={saveRevision}/></View>

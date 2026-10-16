@@ -1,3 +1,4 @@
+import {haptics} from '../haptics';
 import {motion,layers} from '../theme';
 import {SheetSurface,Field} from '../design-system/components';
 import React,{forwardRef,useEffect,useImperativeHandle,useLayoutEffect,useReducer,useRef,useState} from 'react';
@@ -42,9 +43,10 @@ export const ProfileEditorSheet=forwardRef<ProfileEditorHandle,Props>(function P
  };
  const save=async()=>{
   const current=session.current;if(!current||current.busy||!current.dirty)return;
+  const done=haptics.begin('profile');
   setSaving(true);setError('');
-  try{if(await current.save()){Keyboard.dismiss();onClose()}}
-  catch{setError('Non riesco a salvare sul telefono. I dati precedenti sono conservati. Riprova.');}
+  try{if(await current.save()){if(session.current===current&&latestOpen.current)done('confirm');else done();Keyboard.dismiss();onClose()}else done()}
+  catch{done();setError('Non riesco a salvare sul telefono. I dati precedenti sono conservati. Riprova.');}
   finally{setSaving(false);render()}
  };
  const overlayStyle=useAnimatedStyle(()=>({opacity:progress.value*.32}));
@@ -63,7 +65,7 @@ export const ProfileEditorSheet=forwardRef<ProfileEditorHandle,Props>(function P
     <Label muted style={styles.field}>Nome · facoltativo</Label><Field accessibilityLabel="Nome nel profilo, facoltativo" editable={!saving} value={identity?.name??''} onChangeText={name=>{current?.setName(name);render()}} maxLength={96} placeholder="Il tuo nome" placeholderTextColor={palette.muted} autoCapitalize="words" autoCorrect={false} returnKeyType="done" onSubmitEditing={()=>Keyboard.dismiss()} style={[styles.input,{backgroundColor:palette.surface,borderColor:palette.line,color:palette.ink}]}/>
     <Label muted style={styles.hint}>Nome e foto rimangono sul dispositivo.</Label><Label accessibilityLiveRegion="polite" style={[styles.error,{color:palette.accent}]}>{error}</Label>
    </ScrollView>
-   <View style={[styles.actions,{paddingBottom:bottom+12}]}><Button disabled={saving} label="Annulla modifica profilo" onPress={requestClose} style={[styles.action,{backgroundColor:palette.surface}]}><Label>Annulla</Label></Button><Button disabled={!current?.dirty||busy} label="Salva nome e foto" onPress={()=>void save()} style={[styles.action,{backgroundColor:palette.active,opacity:(!current?.dirty||busy)? .5:1}]}><Label strong>{saving?'Salvo…':'Salva'}</Label></Button></View>
+   <View style={[styles.actions,{paddingBottom:bottom+12}]}><Button disabled={saving} label="Annulla modifica profilo" onPress={requestClose} style={[styles.action,{backgroundColor:palette.surface}]}><Label>Annulla</Label></Button><Button disabled={!current?.dirty||busy} label="Salva nome e foto" haptic={false} onPress={()=>void save()} style={[styles.action,{backgroundColor:palette.active,opacity:(!current?.dirty||busy)? .5:1}]}><Label strong>{saving?'Salvo…':'Salva'}</Label></Button></View>
   </SheetSurface>
  </View>;
 });

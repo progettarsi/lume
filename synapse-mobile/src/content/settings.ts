@@ -7,6 +7,7 @@ export function parseSettings(json:string|null|undefined):Settings{
   try{const parsed:unknown=JSON.parse(json||'{}');if(parsed&&typeof parsed==='object'&&!Array.isArray(parsed))value=parsed as Record<string,unknown>}catch{}
   return {
     themeMode:value.themeMode==='automatic'||value.themeMode==='light'||value.themeMode==='dark'?value.themeMode:typeof value.dark==='boolean'?(value.dark?'dark':'light'):DEFAULT_SETTINGS.themeMode,
+    hapticsEnabled:typeof value.hapticsEnabled==='boolean'?value.hapticsEnabled:true,
     aiEnabled:typeof value.aiEnabled==='boolean'?value.aiEnabled:DEFAULT_SETTINGS.aiEnabled,
     linkDiscoveries:typeof value.linkDiscoveries==='boolean'?value.linkDiscoveries:true,
     autoHideCategories:typeof value.autoHideCategories==='boolean'?value.autoHideCategories:DEFAULT_SETTINGS.autoHideCategories,
