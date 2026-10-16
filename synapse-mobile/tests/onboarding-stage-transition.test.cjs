@@ -2,7 +2,7 @@ const {test}=require('node:test'),assert=require('node:assert/strict'),fs=requir
 const {initialOnboarding,preparationState}=require('../.test-build/onboarding');
 
 function fixture({stage='interests',reduced=false,appActive=true,count=9,height=852}={}){
- const keyboard={value:0};
+ const keyboard={value:0},keyboardListeners=new Map();
  const slots=[],effects=[],animations=[],shared=[],navigations=[];let cursor=0,tree,dirty=false;
  const jsx=(type,props)=>({type,props}),slot=make=>{const i=cursor++;return slots[i]??(slots[i]=make())};
  const effect=(fn,deps)=>{const s=slot(()=>({deps:null,cleanup:null}));if(!s.deps||deps.some((d,i)=>!Object.is(d,s.deps[i]))){effects.push(()=>{s.cleanup?.();s.cleanup=fn()});s.deps=deps}};
@@ -13,7 +13,7 @@ function fixture({stage='interests',reduced=false,appActive=true,count=9,height=
  const atom=value=>({current:value,animation:null,get value(){return this.current},set value(next){if(next?.animation){this.animation={...next,owner:this};animations.push(this.animation)}else{this.current=next;this.animation=null}}});
  const reanimated={__esModule:true,default:{View:'AnimatedView',createAnimatedComponent:()=> 'AnimatedPath'},
   useSharedValue:value=>{const s=slot(()=>atom(value));if(!shared.includes(s))shared.push(s);return s},
-  useAnimatedStyle:fn=>{slot(()=>({}));return {read:fn}},useAnimatedProps:fn=>{slot(()=>({}));return {read:fn}},
+  useAnimatedStyle:fn=>{const s=slot(()=>({initial:fn()}));return {read:fn,initial:s.initial}},useAnimatedProps:fn=>{slot(()=>({}));return {read:fn}},useDerivedValue:fn=>{slot(()=>({}));return {get value(){return fn()}}},
   cancelAnimation(s){if(s.animation)s.animation.cancelled=true;s.animation=null},
   withTiming:(target,config,done)=>({animation:true,target,config,done}),withDelay:(delay,animation)=>({...animation,delay}),runOnJS:fn=>fn,Easing:{bezier:()=> 'ease'},
   interpolate(n,stops,values){let i=0;while(i<stops.length-2&&n>stops[i+1])i++;const t=Math.max(0,Math.min(1,(n-stops[i])/(stops[i+1]-stops[i])));return values[i]+(values[i+1]-values[i])*t},interpolateColor:(n,range,colors)=>n<.5?colors[0]:colors[1],
@@ -21,7 +21,7 @@ function fixture({stage='interests',reduced=false,appActive=true,count=9,height=
  const module={exports:{}},code=ts.transpileModule(fs.readFileSync('src/components/onboarding/ApprovedOnboardingScene.tsx','utf8'),{compilerOptions:{jsx:ts.JsxEmit.ReactJSX,module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText;
  vm.runInNewContext(code,{module,exports:module.exports,Math,require(id){
   if(id==='../../theme')return require('./helpers/theme.cjs');if(id==='react')return react;if(id==='react/jsx-runtime')return {jsx,jsxs:jsx};if(id==='react-native-reanimated')return reanimated;
-  if(id==='react-native')return {View:'View',ScrollView:'ScrollView',Pressable:'Pressable',Keyboard:{dismiss(){}},Platform:{OS:'android'},StyleSheet:{create:x=>x,absoluteFill:{},hairlineWidth:1},useWindowDimensions:()=>({width:393,height,fontScale:1})};
+  if(id==='react-native')return {View:'View',ScrollView:'ScrollView',Pressable:'Pressable',Keyboard:{dismiss(){},addListener:(name,fn)=>{keyboardListeners.set(name,fn);return {remove:()=>keyboardListeners.delete(name)}}},Platform:{OS:'android'},StyleSheet:{create:x=>x,absoluteFill:{},hairlineWidth:1},useWindowDimensions:()=>({width:393,height,fontScale:1})};
   if(id==='react-native-safe-area-context')return {useSafeAreaInsets:()=>({top:24,bottom:24})};if(id==='react-native-svg')return {__esModule:true,default:'Svg',Path:'Path',SvgXml:'SvgXml'};
   if(id==='../../useKeyboardLift')return {useKeyboardLift:()=>keyboard};if(id==='../../content/onboarding')return require('../.test-build/onboarding');
   if(id==='../../content/onboardingBrand')return {onboardingBrand:()=>({logo:'<svg/>'})};
@@ -35,11 +35,23 @@ function fixture({stage='interests',reduced=false,appActive=true,count=9,height=
  const flush=()=>{for(let i=0;i<30;i++){while(effects.length)effects.shift()();if(!dirty)break;dirty=false;render()}};
  const settle=animation=>{assert(animation&&!animation.cancelled);animation.owner.value=animation.target;animation.done?.(true);render();flush()};
  const change=patch=>{Object.assign(binding,patch);render();flush()};
- render();flush();return {binding,keyboard,render,flush,change,settle,animations,shared,navigations,get tree(){return tree}};
+ render();flush();return {binding,keyboard,keyboardEvent:(name,height)=>keyboardListeners.get(name)?.({endCoordinates:{height}}),render,flush,change,focusName(){const input=ofType({tree},'IdentityStage')[0];input.props.onNamePress();input.props.onNameFocus(true)},settle,animations,shared,navigations,get tree(){return tree}};
 }
 function nodes(root){if(!root||typeof root!=='object')return [];if(Array.isArray(root))return root.flatMap(nodes);return [root,...nodes(root.props?.children)]}
 const find=(f,testID)=>nodes(f.tree).find(n=>n.props?.testID===testID),ofType=(f,type)=>nodes(f.tree).filter(n=>n.type===type);
 const latest=(f,owner)=>f.animations.filter(a=>a.owner===owner&&!a.cancelled).at(-1);
+
+test('picker presentation remount starts with identity geometry rather than cached welcome coordinates',()=>{
+ const heading=f=>nodes(f.tree).find(n=>n.props?.children?.[0]?.props?.children?.type==='Title');
+ const old=fixture({stage:'intro'}),cached=heading(old).props.style[1].initial;
+ old.change({stage:'identity'});old.settle(latest(old,old.shared[0]));assert.equal(heading(old).props.style[1].read().top,117);assert.equal(cached.top,852*.49);
+ // Reanimated retains initial React props for an Animated.View's lifetime.
+ // A fresh identity presentation makes even those fallback props correct.
+ const returned=fixture({stage:'identity'}),layer=heading(returned),title=ofType(returned,'Title')[0];
+ assert.equal(layer.props.style[1].initial.top,117);assert.equal(layer.props.children[0].props.style.initial.transform[0].translateX,0);
+ assert.equal(title.props.initialReveal,false);assert.equal(title.props.title,'Parlami un po’ di te');
+ const session=returned.tree.props.value.current;assert.equal(session.title,title.props.title);assert.equal(session.key,title.props.titleKey);assert.equal(session.animating,false);
+});
 
 test('one persistent action and snippet survive forward and interrupted reverse choreography without changing the draft',()=>{
  const f=fixture(),draft=JSON.stringify(f.binding.draft),scene=f.shared[0];
@@ -90,6 +102,31 @@ test('failed durable entry restores readable preparation with a manual retry and
 
 
 test('identity scroll viewport stays above keyboard-raised actions through open, close and interrupted navigation',()=>{
- for(const height of [600,700,852]){const f=fixture({stage:'identity',height});for(const lift of [0,90,180,280,330]){f.keyboard.value=lift;const container=nodes(f.tree).find(n=>n.type==='AnimatedView'&&n.props.children?.type==='ScrollView');const area=container.props.style[1].read(),action=find(f,'onboarding-persistent-action').props.style[1].read();assert(height-area.bottom<=action.top-12,'content must not run behind the action');assert(area.top<height-area.bottom,'scroll viewport remains usable')}
+ for(const height of [600,700,852]){const f=fixture({stage:'identity',height});f.focusName();for(const lift of [0,90,180,280,330]){f.keyboard.value=lift;const container=nodes(f.tree).find(n=>n.type==='AnimatedView'&&n.props.children?.type==='ScrollView');const area=container.props.style[1].read(),action=find(f,'onboarding-persistent-action').props.style[1].read();assert(height-area.bottom<=action.top-12,'content must not run behind the action');assert(area.top<height-area.bottom,'scroll viewport remains usable')}
  f.keyboard.value=280;const before=find(f,'onboarding-persistent-action').props.style[1].read().top;f.change({stage:'interests'});const after=find(f,'onboarding-persistent-action').props.style[1].read().top;assert.equal(after,before,'changing logical stage must not abruptly remove keyboard offset');}
+});
+test('photo picker return ignores restored focus and stale IME height until an actual input interaction',()=>{
+ for(const reduced of [false,true]){
+  const f=fixture({stage:'identity',reduced}),draft=JSON.stringify(f.binding.draft);
+  const geometry=()=>({area:nodes(f.tree).find(n=>n.type==='AnimatedView'&&n.props.children?.type==='ScrollView').props.style[1].read(),action:find(f,'onboarding-persistent-action').props.style[1].read()});
+  const resting=JSON.stringify(geometry());f.focusName();f.keyboard.value=330;assert.notEqual(JSON.stringify(geometry()),resting);
+  f.change({photoBusy:true});assert.equal(JSON.stringify(geometry()),resting);
+  // No closing-animation event arrives: the raw height stays at 330.
+  f.change({photoBusy:false});ofType(f,'IdentityStage')[0].props.onNameFocus(true);assert.equal(f.keyboard.value,330);assert.equal(JSON.stringify(geometry()),resting);assert.equal(JSON.stringify(f.binding.draft),draft);
+  f.focusName();assert.notEqual(JSON.stringify(geometry()),resting);
+  // Ordinary blur keeps following the native closing animation smoothly.
+  ofType(f,'IdentityStage')[0].props.onNameFocus(false);f.keyboard.value=180;assert.notEqual(JSON.stringify(geometry()),resting);f.keyboard.value=0;assert.equal(JSON.stringify(geometry()),resting);
+ }
+});
+test('keyboard visibility events support input activation without pointer presses and discard stale hidden height',()=>{
+ const f=fixture({stage:'identity'}),top=()=>find(f,'onboarding-persistent-action').props.style[1].read().top,resting=top();
+ f.keyboard.value=330;ofType(f,'IdentityStage')[0].props.onNameFocus(true);assert.equal(top(),resting);
+ f.keyboardEvent('keyboardDidShow',330);assert(top()<resting);
+ f.keyboardEvent('keyboardDidHide',0);assert.equal(top(),resting);
+ f.change({photoBusy:true});f.keyboardEvent('keyboardDidShow',330);f.change({photoBusy:false});assert.equal(top(),resting);
+});
+test('returning from another window cannot restore the old keyboard session',()=>{
+ const f=fixture({stage:'identity'});f.focusName();f.keyboard.value=330;
+ const raised=find(f,'onboarding-persistent-action').props.style[1].read().top;
+ f.change({appActive:false});f.change({appActive:true});assert(find(f,'onboarding-persistent-action').props.style[1].read().top>raised);
 });

@@ -10,11 +10,17 @@ function reader(embedded,kind='home',options={}){
   if(id==='../content/edition')return require('../.test-build/edition');if(id==='../content/text')return require('../.test-build/text');if(id==='../content/categories')return require('../.test-build/categories');if(id==='../content/readerReturn')return require('../.test-build/readerReturn');if(id==='../content/safeSourceUrl')return require('../.test-build/safeSourceUrl');
   if(id==='../theme')return require('./helpers/theme.cjs');return {useTheme:()=>({palette:{paper:'#eee',active:'#aaa'}})};
  }});
- const tree=module.exports.Reader({article:{id:'demo',title:'Aurora',preview:['Testo breve'],paragraphs:['Testo breve','Dettagli'],complete:true,source:'https://it.wikipedia.org/wiki/Aurora'},origin:{x:40,y:260,width:300,height:250,kind},open:true,width:384,height:832,top:24,bottom:24,size:20,saved:false,onClose(){},onReopen(){},onClosed(){},onSave(){},returnPaper:embedded?'#26211f':undefined,onDoubleTapSave:()=>saves++});
+ const tree=module.exports.Reader({article:{id:'demo',title:'Aurora',preview:['Testo breve'],paragraphs:['Testo breve','Dettagli'],complete:true,source:'https://it.wikipedia.org/wiki/Aurora'},origin:{x:40,y:260,width:300,height:250,kind},open:options.open??true,returnDetached:options.detached??false,width:384,height:832,top:24,bottom:24,size:20,saved:false,onClose(){},onReopen(){},onClosed(){},onSave(){},returnPaper:embedded?'#26211f':undefined,onDoubleTapSave:()=>saves++});
  const touch=find(tree,n=>!!n.props?.onTouchStart);
  return {tree,progress:values[0],time:t=>time=t,saves:()=>saves,tap(x=10,y=10){touch.props.onTouchStart({nativeEvent:{pageX:x,pageY:y}});touch.props.onTouchEnd()},drag(){touch.props.onTouchStart({nativeEvent:{pageX:10,pageY:10}});touch.props.onTouchMove({nativeEvent:{pageX:10,pageY:50}});touch.props.onTouchEnd()}};
 }
 function find(node,predicate){if(!node)return;if(Array.isArray(node)){for(const child of node){const hit=find(child,predicate);if(hit)return hit}return}if(predicate(node))return node;return find(node.props?.children,predicate)}
+test('a detached reader return cannot cover the new page with an invisible touch or accessibility layer',()=>{
+ const detached=reader(false,'home',{open:false,detached:true}).tree;
+ assert.equal(detached.props.pointerEvents,'none');assert.equal(detached.props.accessibilityElementsHidden,true);assert.equal(detached.props.importantForAccessibility,'no-hide-descendants');assert.equal(detached.props.accessibilityViewIsModal,false);
+ const reversible=reader(false,'home',{open:false}).tree;assert.equal(reversible.props.pointerEvents,'box-none');assert.equal(reversible.props.accessibilityViewIsModal,false);
+ const opened=reader(false).tree;assert.equal(opened.props.pointerEvents,'box-none');assert.equal(opened.props.accessibilityViewIsModal,true);
+});
 test('embedded reader contracts to the measured source without fading the whole reader',()=>{
  const demo=reader(true),normal=reader(false);
  for(const p of [1,.75,.3,0,.4,1]){demo.progress.value=p;const surface=demo.tree.props.children[0].props.style[1].read();assert.equal(surface.width,300+84*p);assert.equal(surface.height,250+582*p);assert.equal(surface.left,40*(1-p));assert.equal(surface.top,260*(1-p));assert.equal(surface.opacity,1)}

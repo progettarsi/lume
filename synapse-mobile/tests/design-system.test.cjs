@@ -23,7 +23,8 @@ test('disabled actions stay visibly disabled instead of the feedback animation o
    if(id==='react-native-reanimated')return {default:{View:'AnimatedView'},useSharedValue:value=>({value}),useAnimatedStyle:read=>({read}),withSpring:value=>value};
    if(id==='./tokens')return tokens;
    if(id==='../useMotionPreference')return {useMotionPreference:()=>false};
-   if(id.includes('MaterialCommunityIcons'))return {default:'Icon'};
+   if(id==='react-native-svg')return {default:'Svg',Path:'Path'};
+   if(id==='./phosphorPaths')return {phosphorPaths:{}};
    throw Error(id);
   }
  });

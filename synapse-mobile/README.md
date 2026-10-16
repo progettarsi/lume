@@ -1,6 +1,6 @@
 # Synapse mobile
 
-Release corrente: **v0.2.3**, build 25. [Note di rilascio](docs/RELEASE-v0.2.3.md) e [APK universale Android](https://github.com/progettarsi/lume/releases/tag/v0.2.3), compatibile con le quattro ABI da Android 7.0.
+Release corrente: **v0.2.4**, build 26. [Note di rilascio](docs/RELEASE-v0.2.4.md) e [APK universale Android](https://github.com/progettarsi/lume/releases/tag/v0.2.4), compatibile con le quattro ABI da Android 7.0.
 
 Prima implementazione React Native + Expo dell’esperienza approvata. Android come prima piattaforma; codice dell’app condiviso con iOS. Il prototipo originale nella cartella `../synapse` resta separato.
 
@@ -26,7 +26,7 @@ La selezione divulgativa usa filtri e temi iniziali: non garantisce che ogni voc
 
 ## Crediti delle icone
 
-[Animated icons by Lordicon.com](https://lordicon.com/). Le icone di navigazione Home e Avatar appartengono alla famiglia **System Solid**, con animazione `hover-pinch`, e sono utilizzate con attribuzione secondo la [licenza gratuita Lordicon](https://lordicon.com/licenses). Il credito è presente anche in Impostazioni → Informazioni; va mantenuto nella descrizione di eventuali pubblicazioni su Google Play/App Store. Gli asset Lordicon non sono coperti dalla licenza 0BSD del codice: si applicano i termini del fornitore. Provenienza e dettagli in [assets/lordicon/README.md](assets/lordicon/README.md).
+[useAnimations](https://useanimations.com/) per Home/Profilo nella dock, salvataggio e Shuffle; [Phosphor Icons](https://phosphoricons.com/) per tutte le icone statiche, comprese le 22 categorie. Entrambe le librerie sono MIT: crediti e testi integrali delle licenze sono inclusi nell’app (Impostazioni → Informazioni) e in [assets/licenses](assets/licenses). Sono vettori locali, senza servizi o abbonamenti. Gli asset Lordicon rimasti nel repository documentano la versione precedente e non sono importati dall’app. Dettagli e regole di movimento in [docs/ICON-SECTION-PLAN.md](docs/ICON-SECTION-PLAN.md).
 
 ## Avvio e controlli
 

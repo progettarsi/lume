@@ -124,7 +124,9 @@ export function Reader({article:incomingArticle,origin,open,width,height,top,bot
   const titleScroll=useAnimatedStyle(()=>({transform:[{translateY:-scroll.value*Math.max(0,Math.min(1,progress.value))}]}));
   const returnGradient=useAnimatedStyle(()=>({opacity:1-Math.max(0,Math.min(1,progress.value))}));
   const rowHandoff=useAnimatedStyle(()=>({opacity:returnDetached?phase(progress.value,0,.12):1}),[returnDetached]);
-  return <Animated.View style={[StyleSheet.absoluteFill,{zIndex:40}]} pointerEvents="box-none" accessibilityViewIsModal>
+  // A detached return is paint only. Even if its final animation callback is
+  // delayed, the old page must never intercept the new page's input or focus.
+  return <Animated.View style={[StyleSheet.absoluteFill,{zIndex:40}]} pointerEvents={!open&&returnDetached?'none':'box-none'} accessibilityElementsHidden={!open&&returnDetached} importantForAccessibility={!open&&returnDetached?'no-hide-descendants':'auto'} accessibilityViewIsModal={open}>
     <Animated.View style={[styles.surface,surface]}>
       <Animated.View style={content}>
         <Animated.ScrollView ref={scrollRef} scrollEnabled={open} onScroll={onScroll} onLayout={e=>{viewport.value=e.nativeEvent.layout.height}} scrollEventThrottle={16} showsVerticalScrollIndicator={false} style={{position:'absolute',top:destinationY-16,left:0,right:0,bottom:0}} contentContainerStyle={{paddingHorizontal:24,paddingTop:16,paddingBottom:bottom+40}}>
@@ -154,7 +156,7 @@ export function Reader({article:incomingArticle,origin,open,width,height,top,bot
       <Animated.View pointerEvents="box-none" style={[{position:'absolute',left:0,right:0,bottom:0,overflow:'hidden'},titleClip,rowHandoff]}><Animated.View pointerEvents="box-none" style={[StyleSheet.absoluteFill,titleScroll]}>{titleLayout?.words.map((box,i)=><MorphWord key={`${article.id}:${i}`} text={article.title.split(/\s+/)[i]} source={origin.title?.words[i]||box} destination={box} origin={origin} destinationY={destinationY} progress={progress} onReopen={()=>{if(!open)onReopen()}}/>)}</Animated.View></Animated.View>
       <Animated.View pointerEvents="none" style={[{position:'absolute',left:origin.x,top:origin.y+21},metaStyle,rowHandoff]}><Label muted numberOfLines={1} style={{fontSize:12,lineHeight:18}}>{categoryLabel(article.category)}</Label></Animated.View>
     </>}
-    <Animated.View pointerEvents={open?'auto':'none'} style={[{position:'absolute',top:0,left:0,right:0,backgroundColor:palette.paper},controls]}><View style={[styles.header,{paddingTop:top}]}><Button label="Chiudi approfondimento" onPress={onClose}><Icon name="arrow-left"/></Button><Label muted style={{flex:1,fontSize:14}}>Articolo</Label><SaveButton saved={saved} onPress={onSave}/></View></Animated.View>
+    <Animated.View pointerEvents={open?'auto':'none'} style={[{position:'absolute',top:0,left:0,right:0,backgroundColor:palette.paper},controls]}><View style={[styles.header,{paddingTop:top}]}><Button label="Chiudi approfondimento" onPress={onClose}><Icon name="arrow-left"/></Button><Label muted style={{flex:1,fontSize:14}}>Articolo</Label><SaveButton saved={saved} onPress={onSave} active={open} reduced={motionReduced}/></View></Animated.View>
   </Animated.View>;
 }
 function MorphWord({text,source,destination,origin,destinationY,progress,onReopen}:{text:string;source:{x:number;y:number};destination:{x:number;y:number;width:number};origin:Origin;destinationY:number;progress:SharedValue<number>;onReopen:()=>void}){

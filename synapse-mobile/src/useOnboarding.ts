@@ -11,6 +11,7 @@ export function useOnboarding(lib:ReturnType<typeof useLibrary>,reduced:boolean,
  if(!durable.current&&lib.onboarding)durable.current=new OnboardingController(lib.onboarding,(s,i)=>live.current.persistOnboarding(s,i),render);
  const controller=sandbox.current??durable.current,state=controller?.state,photo=useRef(new LocalPhoto(photoPort));
  const [photoBusy,setPhotoBusy]=useState(false),[photoError,setPhotoError]=useState(''),[photoUri,setPhotoUri]=useState<string>();
+ const [photoPresentationRevision,setPhotoPresentationRevision]=useState(0);
  const demo=useRef(new TutorialDemo()),[demoRevision,updateDemo]=useReducer(n=>n+1,0);
  const photoTask=useRef(false);
  const replay=controller?.replayIndex!==null&&controller?.replayIndex!==undefined;
@@ -28,15 +29,17 @@ export function useOnboarding(lib:ReturnType<typeof useLibrary>,reduced:boolean,
  const identityTarget=()=>active&&!replay?'draft':'profile';
  const pickPhoto=async(remove=false)=>{
   if(!controller||controller.busy||photoTask.current||sandbox.current)return;photoTask.current=true;setPhotoBusy(true);setPhotoError('');const target=identityTarget();
+   // Release the name input before handing focus to the external picker.
+   Keyboard.dismiss();
   try{const current=()=>controller.state[target].photoUri,commit=(uri:string|undefined)=>controller[target]({photoUri:uri});
    if(remove)await photo.current.remove(current,commit,references);
    else {const result=await photo.current.replace(current,commit,references);if(result==='denied')setPhotoError('Foto non disponibile o accesso negato. Puoi continuare senza foto.');}
   }catch(error){setPhotoError(error instanceof Error?error.message:'Foto non salvata. Puoi continuare senza foto.')}
-  finally{photoTask.current=false;setPhotoBusy(false)}
+  finally{photoTask.current=false;setPhotoBusy(false);if(!remove)setPhotoPresentationRevision(n=>n+1)}
  };
  return {
   controller,state,draft:controller?.draftValue,stage,active,replay,revision,bootError:lib.onboardingError,retryBoot:lib.retryOnboarding,busy:!!controller?.busy||photoBusy,error:controller?.error||'',photoBusy,photoError,photoUri,
-  reduced,appActive,motionEnabled:!reduced&&appActive&&active,
+  reduced,appActive,photoPresentationRevision,motionEnabled:!reduced&&appActive&&active,
   tutorialIndex:replay?controller!.replayIndex!:state?.tutorialIndex??0,tutorialNavigationRevision:controller?.tutorialNavigationRevision??0,demo:demo.current,demoRevision,
   interactDemo:(action:(d:TutorialDemo)=>void)=>{demo.current.interact();action(demo.current);updateDemo()},
   options:interestOptions(lib.registry,new Set(lib.cache.filter(a=>a.preview.length).map(a=>a.category))),preparation,navigate,presentPreparation:()=>{},updateDraft,pickPhoto,

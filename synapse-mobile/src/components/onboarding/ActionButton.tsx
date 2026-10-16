@@ -1,7 +1,7 @@
 import React,{useEffect} from 'react';
-import {Image,Pressable,StyleSheet,View,type StyleProp,type ViewStyle} from 'react-native';
+import {Pressable,StyleSheet,View,type StyleProp,type ViewStyle} from 'react-native';
 import Animated,{useAnimatedStyle,useSharedValue,withTiming,withSequence,cancelAnimation,Easing} from 'react-native-reanimated';
-import {Label,useTheme} from '../Atoms';
+import {Icon,Label,useTheme} from '../Atoms';
 import {ONBOARDING_MOTION,type MotionEnvironment,type OrganicShapeKind} from '../../content/onboardingPresentation';
 import {OrganicShapeSlot} from '../OnboardingMotionSlots';
 const easeOut=Easing.bezier(.22,1,.36,1);
@@ -15,7 +15,7 @@ export function ActionButton({label,onPress,disabled=false,shapeKind='round-acti
  const {palette}=useTheme(),bounce=usePressBounce(motion,disabled);
  return <Pressable testID={testID} accessibilityRole="button" accessibilityLabel={label} accessibilityState={{disabled}} disabled={disabled} onPressIn={bounce.onPressIn} onPressOut={bounce.onPressOut} onPress={onPress} style={[styles.hitbox,style]}>
   <Animated.View pointerEvents="none" style={[styles.shapeWrapper,bounce.style]}><OrganicShapeSlot kind={shapeKind} size={50} motion={motion}/></Animated.View>
-  <Image source={require('../../../assets/onboarding/arrow.png')} style={[styles.arrow,{tintColor:palette.ink}]} resizeMode="contain" accessible={false}/>
+  <Icon name="arrow-right" size={24}/>
  </Pressable>;
 }
 export function SkipButton({label,onPress,disabled=false,motion}:{label:string;onPress:()=>void;disabled?:boolean;motion:MotionEnvironment}){

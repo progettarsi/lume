@@ -22,6 +22,7 @@ export interface IdentityStageProps {
   fontScale: number;
   embedded?: boolean;
   onNameFocus?: (focused:boolean)=>void;
+  onNamePress?:()=>void;
 }
 
 export function IdentityStage({
@@ -31,6 +32,7 @@ export function IdentityStage({
   fontScale,
   embedded=false,
   onNameFocus,
+  onNamePress,
 }: IdentityStageProps) {
   const { palette } = useTheme();
 
@@ -202,6 +204,7 @@ export function IdentityStage({
             value={realValue}
             onChangeText={handleChangeText}
             onFocus={handleFocus}
+            onPressIn={onNamePress}
             onBlur={handleBlur}
             placeholder={showOverlay ? '' : 'Il tuo nome, facoltativo'}
             placeholderTextColor={palette.muted}

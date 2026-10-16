@@ -45,7 +45,7 @@ test('onboarding presentation components compile and export valid functions', ()
 test('onboarding wrapper delegates the same binding to the approved scene and preserves explicit profile editing', () => {
   const slots=[],saves=[],picks=[],ApprovedScene=function(){};let cursor=0,tree;
   const react={useState(value){const i=cursor++;if(!(i in slots))slots[i]=value;return [slots[i],next=>slots[i]=next]}};
-  const jsx=(type,props)=>({type,props}),module={exports:{}};
+  const jsx=(type,props,key)=>({type,props,key}),module={exports:{}};
   vm.runInNewContext(compileComponent('src/components/OnboardingScreen.tsx'),{module,exports:module.exports,Array,require(id){
     if(id==='react')return {__esModule:true,default:react,...react};if(id==='react/jsx-runtime')return {jsx,jsxs:jsx};
     if(id==='react-native')return {View:'View',Image:'Image',Pressable:'Pressable',TextInput:'TextInput',StyleSheet:{create:v=>v}};
@@ -55,6 +55,7 @@ test('onboarding wrapper delegates the same binding to the approved scene and pr
   }});
   const b={stage:'tutorial',active:false,state:{profile:{name:'Privato',photoUri:'file:local/photo.jpg'},draft:{}},photoUri:'file:local/photo.jpg',busy:false,pickPhoto:remove=>picks.push(!!remove),saveProfile:name=>saves.push(name),reportPhotoUnavailable(){}};
   const wrapped=module.exports.OnboardingScreen({binding:b});assert.equal(wrapped.type,ApprovedScene);assert.equal(wrapped.props.binding,b);
+  assert.equal(wrapped.key,0);b.photoPresentationRevision=1;const returned=module.exports.OnboardingScreen({binding:b});assert.equal(returned.key,1);assert.equal(returned.props.binding,b);assert.equal(returned.props.binding.state,b.state);
   function nodes(root){if(!root||typeof root!=='object')return [];if(Array.isArray(root))return root.flatMap(nodes);return [root,...nodes(root.props?.children)]}
   const render=()=>{cursor=0;tree=module.exports.LocalProfileEditor({binding:b})};
   render();let input=nodes(tree).find(n=>n.type==='TextInput');assert.equal(input.props.accessibilityLabel,'Nome nel profilo');assert.equal(input.props.value,'Privato');assert.equal(input.props.maxLength,96);

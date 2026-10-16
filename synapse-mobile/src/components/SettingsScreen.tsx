@@ -1,4 +1,5 @@
-import {View,Linking} from 'react-native';
+import {Alert,View,Linking} from 'react-native';
+import {iconLicenses} from '../design-system/iconLicenses';
 import {Label,useTheme} from './Atoms';
 import {Action,ChoiceGroup,NavigationRow,PageScroll,Section,Surface,ToggleRow} from '../design-system/components';
 import type {Settings,ThemeMode} from '../content/types';
@@ -12,7 +13,7 @@ export function SettingsScreen({settings,gemini,onTheme,onUpdate,onGemini,onGall
     <Section title="Lettura"><Surface style={{padding:16,gap:12}}><Label strong style={typography.title}>Dimensione del testo</Label><ChoiceGroup label="Dimensione del testo" value={settings.size} options={[{value:18,label:'Piccolo'},{value:20,label:'Medio'},{value:23,label:'Grande'}]} onChange={size=>onUpdate({size})}/><View style={{padding:14,backgroundColor:palette.paper,borderRadius:16}}><Label style={{fontSize:settings.size,lineHeight:settings.size*1.5}}>Una piccola scoperta cambia il modo di vedere il mondo.</Label></View></Surface></Section>
     <Section title="Home"><Surface><ToggleRow title="Nascondi categorie" description="Durante lo scorrimento degli articoli. Ricompaiono tornando indietro." value={settings.autoHideCategories} onChange={autoHideCategories=>onUpdate({autoHideCategories})}/><ToggleRow title="Collega le scoperte" description="Ogni tanto, piccole storie collegate tra loro." value={settings.linkDiscoveries!==false} onChange={linkDiscoveries=>onUpdate({linkDiscoveries})}/></Surface></Section>
     <Section title="Integrazioni"><Surface style={{overflow:'hidden'}}><NavigationRow focusRequest={focusRequest} icon="auto-fix" title="Gemini" description={gemini.busy?'Aggiornamento in corso…':gemini.status==='error'?'Configurazione da controllare':!gemini.configured?'Facoltativo · da configurare':settings.aiEnabled?'Attivo':'Disattivato'} onPress={onGemini}/></Surface></Section>
-    <Section title="Informazioni"><Surface style={{overflow:'hidden'}}><NavigationRow icon="open-in-new" title="Animated icons by Lordicon.com" description="Icone Home e Profilo · System Solid" onPress={()=>void Linking.openURL('https://lordicon.com/').catch(()=>{})}/></Surface></Section>
+    <Section title="Informazioni"><Surface style={{overflow:'hidden'}}><NavigationRow icon="open-in-new" title="useAnimations" description="Icone animate · licenza MIT" onPress={()=>Alert.alert('useAnimations',iconLicenses.useAnimations,[{text:'Chiudi'},{text:'Sito',onPress:()=>void Linking.openURL('https://useanimations.com/').catch(()=>{})}])}/><NavigationRow icon="open-in-new" title="Phosphor Icons" description="Icone statiche · licenza MIT" onPress={()=>Alert.alert('Phosphor Icons',iconLicenses.phosphor,[{text:'Chiudi'},{text:'Sito',onPress:()=>void Linking.openURL('https://phosphoricons.com/').catch(()=>{})}])}/></Surface></Section>
     {__DEV__&&<Section title="Sviluppo"><View style={{gap:12}}><Action title="Galleria del design system" onPress={onGallery}/><Action title="Anteprima primo avvio" secondary onPress={onPreview}/></View></Section>}
   </PageScroll></View>;
 }

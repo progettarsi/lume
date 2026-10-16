@@ -4,7 +4,7 @@ test('repeated reduced-motion saves keep their own feedback deadline and unmount
  const gesture=()=>{const handlers={},chain=new Proxy({}, {get:(_,key)=>(...args)=>{handlers[key]=args[0];return chain}});taps.push(handlers);return chain};
  const source=ts.transpileModule(fs.readFileSync('src/components/Feed.tsx','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX,esModuleInterop:true}}).outputText;
  vm.runInNewContext(source,{module,exports:module.exports,setTimeout:(fn,ms)=>{const key={};timers.set(key,{at:now+ms,fn});return key},clearTimeout:key=>timers.delete(key),require:id=>{
-  if(id==='react')return {memo:fn=>fn,useRef:current=>({current}),useCallback:fn=>fn,useEffect:fn=>effects.push(fn)};
+  if(id==='react')return {memo:fn=>fn,useState:v=>[v,()=>{}],useRef:current=>({current}),useCallback:fn=>fn,useEffect:fn=>effects.push(fn)};
   if(id==='react/jsx-runtime')return {jsx,jsxs:jsx};if(id==='react-native')return {View:'View',StyleSheet:{create:x=>x}};
   if(id==='react-native-reanimated')return {__esModule:true,default:{View:'AnimatedView'},useSharedValue:value=>{const v={value};shared.push(v);return v},useAnimatedStyle:fn=>fn(),cancelAnimation(){},withSpring:v=>v,withTiming:v=>v};
   if(id==='react-native-gesture-handler')return {Gesture:{Tap:gesture,Exclusive(){}},GestureDetector:'GestureDetector'};

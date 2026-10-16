@@ -1,7 +1,7 @@
 import {surfaceTones} from '../../theme';
 import React,{useCallback,useEffect,useLayoutEffect,useRef,useState} from 'react';
 import {Keyboard,Platform,Pressable,ScrollView,StyleSheet,View,useWindowDimensions} from 'react-native';
-import Animated,{cancelAnimation,Easing,interpolate,interpolateColor,runOnJS,useAnimatedProps,useAnimatedStyle,useSharedValue,withDelay,withSequence,withTiming} from 'react-native-reanimated';
+import Animated,{cancelAnimation,Easing,interpolate,interpolateColor,runOnJS,useAnimatedProps,useAnimatedStyle,useDerivedValue,useSharedValue,withDelay,withSequence,withTiming} from 'react-native-reanimated';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import Svg,{Path,SvgXml} from 'react-native-svg';
 import {Button,Icon,Label,useTheme} from '../Atoms';
@@ -36,16 +36,29 @@ export function ApprovedOnboardingScene({binding:b}:{binding:OnboardingBinding})
  const [introReady,setIntroReady]=useState(b.reduced);
  const [commandedPage,setCommandedPage]=useState({index:Math.min(2,b.tutorialIndex),revision:0});
  const target=Math.min(4,STAGES.indexOf(b.stage||'intro')),tutorial=b.stage==='tutorial',identity=b.stage==='identity',preparing=b.stage==='preparation';
+ const title=target===0?'Benvenuto!':target<3?'Parlami un po’ di te':target===3?TUTORIAL[index].title:'Sto preparando tutto per te…';
+ const titleKey=target<3&&target>0?'about-you':`${target}:${index}`;
  const [tutorialMounted,setTutorialMounted]=useState(tutorial),[presented,setPresented]=useState(preparing),[frozen,setFrozen]=useState<FrozenShape|null>(null);
  const scene=useSharedValue(target),zoom=useSharedValue(0),intro=useSharedValue(b.reduced?1:0),position=useSharedValue(index);
  const bounce=useSharedValue(0),hintOffset=useSharedValue(91);
  const identityScroll=useRef<ScrollView>(null),nameFocused=useRef(false);
  const revealName=()=>{if(nameFocused.current)identityScroll.current?.scrollToEnd({animated:false})};
- const keyboard=useKeyboardLift(),session=useRef<TitleSession>({title:'Benvenuto!',key:'intro',animating:false}),completion=useRef(false),live=useRef(b);live.current=b;
+ const rawKeyboard=useKeyboardLift(),keyboardSession=useSharedValue(false),session=useRef<TitleSession>({title,key:titleKey,animating:false}),completion=useRef(false),live=useRef(b);live.current=b;
  const {width:w,height:h}=size,footer=h-Math.max(79,insets.bottom+45),snippetTop=window.fontScale>1.15?Math.max(280,113+titleHeight+5+copyHeight+24):280,snippetHeight=Math.min(420,Math.max(180,h-snippetTop-142)),snippetWidth=w-32,identityTop=window.fontScale>1.15?Math.max(Math.min(310,h*.35),117+titleHeight+5+copyHeight+24):Math.min(310,h*.35),interestsTop=window.fontScale>1.15?Math.max(272,117+titleHeight+5+copyHeight+24):272,loaderY=window.fontScale>1.15?Math.max(h*.47,80+titleHeight+5+copyHeight+70):h*.47;
  const snippetPaper=surfaceTones(palette).snippet;
  const [fallback,setFallback]=useState(false);
  const active=b.appActive,reduced=b.reduced,busy=b.busy||!active,ready=preparing&&presented&&(b.preparation.kind==='ready'||fallback);
+ // Android's picker may hide the IME without its closing-animation callback,
+ // leaving native animated height/state stale. Focus restoration is not input:
+ // arm from a real input press or RN's independent keyboard visibility event.
+ const allowKeyboard=active&&!b.photoBusy;
+ useEffect(()=>{
+  const shown=Keyboard.addListener('keyboardDidShow',event=>{if(live.current.appActive&&!live.current.photoBusy&&event.endCoordinates.height>0)keyboardSession.value=true});
+  const hidden=Keyboard.addListener('keyboardDidHide',()=>{keyboardSession.value=false});
+  return()=>{shown.remove();hidden.remove()};
+ },[]);
+ const keyboard=useDerivedValue(()=>allowKeyboard&&keyboardSession.value?rawKeyboard.value:0);
+ useLayoutEffect(()=>{if(!allowKeyboard){keyboardSession.value=false;nameFocused.current=false;identityScroll.current?.scrollTo({y:0,animated:false})}},[allowKeyboard]);
  const motion:MotionEnvironment={reduced,appActive:active,visible:b.active};
  const complete=useCallback(()=>{completion.current=true;live.current.navigate('enter')},[]);
  useLayoutEffect(()=>{
@@ -94,15 +107,14 @@ export function ApprovedOnboardingScene({binding:b}:{binding:OnboardingBinding})
  const prepCopy=useAnimatedStyle(()=>({opacity:presence(scene.value,4)*(1-phase(zoom.value,0,.28)),transform:[{translateY:50*(1-presence(scene.value,4))}]}));
  const expansion=useAnimatedStyle(()=>{const d=Math.hypot(w,h)*3,s=(104+(d-104)*zoom.value*zoom.value)/104;return{opacity:frozen?1:0,backgroundColor:'transparent',transform:[{scale:s}]}});
  const expansionProps=useAnimatedProps(()=>({fill:interpolateColor(phase(zoom.value,.6,1),[0,1],[palette.active,palette.paper])}));
- const title=target===0?'Benvenuto!':target<3?'Parlami un po’ di te':target===3?TUTORIAL[index].title:'Sto preparando tutto per te…';
  const hint=target===0?'':target===1?'Come ti chiami? Nome e foto sono facoltativi e rimangono sul dispositivo.':target===2?'Scegli gli argomenti che ti incuriosiscono. Puoi continuare anche senza selezionarne.':target===3?TUTORIAL[index].body:'Un momento, le prime scoperte stanno arrivando.';
  const brand=onboardingBrand(palette.ink,palette.paper);
  if(!b.state||b.bootError)return <View style={[styles.boot,{backgroundColor:palette.paper}]}><Label accessibilityLiveRegion="polite">{b.bootError||'Apro la configurazione sul telefono…'}</Label>{!!b.bootError&&<Button label="Riprova" onPress={()=>void b.retryBoot()}><Label>Riprova</Label></Button>}</View>;
  return <OnboardingTitleContext.Provider value={session}><Animated.View testID="approved-onboarding" onLayout={e=>setSize(e.nativeEvent.layout)} style={[StyleSheet.absoluteFill,{overflow:'hidden'},shell]}>
   <Animated.View pointerEvents="none" accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={[StyleSheet.absoluteFill,background]}><OrganicShapeSlot kind="flower" size={450} motion={{...motion,visible:target>=2}} style={{position:'absolute',left:-190,top:-180}}/><OrganicShapeSlot kind="soft-boom" size={320} motion={{...motion,visible:target>=2}} style={{position:'absolute',right:-90,bottom:-65}}/></Animated.View>
   <Animated.View pointerEvents="none" style={[{position:'absolute',top:h*.29,left:w/2-59,width:118,height:118,alignItems:'center'},brandStyle]}><SvgXml xml={brand.logo} width={118} height={118} accessible={false}/></Animated.View>
-  <Animated.View pointerEvents="none" style={[{position:'absolute',left:24,right:24,zIndex:5},titleStyle]}><Animated.View style={titleAlign}><OnboardingTitleSlot title={title} titleKey={target<3&&target>0?'about-you':`${target}:${index}`} motion={motion} center={false} onTitleMeasure={measureIntro} onPaintHeight={setTitleHeight} minLines={1} initialReveal/></Animated.View><Animated.View style={[{position:'absolute',left:0,right:0},hintStyle]}><OnboardingCopy text={hint} color={target===3?palette.ink:palette.muted} center={target===0} motion={motion} onHeight={setCopyHeight}/></Animated.View></Animated.View>
-  <Animated.View pointerEvents={identity?'auto':'none'} accessibilityElementsHidden={!identity} importantForAccessibility={identity?'auto':'no-hide-descendants'} style={[{position:'absolute',left:24,right:24,top:Math.min(310,h*.35),bottom:142},identityStyle]}><ScrollView ref={identityScroll} onLayout={revealName} onContentSizeChange={revealName} keyboardShouldPersistTaps="handled" contentContainerStyle={{paddingBottom:24}}><IdentityStage onNameFocus={focused=>{nameFocused.current=focused;revealName()}} binding={b} motion={{...motion,visible:identity}} usableHeight={h-insets.top-insets.bottom} fontScale={window.fontScale} embedded/></ScrollView></Animated.View>
+  <Animated.View pointerEvents="none" style={[{position:'absolute',left:24,right:24,zIndex:5},titleStyle]}><Animated.View style={titleAlign}><OnboardingTitleSlot title={title} titleKey={titleKey} motion={motion} center={false} onTitleMeasure={measureIntro} onPaintHeight={setTitleHeight} minLines={1} initialReveal={target===0}/></Animated.View><Animated.View style={[{position:'absolute',left:0,right:0},hintStyle]}><OnboardingCopy text={hint} color={target===3?palette.ink:palette.muted} center={target===0} motion={motion} onHeight={setCopyHeight}/></Animated.View></Animated.View>
+  <Animated.View pointerEvents={identity?'auto':'none'} accessibilityElementsHidden={!identity} importantForAccessibility={identity?'auto':'no-hide-descendants'} style={[{position:'absolute',left:24,right:24,top:Math.min(310,h*.35),bottom:142},identityStyle]}><ScrollView ref={identityScroll} onLayout={revealName} onContentSizeChange={revealName} keyboardShouldPersistTaps="handled" contentContainerStyle={{paddingBottom:24}}><IdentityStage onNamePress={()=>{if(allowKeyboard)keyboardSession.value=true}} onNameFocus={focused=>{nameFocused.current=focused;revealName()}} binding={b} motion={{...motion,visible:identity}} usableHeight={h-insets.top-insets.bottom} fontScale={window.fontScale} embedded/></ScrollView></Animated.View>
   <Animated.View pointerEvents={target===2?'auto':'none'} accessibilityElementsHidden={target!==2} importantForAccessibility={target===2?'auto':'no-hide-descendants'} style={[{position:'absolute',left:24,right:24,top:interestsTop,bottom:165},interestsStyle]}><InterestScrollMask visible={target===2}><InterestsStage binding={b} motion={{...motion,visible:target===2}} embedded/></InterestScrollMask></Animated.View>
   <Animated.View testID="tutorial-snippet" pointerEvents={tutorial?'auto':'none'} accessibilityElementsHidden={!tutorial} importantForAccessibility={tutorial?'auto':'no-hide-descendants'} style={[{position:'absolute',overflow:'hidden',backgroundColor:snippetPaper,shadowColor:'#000',shadowOffset:{width:0,height:5},shadowOpacity:.125,shadowRadius:13,elevation:2,borderWidth:StyleSheet.hairlineWidth,borderColor:palette.line},snippet]}><Animated.View style={[{position:'absolute',top:0,width:snippetWidth,height:snippetHeight},snippetContent]}>{tutorialMounted&&<TutorialStage binding={b} motion={{...motion,visible:tutorial}} onIndex={updateIndex} commandedPage={commandedPage}/>}</Animated.View></Animated.View>
   <Animated.View pointerEvents={tutorial?'auto':'none'} accessibilityElementsHidden={!tutorial} importantForAccessibility={tutorial?'auto':'no-hide-descendants'} style={[{position:'absolute',height:64,overflow:'hidden',borderRadius:32,backgroundColor:palette.surface},dockStyle]}><TutorialDock index={index} position={position} reduced={reduced} disabled={busy} onSelect={n=>setCommandedPage(old=>({index:n,revision:old.revision+1}))} width={w-114}/></Animated.View>

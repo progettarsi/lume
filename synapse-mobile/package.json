@@ -2,7 +2,7 @@
   "name": "synapse-mobile",
   "description": "Lume: scoperte quotidiane da Wikipedia, Android e iOS.",
   "license": "0BSD",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "main": "index.ts",
   "dependencies": {
     "@expo-google-fonts/newsreader": "^0.4.1",

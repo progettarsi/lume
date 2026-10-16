@@ -4,7 +4,10 @@ import {Label,Button,Icon,useTheme} from './Atoms';
 import {body} from '../theme';
 import type {OnboardingBinding} from '../useOnboarding';
 import {ApprovedOnboardingScene} from './onboarding/ApprovedOnboardingScene';
-export function OnboardingScreen({binding}:{binding:OnboardingBinding}){return <ApprovedOnboardingScene binding={binding}/>}
+// Rebuild the animated presentation after an external photo activity. Fabric
+// otherwise can recommit cached intro styles over the settled identity scene.
+// The controller owns the draft; only presentation state is recreated.
+export function OnboardingScreen({binding}:{binding:OnboardingBinding}){return <ApprovedOnboardingScene key={binding.photoPresentationRevision??0} binding={binding}/>}
 export function IdentityPhoto({ binding: b }: { binding: OnboardingBinding }) {
   const { palette } = useTheme();
   return (

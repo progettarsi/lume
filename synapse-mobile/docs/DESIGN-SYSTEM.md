@@ -90,3 +90,9 @@ La galleria è accessibile soltanto in sviluppo da Impostazioni → Sviluppo. Us
 `scripts/build-design-system.ps1` produce invece l'APK di produzione senza cambiare applicationId o versione. I due script vanno eseguiti in sequenza: condividono la directory di build Android.
 
 Verifiche e limiti effettivamente osservati sono riportati in `DESIGN-SYSTEM-VERIFICATION.md`; non confondere typecheck/export con installazione, TalkBack o verifica dei gesti sul telefono.
+
+## Icone e movimento mirato
+
+`Icon` rende i soli tracciati Phosphor Core 2.1.1 selezionati tramite SVG nativo, senza font di icone o caricamenti remoti. Le 22 categorie usano la stessa mappatura in barra, badge e interessi. I nomi semantici preesistenti sono alias nella mappa `phosphorPaths.ts`.
+
+useAnimations si applica solo ai controlli animati Home/Profilo della dock, Salva e Shuffle. Le icone a riposo sono SVG degli endpoint originali; il player Lottie esiste soltanto durante la riproduzione. Niente autoplay, animazioni di righe o cambi di famiglia grafica al tocco. Un salvataggio anima solo il controllo azionato, mentre le copie aggiornano lo stato senza riproduzione. Riduzione movimento, background e copertura annullano gli eventi pendenti. Licenze MIT incluse nell’app e in `assets/licenses`; regole complete in `ICON-SECTION-PLAN.md`.

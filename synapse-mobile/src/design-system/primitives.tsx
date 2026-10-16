@@ -1,7 +1,8 @@
 import React,{createContext,useContext} from 'react';
 import { Pressable,StyleSheet,type TextStyle,type ViewStyle,type StyleProp,type TextProps } from 'react-native';
 import Animated,{useAnimatedStyle,useSharedValue,withSpring,type SharedValue} from 'react-native-reanimated';
-import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import Svg,{Path} from 'react-native-svg';
+import {phosphorPaths,type IconName} from './phosphorPaths';
 import { body,bold,light,spring,metrics,motion,secondaryText,type SurfaceRole,type Palette } from './tokens';
 import {useMotionPreference} from '../useMotionPreference';
 export const ThemeContext=createContext<{palette:Palette;progress:SharedValue<number>}>({palette:light,progress:{value:0} as SharedValue<number>});
@@ -12,8 +13,8 @@ export function Label({children,style,muted=false,strong=false,...props}:{childr
   // authoritative palette, without an idle colour mapper for every text node.
   const {palette}=useTheme(),surface=useContext(SurfaceContext);return <Animated.Text {...props} style={[{fontFamily:strong?bold:body,fontSize:17,color:muted?secondaryText(palette,surface):palette.ink},style]}>{children}</Animated.Text>;
 }
-export function Icon({name,size=metrics.icon,color}:{name:React.ComponentProps<typeof MaterialCommunityIcons>['name'];size?:number;color?:string}){
-  const {palette}=useTheme();return <MaterialCommunityIcons accessible={false} aria-hidden importantForAccessibility="no" name={name} size={size} color={color||palette.ink}/>;
+export function Icon({name,size=metrics.icon,color}:{name:IconName;size?:number;color?:string}){
+  const {palette}=useTheme();return <Svg accessible={false} aria-hidden importantForAccessibility="no" width={size} height={size} viewBox="0 0 256 256">{phosphorPaths[name].map((d,i)=><Path key={i} d={d} fill={color||palette.ink}/>)}</Svg>;
 }
 export function Button({children,onPress,label,style,disabled=false,reduced}:{children:React.ReactNode;onPress:()=>void;label:string;style?:StyleProp<ViewStyle>;disabled?:boolean;reduced?:boolean}){
   const systemReduced=useMotionPreference(),noMotion=reduced??systemReduced;

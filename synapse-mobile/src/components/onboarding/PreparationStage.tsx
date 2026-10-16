@@ -2,8 +2,6 @@ import {isDarkPalette} from '../../theme';
 import React from 'react';
 import { View, Image, StyleSheet, useWindowDimensions } from 'react-native';
 import { Label, Button, Icon, useTheme } from '../Atoms';
-import { SvgXml } from 'react-native-svg';
-import { onboardingVector } from '../../content/onboardingVectors';
 import { OrganicShapeSlot } from '../OnboardingMotionSlots';
 import { ActionButton } from './ActionButton';
 import type { MotionEnvironment } from '../../content/onboardingPresentation';
@@ -40,7 +38,7 @@ export function PreparationStage({ binding: b, motion }: PreparationStageProps) 
             motion={motion}
             style={styles.cookieShape}
           />
-          <SvgXml xml={onboardingVector("compass",palette.ink,palette.paper,palette.active)} width={52} height={52} accessible={false}/>
+          <Icon name="compass-outline" size={52}/>
         </View>
 
         {/* Real status text from controller - never a synthetic timer */}

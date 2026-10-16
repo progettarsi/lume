@@ -101,6 +101,9 @@ function Synapse({fontsReady}:{fontsReady:boolean}){
   const [snapshot,setSnapshot]=useState<(ThemeSnapshot&{themeMode:ThemeMode})|null>(null);
   const randomRequest=useRef<AbortController|null>(null),readerRequest=useRef<AbortController|null>(null),previousIndex=useRef(0);
   const readerSession=useRef(0),activeReader=useRef(reader),activeReaderOpen=useRef(readerOpen);activeReader.current=reader;activeReaderOpen.current=readerOpen;
+  // Updated synchronously by navigation as well as render: queued native taps
+  // and measurement callbacks must not open a reader over a different page.
+  const navigationContext=useRef(`${route}:${collection}:${searchOpen}`);navigationContext.current=`${route}:${collection}:${searchOpen}`;
   const lastCollection=useRef<Exclude<Collection,null>>('saved');if(collection)lastCollection.current=collection;
   const displayCollection=lastCollection.current;
   const liveRows=useMemo(()=>(displayCollection==='saved'?lib.cache.filter(a=>a.saved):lib.history).map(a=>lib.settings.aiEnabled||!a.simplified?a:{...a,simplified:undefined}),[displayCollection,lib.cache,lib.history,lib.settings.aiEnabled]);
@@ -146,10 +149,12 @@ function Synapse({fontsReady}:{fontsReady:boolean}){
   });return()=>sub.remove()},[editIdentity,reader,searchOpen,collection,settingsPage,route,onboarding.state,onboarding.bootError,onboarding.active,onboarding.stage,onboarding.replay,onboarding.revision,onboarding.busy]);
   useEffect(()=>()=>{randomRequest.current?.abort();readerRequest.current?.abort()},[]);
   const open:OpenArticle=(article,node,kind,title)=>{
-    if(activeReader.current?.article.id===article.id&&!activeReaderOpen.current){reopen();return}
+    const expectedContext=`${route}:${collection}:${searchOpen}`;
+    if(activeReaderOpen.current||navigationContext.current!==expectedContext)return;
+    if(activeReader.current?.article.id===article.id&&activeReader.current.context===expectedContext){reopen();return}
     if(!article.paragraphs.length&&!lib.online){setToast('Articolo non disponibile offline');return}
     Keyboard.dismiss();readerRequest.current?.abort();const abort=new AbortController();readerRequest.current=abort;
-    const show=(origin:Origin)=>{if(abort.signal.aborted)return;activeReaderOpen.current=true;
+    const show=(origin:Origin)=>{if(abort.signal.aborted||navigationContext.current!==expectedContext)return;activeReaderOpen.current=true;
       collectionReturn.finish();searchReturn.finish();
       if(origin.kind==='row'){if(searchOpen)searchReturn.hold(article.id);else if(collection)collectionReturn.hold(article.id)}
       lib.activate(article);setReader({article,origin,session:++readerSession.current,context:`${route}:${collection}:${searchOpen}`});setReaderOpen(true);setAIStatus({id:article.id,message:'',busy:true,notice:{kind:'loading',message:'L’anteprima resta leggibile mentre arriva l’approfondimento.'}});void lib.read(article).catch(()=>setToast('Cronologia non aggiornata'));
@@ -170,7 +175,7 @@ function Synapse({fontsReady}:{fontsReady:boolean}){
     activeReaderOpen.current=false;setReaderOpen(false);
   };
   const reopen=()=>{
-    if(!reader)return;lib.beginAIOpen();collectionReturn.restore();searchReturn.restore();activeReaderOpen.current=true;setReaderOpen(true);
+    if(!reader||reader.context!==navigationContext.current||activeReader.current?.session!==reader.session)return;lib.beginAIOpen();collectionReturn.restore();searchReturn.restore();activeReaderOpen.current=true;setReaderOpen(true);
     if(readerRequest.current?.signal.aborted){const abort=new AbortController();readerRequest.current=abort;setAIStatus({id:reader.article.id,message:'',busy:true,notice:{kind:'loading',message:'L’anteprima resta leggibile mentre arriva l’approfondimento.'}});void loadReader(reader.article,abort)}
   };
   // The measured opening endpoint stays immutable even when storage changes.
@@ -212,8 +217,10 @@ function Synapse({fontsReady}:{fontsReady:boolean}){
   const dismissSearch=()=>{Keyboard.dismiss();randomRequest.current?.abort();setRandomBusy(false);setSearchOpen(false)};
   const refreshHome=()=>{lib.settleCategories();setEndedCategory('');setIndex(0);previousIndex.current=0;setFeedRevision(n=>n+1);chips.value=reduced?0:withSpring(0,spring);void lib.refresh(category)};
   const navigate=(next:'home'|'profile')=>{
+    if(activeReaderOpen.current)return;
     const now=Date.now();if(next==='home'&&route==='home'&&!readerOpen&&!collection&&!searchOpen){if(now-lastHomeTap.current<350){lastHomeTap.current=0;setDockIconRevision(old=>({...old,home:old.home+1}));refreshHome();return}lastHomeTap.current=now}else lastHomeTap.current=0;
     if(next!==route)setDockIconRevision(old=>({...old,[next]:old[next]+1}));
+    navigationContext.current=`${next}:null:false`;
     if(next==='home'&&route!=='home')lib.settleCategories();Keyboard.dismiss();randomRequest.current?.abort();setRandomBusy(false);readerRequest.current?.abort();setSearchOpen(false);setCollection(null);setRoute(next)};
   const sourceRows=collectionReturn.rows,searchRows=searchReturn.rows;
   return <ThemeContext.Provider value={themeContext}><View style={styles.webFrame}><Animated.View ref={frame} collapsable={false} onLayout={e=>setViewportHeight(e.nativeEvent.layout.height)} style={[{width,flex:1,overflow:Platform.OS==='web'?'clip' as 'hidden':'hidden'},paper]}>
@@ -222,7 +229,7 @@ function Synapse({fontsReady}:{fontsReady:boolean}){
       <View pointerEvents={onboarding.active||editIdentity?'none':'box-none'} accessibilityElementsHidden={onboarding.active||editIdentity} importantForAccessibility={onboarding.active||editIdentity?'no-hide-descendants':'auto'} style={{flex:1}}>
       <ScreenLayer active={route==='home'&&!searchOpen&&!collection&&!readerOpen} style={[StyleSheet.absoluteFill,paper,homeStyle]}>
         <View pointerEvents="box-none" style={{paddingTop:top+8,paddingHorizontal:24,paddingBottom:10,zIndex:2}}><View pointerEvents="none" style={{flexDirection:'row',alignItems:'center',justifyContent:'space-between'}}><Label style={styles.wordmark}>lume</Label></View><View pointerEvents="box-none" style={{height:48,overflow:'hidden'}}><Animated.View pointerEvents="box-none" style={chipStyle}><CategoryRail selected={category} onSelect={selectCategory} items={lib.categoryRail} onInteractionStart={lib.beginCategoryInteraction} onInteractionEnd={lib.endCategoryInteraction}/></Animated.View></View></View>
-        <Animated.View style={[{position:'absolute',top:top+84,left:0,right:0,height:homeHeight},feedStyle]}>{homeHeight>0&&!centralFeed&&<Feed key={`${category}:${feedRevision}`} articles={feedArticles} height={homeHeight} size={lib.settings.size} saved={saved} readerOpen={readerOpen} entry={categoryEntry.current} onOpen={open} onSave={save} covered={reader?.origin.kind==='home'?reader.article.id:undefined} position={index} onIndex={next=>setIndex(lib.trimFeed(category,next))} onEndReached={()=>{if(category!=='all'&&feedState.phase==='exhausted')setEndedCategory(category);else lib.retryFeed()}} onVisible={setSettledIndex} onDirection={hidden=>{const hide=lib.settings.autoHideCategories&&hidden;chips.value=reduced?(hide?1:0):withSpring(hide?1:0,spring)}}/>}</Animated.View>
+        <Animated.View style={[{position:'absolute',top:top+84,left:0,right:0,height:homeHeight},feedStyle]}>{homeHeight>0&&!centralFeed&&<Feed active={appActive&&route==='home'&&!searchOpen&&!collection&&!onboarding.active&&!editIdentity} key={`${category}:${feedRevision}`} articles={feedArticles} height={homeHeight} size={lib.settings.size} saved={saved} readerOpen={readerOpen} entry={categoryEntry.current} onOpen={open} onSave={save} covered={reader?.origin.kind==='home'?reader.article.id:undefined} position={index} onIndex={next=>setIndex(lib.trimFeed(category,next))} onEndReached={()=>{if(category!=='all'&&feedState.phase==='exhausted')setEndedCategory(category);else lib.retryFeed()}} onVisible={setSettledIndex} onDirection={hidden=>{const hide=lib.settings.autoHideCategories&&hidden;chips.value=reduced?(hide?1:0):withSpring(hide?1:0,spring)}}/>}</Animated.View>
         {!centralFeed&&<FeedBottomFade height={fadeHeight}/>}
         {lib.loading&&<View pointerEvents="none" style={{position:'absolute',right:24,top:top+19}}><FeedSpinner active={appActive&&route==='home'&&!collection&&!searchOpen&&!readerOpen&&!onboarding.active}/></View>}
         {centralFeed&&route==='home'&&!searchOpen&&!collection&&!reader&&<View style={{position:'absolute',top:top+142,bottom:bottom+110,left:0,right:0}}><FeedStatus key={category+':'+(!lib.online?'offline':feedState.phase==='exhausted'?'exhausted':'recover')} central state={feedState} online={lib.online} category={category} active={appActive} homeReady={lib.homeReady()} onHome={()=>selectCategory('all')} onRetry={lib.retryFeed}/></View>}
@@ -260,10 +267,10 @@ function Synapse({fontsReady}:{fontsReady:boolean}){
         <Animated.View style={[{flex:1},searchViewport]}><ArticleList articles={searchRows} onOpen={open} hiddenId={searchReturn.released?undefined:reader?.article.id} returnId={reader?.article.id} animate={searchReturn.animate} bottomPadding={24} footer={<>{searchBusy&&<StatusMessage compact status={{kind:'loading',message:'Cerco gli articoli pertinenti…'}}/>}{!!searchError&&<StatusMessage compact status={{kind:'network',message:searchError}}/>}{!searchBusy&&!searchError&&!!query.trim()&&!searchRows.length&&<Label muted style={{paddingVertical:24}}>Nessun articolo trovato.</Label>}</>}/></Animated.View>
         <Animated.View style={[{position:'absolute',left:0,right:0,backgroundColor:palette.paper,paddingHorizontal:24,paddingTop:12,flexDirection:'row',gap:10},composerLift]}>
           <SearchComposer inputRef={input} value={query} onChange={setQuery} onClose={dismissSearch}/>
-          <View ref={shuffleNode} collapsable={false} style={{width:56,height:56,borderRadius:28,backgroundColor:palette.active}}><ShuffleButton busy={randomBusy} onPress={()=>void random()}/></View>
+          <View ref={shuffleNode} collapsable={false} style={{width:56,height:56,borderRadius:28,backgroundColor:palette.active}}><ShuffleButton active={appActive&&!readerOpen} busy={randomBusy} onPress={()=>void random()}/></View>
         </Animated.View>
       </ScreenLayer>
-      {!searchOpen&&collection!=='settings'&&<Dock selected={route} iconRevision={dockIconRevision} active={appActive} onNavigate={navigate} onSearch={()=>{setSearchOpen(true);input.current?.focus()}} bottom={bottom} availableWidth={width-32} disabled={readerOpen} closing={!!reader&&!readerOpen}/>}
+      {!searchOpen&&collection!=='settings'&&<Dock selected={route} iconRevision={dockIconRevision} active={appActive&&!collection&&!onboarding.active&&!editIdentity} onNavigate={navigate} onSearch={()=>{setSearchOpen(true);input.current?.focus()}} bottom={bottom} availableWidth={width-32} disabled={readerOpen} closing={!!reader&&!readerOpen}/>}
       {reader&&<Reader key={reader.session} article={readerArticle!} aiMessage={aiStatus.id===reader.article.id?aiStatus.message:''} aiBusy={aiStatus.busy} onRetryAI={lib.settings.aiEnabled?retryAI:undefined} onRetryArticle={retryAI} notice={aiStatus.id===reader.article.id?aiStatus.notice:undefined} origin={reader.origin} open={readerOpen} width={width} height={height} top={top} bottom={bottom} size={lib.settings.size} saved={saved.has(reader.article.id)} onClose={close} onReopen={reopen} onClosed={closed} onReturnNear={returnNear} returnDetached={collectionReturn.changed||searchReturn.changed||reader.context!==`${route}:${collection}:${searchOpen}`||reader.origin.kind==='home'&&visibleArticle?.id!==reader.article.id} onSave={()=>save(reader.article)}/>}
       {snapshot&&<ThemeReveal key={snapshot.id} snapshot={snapshot} width={width} height={height} topInset={insets.top} onReady={()=>{if(snapshotRef.current?.id===snapshot.id){pendingThemeMode.current=null;lib.updateSettings({themeMode:snapshot.themeMode})}}} onDone={()=>finishTheme(snapshot)}/>}
       {removedSaved.length>0&&collection==='saved'&&!reader&&<Animated.View entering={reduced?undefined:FadeInUp.duration(180)} exiting={reduced?undefined:FadeOutDown.duration(150)} accessibilityLiveRegion="polite" style={[styles.toast,{bottom:bottom+94,left:24,right:24,backgroundColor:palette.surface,borderRadius:18,flexDirection:'row',alignItems:'center',gap:8}]}><Label style={{flex:1,fontSize:14}}>{removedSaved.length===1?'Segnalibro rimosso':`${removedSaved.length} segnalibri rimossi`}</Label><Pressable accessibilityRole="button" accessibilityLabel="Annulla ultima rimozione dai salvati" onPress={undoSaved} style={{padding:12,minHeight:48}}><Label strong>Annulla</Label></Pressable><Pressable accessibilityRole="button" accessibilityLabel="Chiudi avviso di rimozione" onPress={()=>setRemovedSaved([])} style={{minWidth:48,minHeight:48,alignItems:'center',justifyContent:'center'}}><Icon name="close" size={18}/></Pressable></Animated.View>}
