@@ -1,6 +1,6 @@
 # Synapse mobile
 
-Release corrente: **v0.2.4**, build 26. [Note di rilascio](docs/RELEASE-v0.2.4.md) e [APK universale Android](https://github.com/progettarsi/lume/releases/tag/v0.2.4), compatibile con le quattro ABI da Android 7.0.
+Release corrente: **v0.2.5**, build 27. [Note di rilascio](docs/RELEASE-v0.2.5.md) e [APK universale Android](https://github.com/progettarsi/lume/releases/tag/v0.2.5), compatibile con le quattro ABI da Android 7.0.
 
 Prima implementazione React Native + Expo dell’esperienza approvata. Android come prima piattaforma; codice dell’app condiviso con iOS. Il prototipo originale nella cartella `../synapse` resta separato.
 
