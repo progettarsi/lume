@@ -1,0 +1,4 @@
+- Apertura degli articoli con un solo tocco, senza attesa del doppio tap.
+- Cambi di categoria più rapidi, con meno scatti e lavoro inutile.
+- Animazioni e navigazione più stabili, anche con tocchi ravvicinati.
+- Caricamento dei testi, ricerca e gestione della cache ottimizzati.

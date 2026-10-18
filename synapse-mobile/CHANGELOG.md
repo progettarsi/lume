@@ -1,6 +1,6 @@
 # Changelog
 
-## Non rilasciato — 18 ottobre 2026
+## 0.2.6 — 18 ottobre 2026
 
 - Apertura degli articoli con un solo tocco, senza attesa del doppio tap.
 - Cambi di categoria più rapidi, con meno scatti e lavoro inutile.
