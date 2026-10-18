@@ -1,6 +1,6 @@
 import type {Article} from './types';
 import {Wikipedia} from './wikipedia';
-import {paragraphsFromHtml} from './html';
+import {paragraphsFromHtmlAsync} from './html';
 import {makeEdition,isVerified,boundedParagraphs,wordCount,sourceInfo} from './edition';
 import {classifyLocal} from './classification';
 import {identity} from './recommendations';
@@ -14,7 +14,7 @@ export class Wikivoyage implements ContentProvider{
   const data=await this.transport.request({action:'parse',page:title,prop:'text|revid|links',redirects:'1'},signal,1) as unknown as {parse?:{pageid:number;title:string;text:string;revid:number;links?:{ns:number;'*'?:string;title?:string}[]}};
   const p=data.parse;if(!p?.text)return;
   const sections:{text:string;section:string}[]=[];
-  const paragraphs=paragraphsFromHtml(p.text,/^(?:Cenni storici|Cultura e tradizioni|Storia|Da sapere)$/i,(text,section)=>sections.push({text,section}));
+  const paragraphs=await paragraphsFromHtmlAsync(p.text,signal,/^(?:Cenni storici|Cultura e tradizioni|Storia|Da sapere)$/i,(text,section)=>sections.push({text,section}));
   if(!paragraphs.length)return;
   for(const l of p.links||[]){const t=l['*']||l.title;if(l.ns===0&&t&&!t.includes(':')&&!this.titles.includes(t)&&this.titles.length<300)this.titles.push(t)}
   const url='https://it.wikivoyage.org/wiki/'+encodeURIComponent(p.title||title);

@@ -140,7 +140,7 @@ function mountGeminiSettings(extraProps={}){
   render();
 
   const findByRole=(role,node,list=[])=>{
-    if(!node||typeof node!=='object')return list;
+    if(!node||typeof node!=='object'||node.props?.expanded===false)return list;
     if(node.props?.accessibilityRole===role)list.push(node);
     const children=node.props?.children;
     if(Array.isArray(children))children.forEach(c=>findByRole(role,c,list));
@@ -149,7 +149,7 @@ function mountGeminiSettings(extraProps={}){
   };
 
   const findByLabel=(label,node)=>{
-    if(!node||typeof node!=='object')return undefined;
+    if(!node||typeof node!=='object'||node.props?.expanded===false)return undefined;
     if(node.props?.accessibilityLabel===label||node.props?.label===label||node.props?.title===label)return node;
     const children=node.props?.children;
     if(Array.isArray(children)){
@@ -194,8 +194,9 @@ test('touch release during drag/momentum cannot settle the registry under the sc
 test('rail content changes preserve offset when computing the end fade, with text never scaled by touch',()=>{
  const h=mountCategoryRail(),scroll=nodes(h.getTree(),n=>n.type==='ScrollView')[0].props,root=h.getTree().props;
  root.onLayout({nativeEvent:{layout:{width:200}}});scroll.onContentSizeChange(600);scroll.onScroll({nativeEvent:{contentOffset:{x:400}}});h.frame();
- nodes(h.getTree(),n=>n.type==='ScrollView')[0].props.onContentSizeChange(620);h.frame();assert.equal(nodes(h.getTree(),n=>n.type==='LinearGradient').length,2);
- nodes(h.getTree(),n=>n.type==='ScrollView')[0].props.onContentSizeChange(600);h.frame();assert.equal(nodes(h.getTree(),n=>n.type==='LinearGradient').length,1);
+ const rightOpacity=()=>nodes(h.getTree(),n=>n.type==='AnimatedView'&&Array.isArray(n.props.style)&&n.props.style[0]?.right===-1).at(-1).props.style.at(-1).opacity;
+ nodes(h.getTree(),n=>n.type==='ScrollView')[0].props.onContentSizeChange(620);h.frame();assert.equal(rightOpacity(),1);
+ nodes(h.getTree(),n=>n.type==='ScrollView')[0].props.onContentSizeChange(600);h.frame();assert.equal(rightOpacity(),0);
  assert(!fs.readFileSync('src/components/CategoryRail.tsx','utf8').includes('scale:press.value'));
 });
 

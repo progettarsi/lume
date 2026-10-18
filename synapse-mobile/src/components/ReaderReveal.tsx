@@ -14,7 +14,7 @@ export const ReaderReveal=memo(function ReaderReveal({open,paragraphs,size,scrol
   const latest=useRef({open,reduced}),alive=useRef(true),deadline=useRef(Date.now()+2600);
   latest.current={open,reduced};
   const pulseAt=useSharedValue(0),hapticFinished=useSharedValue(false),hapticDeadline=deadline.current;
-  const signalReveal=useCallback(()=>{if(alive.current&&latest.current.open&&!latest.current.reduced&&!scrolled.value&&Date.now()<=deadline.current)haptics.emit('reveal')},[scrolled]);
+  const signalReveal=useCallback(()=>{if(alive.current&&latest.current.open&&!latest.current.reduced&&Date.now()<=deadline.current)haptics.emit('reveal')},[scrolled]);
   useAnimatedReaction(()=>({height:height.value,ready:active.value&&progress.value>=.82}), (next,previous)=>{
     if(!next.ready||next.height<=0)return;
     paintReady.value=true;

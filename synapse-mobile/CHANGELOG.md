@@ -1,5 +1,12 @@
 # Changelog
 
+## Non rilasciato — 18 ottobre 2026
+
+- Apertura degli articoli con un solo tocco, senza attesa del doppio tap.
+- Cambi di categoria più rapidi, con meno scatti e lavoro inutile.
+- Animazioni e navigazione più stabili, anche con tocchi ravvicinati.
+- Caricamento dei testi, ricerca e gestione della cache ottimizzati.
+
 ## 0.1.13 — integrazione del prototipo approvato, 12 ottobre 2026
 
 - Regia nativa della variante C: pulsante persistente alla stessa altezza, forme originali che ruotano, categorie con le icone della Home e ritorno dal tutorial alla personalizzazione.

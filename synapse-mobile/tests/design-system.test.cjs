@@ -6,7 +6,7 @@ const mod={exports:{}};
 vm.runInNewContext(ts.transpileModule(fs.readFileSync('src/design-system/components.tsx','utf8'),{compilerOptions:{jsx:ts.JsxEmit.ReactJSX,module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,{
  module:mod,exports:mod.exports,require(id){
   if(id==='../haptics')return {haptics:{emit:cue=>hapticCues.push(cue)}};
-  if(id==='react')return {forwardRef:fn=>props=>fn(props,null),useRef:()=>({current:null}),useState:v=>[v,()=>{}],useEffect:()=>{}};
+  if(id==='react')return {forwardRef:fn=>props=>fn(props,null),useRef:current=>({current}),useState:v=>[v,()=>{}],useEffect:()=>{}};
   if(id==='react/jsx-runtime')return {jsx,jsxs:jsx};
   if(id==='react-native')return {View:'View',Pressable:'Pressable',Switch:'Switch',TextInput:'TextInput',ScrollView:'ScrollView',KeyboardAvoidingView:'KeyboardAvoidingView',Platform:{OS:'android'},useWindowDimensions:()=>({fontScale:1}),StyleSheet:{create:x=>x,absoluteFill:{position:'absolute'},hairlineWidth:1}};
   if(id==='react-native-reanimated')return {default:{View:'AnimatedView'}};
@@ -75,3 +75,5 @@ test('locally bundled typefaces have font data and redistribution licenses',()=>
  }
  for(const file of ['GoogleSansFlex-OFL.txt','Newsreader-OFL.txt'])assert.match(fs.readFileSync('assets/fonts/'+file,'utf8'),/SIL OPEN FONT LICENSE/i);
 });
+
+test('rapid opposing choices dispatch the final intent even before props rerender',()=>{const changes=[],group=ui.ChoiceGroup({label:'Tema',value:'light',options:[{value:'light',label:'Chiaro'},{value:'dark',label:'Scuro'}],onChange:v=>changes.push(v)}).props.children[1];const [light,dark]=group.props.children;dark.props.onPress();light.props.onPress();dark.props.onPress();dark.props.onPress();assert.deepEqual(changes,['dark','light','dark'])});

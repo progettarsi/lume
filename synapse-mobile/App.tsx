@@ -13,6 +13,9 @@ import { useFonts } from 'expo-font';
 import {fontAssets} from './src/design-system/fonts';
 import {fonts,typography,layers} from './src/theme';
 import {SettingsScreen} from './src/components/SettingsScreen';
+import {SettingsStack} from './src/components/SettingsStack';
+import {CachedScene} from './src/components/CachedScene';
+import {useSlideTransition} from './src/useSlideTransition';
 import {DesignGallery} from './src/design-system/Gallery';
 import {PageHeader,PageScroll,PageKeyboard,ScreenLayer} from './src/design-system/components';
 import { StatusBar } from 'expo-status-bar';
@@ -58,6 +61,7 @@ function Synapse({fontsReady}:{fontsReady:boolean}){
   const keyboardLift=useKeyboardLift();
   const width=Math.min(window.width,Platform.OS==='web'?440:window.width),height=viewportHeight,top=insets.top+16,bottom=Math.max(insets.bottom,16),reduced=useMotionPreference();
   const [appActive,setAppActive]=useState(AppState.currentState==='active');
+  const frameOrigin=useRef({x:0,y:0});
   const onboarding=useOnboarding(lib,reduced,appActive);
 
   useLayoutEffect(()=>{haptics.configure(lib.ready&&appActive&&lib.settings.hapticsEnabled!==false);return()=>haptics.configure(false)},[lib.ready,appActive,lib.settings.hapticsEnabled]);
@@ -68,9 +72,9 @@ function Synapse({fontsReady}:{fontsReady:boolean}){
   const closeSettings=()=>{if(Keyboard.isVisible()){Keyboard.dismiss();return}if(settingsPage!=='main'){setSettingsPage('main');setSettingsFocus(n=>n+1);return}setCollection(null);setAIKey('');setKeyEdited(false)};
   const profileEditor=useRef<ProfileEditorHandle>(null);
   const [settledIndex,setSettledIndex]=useState(0);
-  const [route,setRoute]=useState<'home'|'profile'>('home'),[collection,setCollection]=useState<Collection>(null),[searchOpen,setSearchOpen]=useState(false),[category,setCategory]=useState('all'),[index,setIndex]=useState(0);
+  const [route,setRoute]=useState<'home'|'profile'>('home'),[collection,commitCollection]=useState<Collection>(null),[searchOpen,commitSearchOpen]=useState(false),[category,setCategory]=useState('all'),[index,setIndex]=useState(0);
   const [query,setQuery]=useState(''),[results,setResults]=useState<Article[]>([]),[searchBusy,setSearchBusy]=useState(false),[searchError,setSearchError]=useState(''),[randomBusy,setRandomBusy]=useState(false),[toast,setToast]=useState('');
-  const [reader,setReader]=useState<{article:Article;origin:Origin;session:number;context:string}|null>(null),[readerOpen,setReaderOpen]=useState(false),[aiKey,setAIKey]=useState(''),[keyEdited,setKeyEdited]=useState(false);
+  const [reader,setReader]=useState<{article:Article;origin:Origin;session:number;context:string;navigationRevision:number}|null>(null),[readerOpen,setReaderOpen]=useState(false),[aiKey,setAIKey]=useState(''),[keyEdited,setKeyEdited]=useState(false);
   const keyRevision=useRef(0),gemini=useRef<GeminiIntegration|null>(null);
   const [geminiState,setGeminiState]=useState<GeminiConfigurationState>({status:'loading',configured:false,enabled:false,busy:true,message:'Carichiamo la configurazione…',actions:[]});
   if(!gemini.current)gemini.current=new GeminiIntegration(getAIKey,putAIKey,(key,enabled)=>lib.configureAI(key,enabled),setGeminiState);
@@ -78,7 +82,7 @@ function Synapse({fontsReady}:{fontsReady:boolean}){
   const lastHomeTap=useRef(0);
   const [dockIconRevision,setDockIconRevision]=useState({home:0,profile:0});
   const [removedSaved,setRemovedSaved]=useState<{article:Article;token:number}[]>([]),removalToken=useRef(0),removalVersions=useRef(new Map<string,number>());
-  useEffect(()=>{const sub=AppState.addEventListener('change',state=>{setAppActive(state==='active');});return()=>sub.remove()},[]);
+  useEffect(()=>{let previous=AppState.currentState;const sub=AppState.addEventListener('change',state=>{if(state==='active'&&previous!=='active'){categoryEntry.current=0;}previous=state;setAppActive(state==='active');});return()=>sub.remove()},[]);
   const revise=async(full:Article,abort:AbortController,retry=false)=>{
     if(abort.signal.aborted)return;
     setAIStatus({id:full.id,message:'',busy:true,notice:hasRevision(full)?undefined:{kind:'revising',message:'Puoi leggere il testo originale mentre arriva la revisione.'}});
@@ -99,15 +103,22 @@ function Synapse({fontsReady}:{fontsReady:boolean}){
   const homeHeight=Math.max(0,height-top-132);
   const dockTop=bottom+14+Math.max(60,Math.ceil(18*window.fontScale+28)),fadeHeight=dockTop+90;
   const systemScheme=useColorScheme(),isDark=isDarkTheme(lib.settings.themeMode,systemScheme);
-  const palette=isDark?dark:light,theme=useSharedValue(isDark?1:0),page=useSharedValue(0),collectionP=useSharedValue(0),searchP=useSharedValue(0),chips=useSharedValue(0);
+  const palette=isDark?dark:light,theme=useSharedValue(isDark?1:0),page=useSharedValue(0),chips=useSharedValue(0);
   const categoryEntry=useRef(0),themeRequest=useRef(0),pendingThemeMode=useRef<ThemeMode|null>(null),snapshotRef=useRef<(ThemeSnapshot&{themeMode:ThemeMode})|null>(null);
+  const themeCapturing=useRef(false),themeAlive=useRef(true);
+  const [themeChoice,setThemeChoice]=useState<ThemeMode|null>(null);
   const [snapshot,setSnapshot]=useState<(ThemeSnapshot&{themeMode:ThemeMode})|null>(null);
   const randomRequest=useRef<AbortController|null>(null),readerRequest=useRef<AbortController|null>(null),previousIndex=useRef(0);
   const readerSession=useRef(0),activeReader=useRef(reader),activeReaderOpen=useRef(readerOpen);activeReader.current=reader;activeReaderOpen.current=readerOpen;
   // Updated synchronously by navigation as well as render: queued native taps
   // and measurement callbacks must not open a reader over a different page.
   const navigationContext=useRef(`${route}:${collection}:${searchOpen}`);navigationContext.current=`${route}:${collection}:${searchOpen}`;
+  const navigationRevision=useRef(0),renderedNavigationRevision=navigationRevision.current;
+  const setCollection=(next:Collection)=>{navigationRevision.current++;const [currentRoute,,currentSearch]=navigationContext.current.split(':');navigationContext.current=`${currentRoute}:${next}:${currentSearch}`;commitCollection(next)};
+  const setSearchOpen=(next:boolean)=>{navigationRevision.current++;const [currentRoute,currentCollection]=navigationContext.current.split(':');navigationContext.current=`${currentRoute}:${currentCollection}:${next}`;commitSearchOpen(next)};
   const lastCollection=useRef<Exclude<Collection,null>>('saved');if(collection)lastCollection.current=collection;
+  const collectionMotion=useSlideTransition(!!collection,reduced,()=>{if(lastCollection.current==='settings'){setSettingsPage('main');setProfileFocus(n=>n+1)}},true),collectionP=collectionMotion.progress;
+  const searchMotion=useSlideTransition(searchOpen,reduced),searchP=searchMotion.progress;
   const displayCollection=lastCollection.current;
   const liveRows=useMemo(()=>(displayCollection==='saved'?lib.cache.filter(a=>a.saved):lib.history).map(a=>lib.settings.aiEnabled||!a.simplified?a:{...a,simplified:undefined}),[displayCollection,lib.cache,lib.history,lib.settings.aiEnabled]);
   const collectionReturn=useReturnRows(liveRows),searchReturn=useReturnRows(results);
@@ -133,10 +144,9 @@ function Synapse({fontsReady}:{fontsReady:boolean}){
   const paper=useMemo(()=>({backgroundColor:palette.paper}),[palette]);
   const homeStyle=useAnimatedStyle(()=>({transform:[{translateX:-page.value*width}]})),profileStyle=useAnimatedStyle(()=>({transform:[{translateX:(1-page.value)*width}]})),collectionStyle=useAnimatedStyle(()=>({transform:[{translateX:(1-collectionP.value)*width}]})),searchStyle=useAnimatedStyle(()=>({transform:[{translateY:(1-searchP.value)*height}]})),chipStyle=useAnimatedStyle(()=>({transform:[{translateY:-48*Math.max(0,Math.min(1,chips.value))}]})),feedStyle=useAnimatedStyle(()=>({transform:[{translateY:48*(1-Math.max(0,Math.min(1,chips.value)))}]}));
   useLayoutEffect(()=>{page.value=reduced?(route==='home'?0:1):withSpring(route==='home'?0:1,spring)},[route,reduced]);
-  useEffect(()=>{const restore=()=>{if(!collection&&lastCollection.current==='settings')setProfileFocus(n=>n+1)};if(reduced){collectionP.value=collection?1:0;restore()}else collectionP.value=withSpring(collection?1:0,spring,finished=>{if(finished)runOnJS(restore)()})},[collection,reduced]);
-  useEffect(()=>{searchP.value=reduced?(searchOpen?1:0):withSpring(searchOpen?1:0,spring);if(searchOpen){const timer=setTimeout(()=>input.current?.focus(),30);return()=>clearTimeout(timer)}},[searchOpen,reduced]);
+  useEffect(()=>{if(searchOpen){const timer=setTimeout(()=>input.current?.focus(),30);return()=>clearTimeout(timer)}},[searchOpen]);
   const composerLift=useAnimatedStyle(()=>({bottom:Math.max(keyboardLift.value+12,bottom+16)})),searchViewport=useAnimatedStyle(()=>({marginBottom:Math.max(keyboardLift.value,0)+100}));
-  useEffect(()=>{const enabled=!!onboarding.state&&!onboarding.bootError&&route==='home'&&!searchOpen&&!collection;lib.setDiscovery(enabled);if(lib.ready&&enabled&&!reader)void lib.load(category,index)},[lib.ready,!!onboarding.state,onboarding.bootError,category,index,lib.online,route,searchOpen,collection,reader]);
+  useEffect(()=>{const enabled=appActive&&!!onboarding.state&&!onboarding.bootError&&!onboarding.active&&!editIdentity&&route==='home'&&!searchOpen&&!collection;lib.setDiscovery(enabled);if(lib.ready&&enabled&&!reader)void lib.load(category,index)},[lib.ready,appActive,!!onboarding.state,onboarding.bootError,onboarding.active,editIdentity,category,index,lib.online,route,searchOpen,collection,reader]);
   useEffect(()=>{void gemini.current!.load()},[]);
   useEffect(()=>{
     const abort=new AbortController();if(!searchOpen)return()=>abort.abort();
@@ -151,24 +161,30 @@ function Synapse({fontsReady}:{fontsReady:boolean}){
     if(editIdentity){if(Keyboard.isVisible())Keyboard.dismiss();else profileEditor.current?.requestClose();return true}if(reader){close();return true}if(searchOpen){dismissSearch();return true}if(collection){if(collection==='settings')closeSettings();else setCollection(null);return true}if(route==='profile'){setRoute('home');return true}return false;
   });return()=>sub.remove()},[editIdentity,reader,searchOpen,collection,settingsPage,route,onboarding.state,onboarding.bootError,onboarding.active,onboarding.stage,onboarding.replay,onboarding.revision,onboarding.busy]);
   useEffect(()=>()=>{randomRequest.current?.abort();readerRequest.current?.abort()},[]);
-  const open:OpenArticle=(article,node,kind,title)=>{
+  useEffect(()=>{if(route==='home')lib.settleCategories()},[route]);
+  useEffect(()=>{if(lib.error==='Preferenza non salvata')setToast(lib.error)},[lib.error]);
+  const open:OpenArticle=(article,node,kind,title,geometry)=>{
     const expectedContext=`${route}:${collection}:${searchOpen}`;
-    if(activeReaderOpen.current||navigationContext.current!==expectedContext)return;
-    if(activeReader.current?.article.id===article.id&&activeReader.current.context===expectedContext){reopen();return}
+    const expectedRevision=renderedNavigationRevision;
+    if(activeReaderOpen.current||navigationContext.current!==expectedContext||navigationRevision.current!==expectedRevision)return;
+    if(activeReader.current?.article.id===article.id&&activeReader.current.context===expectedContext&&activeReader.current.navigationRevision===expectedRevision){reopen();return}
     if(!article.paragraphs.length&&!lib.online){setToast('Articolo non disponibile offline');return}
     Keyboard.dismiss();readerRequest.current?.abort();const abort=new AbortController();readerRequest.current=abort;
-    const show=(origin:Origin)=>{if(abort.signal.aborted||navigationContext.current!==expectedContext)return;if(kind!=='shuffle')haptics.emit('tap');activeReaderOpen.current=true;
+    const show=(origin:Origin)=>{if(abort.signal.aborted||navigationContext.current!==expectedContext||navigationRevision.current!==expectedRevision)return;if(kind!=='shuffle')haptics.emit('tap');activeReaderOpen.current=true;
       collectionReturn.finish();searchReturn.finish();
       if(origin.kind==='row'){if(searchOpen)searchReturn.hold(article.id);else if(collection)collectionReturn.hold(article.id)}
-      lib.activate(article);setReader({article,origin,session:++readerSession.current,context:`${route}:${collection}:${searchOpen}`});setReaderOpen(true);setAIStatus({id:article.id,message:'',busy:true,notice:{kind:'loading',message:'L’anteprima resta leggibile mentre arriva l’approfondimento.'}});void lib.read(article).catch(()=>setToast('Cronologia non aggiornata'));
+      lib.activate(article);setReader({article,origin,session:++readerSession.current,context:`${route}:${collection}:${searchOpen}`,navigationRevision:expectedRevision});setReaderOpen(true);setAIStatus({id:article.id,message:'',busy:true,notice:{kind:'loading',message:'L’anteprima resta leggibile mentre arriva l’approfondimento.'}});void lib.read(article).catch(()=>setToast('Cronologia non aggiornata'));
       void loadReader(article,abort);
     };
-    if(node&&frame.current){frame.current.measureInWindow((fx,fy)=>node.measureInWindow((x,y,w,h)=>{
+    const measured=(x:number,y:number,w:number,h:number)=>{
+      const {x:fx,y:fy}=frameOrigin.current;
       if(![x,y,w,h,fx,fy].every(Number.isFinite)||w<=0||h<=0){show({x:24,y:top+100,width:width-48,height:120,kind,title});return}
       const scale=kind==='home'?w/(width-48):1,normalHeight=h/scale;
       show({x:kind==='home'?24:x-fx,y:y-fy-normalHeight/2*(1-scale),width:kind==='home'?width-48:w,height:normalHeight,kind,title});
-    }))}
-    else show({x:24,y:top+100,width:width-48,height:120,kind});
+    };
+    if(geometry)measured(geometry.x,geometry.y,geometry.width,geometry.height);
+    else if(node)node.measureInWindow(measured);
+    else show({x:24,y:top+100,width:width-48,height:120,kind,title});
   };
   const close=()=>{
     lib.abandonAIOpen();
@@ -178,7 +194,7 @@ function Synapse({fontsReady}:{fontsReady:boolean}){
     activeReaderOpen.current=false;setReaderOpen(false);
   };
   const reopen=()=>{
-    if(!reader||reader.context!==navigationContext.current||activeReader.current?.session!==reader.session)return;haptics.emit('tap');lib.beginAIOpen();collectionReturn.restore();searchReturn.restore();activeReaderOpen.current=true;setReaderOpen(true);
+    if(!reader||reader.context!==navigationContext.current||reader.navigationRevision!==navigationRevision.current||activeReader.current?.session!==reader.session)return;haptics.emit('tap');lib.beginAIOpen();collectionReturn.restore();searchReturn.restore();activeReaderOpen.current=true;setReaderOpen(true);
     if(readerRequest.current?.signal.aborted){const abort=new AbortController();readerRequest.current=abort;setAIStatus({id:reader.article.id,message:'',busy:true,notice:{kind:'loading',message:'L’anteprima resta leggibile mentre arriva l’approfondimento.'}});void loadReader(reader.article,abort)}
   };
   // The measured opening endpoint stays immutable even when storage changes.
@@ -207,51 +223,61 @@ function Synapse({fontsReady}:{fontsReady:boolean}){
     catch{if(!abort.signal.aborted)setToast('Non è stato possibile aprire un articolo')}
     finally{if(randomRequest.current===abort)setRandomBusy(false)}
   };
-  const selectCategory=(id:string)=>{if(id===category||lib.disabledCategory(id))return;haptics.emit('selection');setEndedCategory('');lib.enterCategory(id);const ordered=['all',...lib.categoryIds],direction=ordered.indexOf(id)>ordered.indexOf(category)?1:-1;categoryEntry.current=reduced?0:direction*24;setCategory(id);setIndex(0);previousIndex.current=0;chips.value=reduced?0:withSpring(0,spring)};
-  const finishTheme=(image:ThemeSnapshot)=>{if(snapshotRef.current?.id!==image.id)return;snapshotRef.current=null;setSnapshot(null);releaseCapture(image.uri)};
+  const selectCategory=(id:string)=>{if(id===category||lib.disabledCategory(id))return;navigationRevision.current++;haptics.emit('selection');setEndedCategory('');const ordered=['all',...lib.categoryIds],direction=ordered.indexOf(id)>ordered.indexOf(category)?1:-1;categoryEntry.current=reduced?0:direction*24;setCategory(id);setFeedRevision(n=>n+1);setIndex(0);previousIndex.current=0;chips.value=reduced?0:withSpring(0,spring)};
+  useEffect(()=>{lib.enterCategory(category)},[category]);
+  const finishTheme=(image:ThemeSnapshot)=>{if(snapshotRef.current?.id!==image.id)return;snapshotRef.current=null;setSnapshot(null);setThemeChoice(null);releaseCapture(image.uri)};
   const changeTheme=async(themeMode:ThemeMode)=>{
-    const id=++themeRequest.current,next=isDarkTheme(themeMode,systemScheme);pendingThemeMode.current=themeMode;
-    const previous=snapshotRef.current;snapshotRef.current=null;setSnapshot(null);if(previous)releaseCapture(previous.uri);
-    if(next===isDark||reduced||Platform.OS==='web'||!frame.current){pendingThemeMode.current=null;lib.updateSettings({themeMode});return}
+    if((pendingThemeMode.current??lib.currentSettings().themeMode)===themeMode)return;
+    pendingThemeMode.current=themeMode;setThemeChoice(themeMode);
+    if(snapshotRef.current){lib.updateSettings({themeMode});return}
+    if(themeCapturing.current)return;
+    const apply=()=>{const mode=pendingThemeMode.current;if(mode){pendingThemeMode.current=null;lib.updateSettings({themeMode:mode})}setThemeChoice(null)};
+    if(isDarkTheme(themeMode,systemScheme)===isDark||reduced||Platform.OS==='web'||!frame.current){apply();return}
+    themeCapturing.current=true;const epoch=themeRequest.current;
     try{
       const uri=await captureRef(frame.current,{format:'png',result:'tmpfile'});
-      if(id!==themeRequest.current){releaseCapture(uri);return}
-      const image={uri,x:0,y:0,dark:next,id,themeMode};snapshotRef.current=image;setSnapshot(image);
-    }catch{if(id===themeRequest.current){pendingThemeMode.current=null;lib.updateSettings({themeMode})}}
+      if(!themeAlive.current){releaseCapture(uri);return}
+      const latest=pendingThemeMode.current;
+      if(AppState.currentState!=='active'||epoch!==themeRequest.current||!latest||isDarkTheme(latest,systemScheme)===isDark){releaseCapture(uri);apply();return}
+      const image={uri,x:0,y:0,dark:isDarkTheme(latest,systemScheme),id:++themeRequest.current,themeMode:latest};snapshotRef.current=image;setSnapshot(image);
+    }catch{if(themeAlive.current)apply()}
+    finally{themeCapturing.current=false}
   };
-  useEffect(()=>()=>{themeRequest.current++;if(snapshotRef.current)releaseCapture(snapshotRef.current.uri)},[]);
+  useEffect(()=>{themeAlive.current=true;return()=>{themeAlive.current=false;themeRequest.current++;if(snapshotRef.current)releaseCapture(snapshotRef.current.uri)}},[]);
   const dismissSearch=()=>{Keyboard.dismiss();randomRequest.current?.abort();setRandomBusy(false);setSearchOpen(false)};
-  const refreshHome=()=>{haptics.emit('refresh');lib.settleCategories();setEndedCategory('');setIndex(0);previousIndex.current=0;setFeedRevision(n=>n+1);chips.value=reduced?0:withSpring(0,spring);void lib.refresh(category)};
+  const refreshHome=()=>{navigationRevision.current++;haptics.emit('refresh');lib.settleCategories();setEndedCategory('');setIndex(0);previousIndex.current=0;setFeedRevision(n=>n+1);chips.value=reduced?0:withSpring(0,spring);void lib.refresh(category)};
   const navigate=(next:'home'|'profile')=>{
     if(activeReaderOpen.current)return;
     const now=Date.now();if(next==='home'&&route==='home'&&!readerOpen&&!collection&&!searchOpen){if(now-lastHomeTap.current<350){lastHomeTap.current=0;setDockIconRevision(old=>({...old,home:old.home+1}));refreshHome();return}lastHomeTap.current=now}else lastHomeTap.current=0;
     if(next!==route){haptics.emit('selection');setDockIconRevision(old=>({...old,[next]:old[next]+1}))};
     navigationContext.current=`${next}:null:false`;
-    if(next==='home'&&route!=='home')lib.settleCategories();Keyboard.dismiss();randomRequest.current?.abort();setRandomBusy(false);readerRequest.current?.abort();setSearchOpen(false);setCollection(null);setRoute(next)};
+    Keyboard.dismiss();randomRequest.current?.abort();setRandomBusy(false);readerRequest.current?.abort();setSearchOpen(false);setCollection(null);setRoute(next)};
+  const feedEventCurrent=()=>navigationRevision.current===renderedNavigationRevision&&navigationContext.current==='home:null:false'&&!activeReaderOpen.current;
   const sourceRows=collectionReturn.rows,searchRows=searchReturn.rows;
-  return <ThemeContext.Provider value={themeContext}><View style={styles.webFrame}><Animated.View ref={frame} collapsable={false} onLayout={e=>setViewportHeight(e.nativeEvent.layout.height)} style={[{width,flex:1,overflow:Platform.OS==='web'?'clip' as 'hidden':'hidden'},paper]}>
+  return <ThemeContext.Provider value={themeContext}><View style={styles.webFrame}><Animated.View ref={frame} collapsable={false} onLayout={e=>{setViewportHeight(e.nativeEvent.layout.height);frame.current?.measureInWindow((x,y)=>{frameOrigin.current={x,y}})}} style={[{width,flex:1,overflow:Platform.OS==='web'?'clip' as 'hidden':'hidden'},paper]}>
     <StatusBar style={isDark?'light':'dark'}/>
     {!fontsReady||!lib.ready?<View style={[styles.loader,{backgroundColor:palette.paper}]}><ActivityIndicator color={palette.accent}/><Label>{lib.error}</Label></View>:!onboarding.state||onboarding.bootError?<OnboardingScreen key={onboarding.devSandbox?'sandbox':onboarding.replay?'replay':'onboarding'} binding={onboarding}/>:<>
       <View pointerEvents={onboarding.active||editIdentity?'none':'box-none'} accessibilityElementsHidden={onboarding.active||editIdentity} importantForAccessibility={onboarding.active||editIdentity?'no-hide-descendants':'auto'} style={{flex:1}}>
-      <ScreenLayer active={route==='home'&&!searchOpen&&!collection&&!readerOpen} style={[StyleSheet.absoluteFill,paper,homeStyle]}>
+      <ScreenLayer active={route==='home'&&!searchOpen&&!collection&&!readerOpen} style={[StyleSheet.absoluteFill,paper,homeStyle]}><CachedScene active={route==='home'&&!readerOpen&&!collection&&!searchOpen}>
         <View pointerEvents="box-none" style={{paddingTop:top+8,paddingHorizontal:24,paddingBottom:10,zIndex:2}}><View pointerEvents="none" style={{flexDirection:'row',alignItems:'center',justifyContent:'space-between'}}><Label style={styles.wordmark}>lume</Label></View><View pointerEvents="box-none" style={{height:48,overflow:'hidden'}}><Animated.View pointerEvents="box-none" style={chipStyle}><CategoryRail selected={category} onSelect={selectCategory} items={lib.categoryRail} onInteractionStart={lib.beginCategoryInteraction} onInteractionEnd={lib.endCategoryInteraction}/></Animated.View></View></View>
-        <Animated.View style={[{position:'absolute',top:top+84,left:0,right:0,height:homeHeight},feedStyle]}>{homeHeight>0&&!centralFeed&&<Feed active={appActive&&route==='home'&&!searchOpen&&!collection&&!onboarding.active&&!editIdentity} key={`${category}:${feedRevision}`} articles={feedArticles} height={homeHeight} size={lib.settings.size} saved={saved} readerOpen={readerOpen} entry={categoryEntry.current} onOpen={open} onSave={save} covered={reader?.origin.kind==='home'?reader.article.id:undefined} position={index} onIndex={next=>setIndex(lib.trimFeed(category,next))} onEndReached={()=>{if(category!=='all'&&feedState.phase==='exhausted')setEndedCategory(category);else lib.retryFeed()}} onVisible={setSettledIndex} onDirection={hidden=>{const hide=lib.settings.autoHideCategories&&hidden;chips.value=reduced?(hide?1:0):withSpring(hide?1:0,spring)}}/>}</Animated.View>
+        <Animated.View style={[{position:'absolute',top:top+84,left:0,right:0,height:homeHeight},feedStyle]}>{homeHeight>0&&!centralFeed&&<Feed active={appActive&&route==='home'&&!searchOpen&&!collection&&!onboarding.active&&!editIdentity} presentation={feedRevision} articles={feedArticles} height={homeHeight} size={lib.settings.size} saved={saved} readerOpen={readerOpen} entry={categoryEntry.current} onOpen={open} onSave={save} covered={reader?.origin.kind==='home'?reader.article.id:undefined} position={index} onIndex={next=>{if(feedEventCurrent())setIndex(lib.trimFeed(category,next))}} onEndReached={()=>{if(!feedEventCurrent())return;if(category!=='all'&&feedState.phase==='exhausted')setEndedCategory(category);else lib.retryFeed()}} onVisible={next=>{if(feedEventCurrent())setSettledIndex(next)}} onDirection={hidden=>{if(!feedEventCurrent())return;const hide=lib.settings.autoHideCategories&&hidden;chips.value=reduced?(hide?1:0):withSpring(hide?1:0,spring)}}/>}</Animated.View>
         {!centralFeed&&<FeedBottomFade height={fadeHeight}/>}
         {lib.loading&&<View pointerEvents="none" style={{position:'absolute',right:24,top:top+19}}><FeedSpinner active={appActive&&route==='home'&&!collection&&!searchOpen&&!readerOpen&&!onboarding.active}/></View>}
         {centralFeed&&route==='home'&&!searchOpen&&!collection&&!reader&&<View style={{position:'absolute',top:top+142,bottom:bottom+110,left:0,right:0}}><FeedStatus key={category+':'+(!lib.online?'offline':feedState.phase==='exhausted'?'exhausted':'recover')} central state={feedState} online={lib.online} category={category} active={appActive} homeReady={lib.homeReady()} onHome={()=>selectCategory('all')} onRetry={lib.retryFeed}/></View>}
         {!centralFeed&&lib.online&&['service','limit','unavailable'].includes(feedState.phase)&&<View style={{position:'absolute',bottom:dockTop+6,left:24,right:24,backgroundColor:palette.paper}}><FeedStatus state={feedState} online category={category} active={appActive&&route==='home'} homeReady={lib.homeReady()} onHome={()=>selectCategory('all')} onRetry={lib.retryFeed}/></View>}
         {!lib.online&&<View pointerEvents="none" style={{position:'absolute',bottom:dockTop+6,left:8,right:8}}><OfflineNotice repeated={offlineRepeated}/></View>}
-      </ScreenLayer>
-      <ScreenLayer active={route==='profile'&&!collection&&!searchOpen&&!readerOpen} style={[StyleSheet.absoluteFill,paper,profileStyle]}>
-        <ProfileHeader name={onboarding.state?.profile.name} photoUri={onboarding.photoUri} top={top+12} reduced={reduced||!appActive||route!=='profile'||!!collection||searchOpen} onEdit={()=>{haptics.emit('tap');setEditIdentity(true)}}/>
+      </CachedScene></ScreenLayer>
+      <ScreenLayer active={route==='profile'&&!collection&&!searchOpen&&!readerOpen} style={[StyleSheet.absoluteFill,paper,profileStyle]}><CachedScene active={route==='profile'&&!readerOpen&&!collection&&!searchOpen}>
+        {/* Rebase cached native initial styles on palette changes; identity stays in the binding. */}
+        <ProfileHeader key={`${palette.paper}`} name={onboarding.state?.profile.name} photoUri={onboarding.photoUri} top={top+12} reduced={reduced||!appActive||route!=='profile'||!!collection||searchOpen} onEdit={()=>{haptics.emit('tap');setEditIdentity(true)}}/>
         <ScrollView style={{flex:1}} contentContainerStyle={{flexGrow:1,justifyContent:'center',paddingTop:24,paddingBottom:bottom+110}}>
         <View style={{marginHorizontal:24,borderRadius:24,overflow:'hidden',gap:2}}>{([{id:'saved',title:'Articoli salvati',icon:'bookmark-outline',count:lib.cache.filter(a=>a.saved).length},{id:'history',title:'Cronologia',icon:'history',count:lib.history.length},{id:'settings',title:'Impostazioni',icon:'tune',count:undefined}] as const).map(row=><ProfileMenuRow focusRequest={row.id==='settings'?profileFocus:0} key={row.id} icon={row.icon} title={row.title} count={row.count} onPress={()=>{setSettingsPage('main');setSettingsFocus(0);setCollection(row.id)}}/>)}</View></ScrollView>
-      </ScreenLayer>
-      <ScreenLayer active={!!collection&&!searchOpen&&!readerOpen} style={[StyleSheet.absoluteFill,paper,collectionStyle]}>
+      </CachedScene></ScreenLayer>
+      {collectionMotion.mounted&&<ScreenLayer layer={2} active={!!collection&&!searchOpen&&!readerOpen} style={[StyleSheet.absoluteFill,paper,collectionStyle]}>
+        <CachedScene active={collectionMotion.painting}>
         {displayCollection==='settings'?<PageKeyboard>
-          <PageHeader title={settingsPage==='gemini'?'Gemini':settingsPage==='gallery'?'Design system':'Impostazioni'} top={top} active={collection==='settings'&&(settingsPage!=='main'||!settingsFocus)} backLabel={settingsPage==='main'?'Torna al profilo':'Torna alle impostazioni'} onBack={closeSettings}/>
-          <SettingsScreen focusRequest={settingsFocus} active={settingsPage==='main'} settings={lib.settings} gemini={geminiState} onTheme={mode=>void changeTheme(mode)} onUpdate={lib.updateSettings} onGemini={()=>setSettingsPage('gemini')} onGallery={()=>setSettingsPage('gallery')} onPreview={()=>onboarding.developmentPreview()} bottom={bottom}/>
-          {settingsPage==='gemini'&&<PageScroll bottom={bottom}>
+          <SettingsStack page={settingsPage} width={width} top={top} active={collection==='settings'&&!searchOpen&&!readerOpen} reduced={reduced||!collectionMotion.painting} focusRequest={settingsFocus} onBack={closeSettings} main={<SettingsScreen focusRequest={settingsPage==='main'?settingsFocus:0} settings={themeChoice?{...lib.settings,themeMode:themeChoice}:lib.settings} gemini={geminiState} onTheme={mode=>void changeTheme(mode)} onUpdate={lib.updateSettings} onGemini={()=>setSettingsPage('gemini')} onGallery={()=>setSettingsPage('gallery')} onPreview={()=>onboarding.developmentPreview()} bottom={bottom}/>}>
+          {detail=>detail==='gemini'?<PageScroll bottom={bottom}>
             <GeminiSettings online={lib.online} onRetryConfiguration={()=>void gemini.current!.load()}
               state={geminiState}
               aiKey={aiKey}
@@ -260,25 +286,27 @@ function Synapse({fontsReady}:{fontsReady:boolean}){
               onSaveKey={()=>void persistAIKey(true)}
               onRemoveKey={()=>{keyRevision.current++;void gemini.current!.remove().then(()=>{setAIKey('');setKeyEdited(false);lib.updateSettings({aiEnabled:false})}).catch(()=>setToast('Chiave non rimossa. Riprova.'))}}
               aiEnabled={lib.settings.aiEnabled}
-              onToggleEnabled={enabled=>lib.updateSettings({aiEnabled:enabled})}
+              onToggleEnabled={()=>lib.updateSettings(current=>({aiEnabled:!current.aiEnabled})).aiEnabled}
             />
-          </PageScroll>}
-          {__DEV__&&settingsPage==='gallery'&&<DesignGallery bottom={bottom}/>}
+          </PageScroll>:__DEV__?<DesignGallery bottom={bottom}/>:null}
+          </SettingsStack>
         </PageKeyboard>:<>
         <PageHeader title={displayCollection==='saved'?'Salvati':'Cronologia'} top={top} active={!!collection} backLabel="Torna al profilo" onBack={()=>setCollection(null)}/>
         <ArticleList key={displayCollection} removalEnabled={!reader} onRemove={displayCollection==='saved'?removeSaved:undefined} articles={sourceRows} onOpen={open} hiddenId={collectionReturn.released?undefined:reader?.article.id} returnId={reader?.article.id} animate={collectionReturn.animate} bottomPadding={bottom+110} empty={<View style={{paddingTop:42}}><Label style={{fontFamily:heading,fontSize:28}}>{displayCollection==='saved'?'Le tue prossime riletture':'Le tue scoperte, qui'}</Label></View>}/></>}
-      </ScreenLayer>
-      <ScreenLayer active={searchOpen&&!readerOpen} style={[StyleSheet.absoluteFill,paper,searchStyle]}>
+        </CachedScene>
+      </ScreenLayer>}
+      {searchMotion.mounted&&<ScreenLayer layer={3} active={searchOpen&&!readerOpen} style={[StyleSheet.absoluteFill,paper,searchStyle]}>
         <Label accessibilityRole="header" style={[styles.pageTitle,{paddingTop:top+12}]}>Cerca</Label>
         <Animated.View style={[{flex:1},searchViewport]}><ArticleList articles={searchRows} onOpen={open} hiddenId={searchReturn.released?undefined:reader?.article.id} returnId={reader?.article.id} animate={searchReturn.animate} bottomPadding={24} footer={<>{searchBusy&&<StatusMessage compact status={{kind:'loading',message:'Cerco gli articoli pertinenti…'}}/>}{!!searchError&&<StatusMessage compact status={{kind:'network',message:searchError}}/>}{!searchBusy&&!searchError&&!!query.trim()&&!searchRows.length&&<Label muted style={{paddingVertical:24}}>Nessun articolo trovato.</Label>}</>}/></Animated.View>
         <Animated.View style={[{position:'absolute',left:0,right:0,backgroundColor:palette.paper,paddingHorizontal:24,paddingTop:12,flexDirection:'row',gap:10},composerLift]}>
           <SearchComposer inputRef={input} value={query} onChange={setQuery} onClose={dismissSearch}/>
           <View ref={shuffleNode} collapsable={false} style={{width:56,height:56,borderRadius:28,backgroundColor:palette.active}}><ShuffleButton active={appActive&&!readerOpen} busy={randomBusy} onPress={()=>void random()}/></View>
         </Animated.View>
-      </ScreenLayer>
-      {!searchOpen&&collection!=='settings'&&<Dock selected={route} iconRevision={dockIconRevision} active={appActive&&!collection&&!onboarding.active&&!editIdentity} onNavigate={navigate} onSearch={()=>{setSearchOpen(true);input.current?.focus()}} bottom={bottom} availableWidth={width-32} disabled={readerOpen} closing={!!reader&&!readerOpen}/>}
+      </ScreenLayer>}
+      {/* Palette-only rebasing preserves warm navigation and the current selected endpoint. */}
+      <Dock key={`${palette.paper}`} visible={!searchOpen&&collection!=='settings'} selected={route} iconRevision={dockIconRevision} active={appActive&&!collection&&!onboarding.active&&!editIdentity} onNavigate={navigate} onSearch={()=>{setSearchOpen(true);input.current?.focus()}} bottom={bottom} availableWidth={width-32} disabled={readerOpen} closing={!!reader&&!readerOpen}/>
       {reader&&<Reader key={reader.session} article={readerArticle!} aiMessage={aiStatus.id===reader.article.id?aiStatus.message:''} aiBusy={aiStatus.busy} onRetryAI={lib.settings.aiEnabled?retryAI:undefined} onRetryArticle={retryAI} notice={aiStatus.id===reader.article.id?aiStatus.notice:undefined} origin={reader.origin} open={readerOpen} width={width} height={height} top={top} bottom={bottom} size={lib.settings.size} saved={saved.has(reader.article.id)} onClose={close} onReopen={reopen} onClosed={closed} onReturnNear={returnNear} returnDetached={collectionReturn.changed||searchReturn.changed||reader.context!==`${route}:${collection}:${searchOpen}`||reader.origin.kind==='home'&&visibleArticle?.id!==reader.article.id} onSave={()=>save(reader.article)}/>}
-      {snapshot&&<ThemeReveal key={snapshot.id} snapshot={snapshot} width={width} height={height} topInset={insets.top} onReady={()=>{if(snapshotRef.current?.id===snapshot.id){pendingThemeMode.current=null;lib.updateSettings({themeMode:snapshot.themeMode})}}} onDone={()=>finishTheme(snapshot)}/>}
+      {snapshot&&<ThemeReveal key={snapshot.id} snapshot={snapshot} width={width} height={height} topInset={insets.top} onReady={()=>{if(snapshotRef.current?.id===snapshot.id){const mode=pendingThemeMode.current??snapshot.themeMode;pendingThemeMode.current=null;lib.updateSettings({themeMode:mode});setThemeChoice(null)}}} onDone={()=>finishTheme(snapshot)}/>}
       {removedSaved.length>0&&collection==='saved'&&!reader&&<Animated.View entering={reduced?undefined:FadeInUp.duration(180)} exiting={reduced?undefined:FadeOutDown.duration(150)} accessibilityLiveRegion="polite" style={[styles.toast,{bottom:bottom+94,left:24,right:24,backgroundColor:palette.surface,borderRadius:18,flexDirection:'row',alignItems:'center',gap:8}]}><Label style={{flex:1,fontSize:14}}>{removedSaved.length===1?'Segnalibro rimosso':`${removedSaved.length} segnalibri rimossi`}</Label><Pressable accessibilityRole="button" accessibilityLabel="Annulla ultima rimozione dai salvati" onPress={undoSaved} style={{padding:12,minHeight:48}}><Label strong>Annulla</Label></Pressable><Pressable accessibilityRole="button" accessibilityLabel="Chiudi avviso di rimozione" onPress={()=>setRemovedSaved([])} style={{minWidth:48,minHeight:48,alignItems:'center',justifyContent:'center'}}><Icon name="close" size={18}/></Pressable></Animated.View>}
       {!!toast&&<DismissibleNotice key={toast} reduced={reduced} closeColor={palette.paper} onDismiss={()=>setToast(current=>current===toast?'':current)} style={[styles.toast,{bottom:bottom+174,backgroundColor:palette.ink}]}><Label style={{color:palette.paper,fontSize:15,paddingRight:42,minHeight:48,textAlignVertical:'center'}}>{toast}</Label></DismissibleNotice>}
       </View>

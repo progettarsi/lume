@@ -10,7 +10,7 @@ const motion=motionTokens.dock;
 function visibility(p:number){'worklet';const t=Math.max(0,Math.min(1,p));return t*t*(3-2*t)}
 // One continuous coordinate governs pill, tracks, icons and text. Text is laid
 // out at its final intrinsic width; only its parent clips and its paint fades.
-export function Dock({selected,onNavigate,onSearch,bottom,availableWidth,disabled=false,closing=false,reducedOverride,fontScaleOverride,iconRevision={home:0,profile:0},active=true}:{selected:Destination;onNavigate:(id:Destination)=>void;onSearch:()=>void;bottom:number;availableWidth:number;disabled?:boolean;closing?:boolean;reducedOverride?:boolean;fontScaleOverride?:number;iconRevision?:Record<Destination,number>;active?:boolean}){
+export function Dock({selected,onNavigate,onSearch,bottom,availableWidth,disabled=false,closing=false,reducedOverride,fontScaleOverride,iconRevision={home:0,profile:0},active=true,visible=true}:{selected:Destination;onNavigate:(id:Destination)=>void;onSearch:()=>void;bottom:number;availableWidth:number;disabled?:boolean;closing?:boolean;reducedOverride?:boolean;fontScaleOverride?:number;iconRevision?:Record<Destination,number>;active?:boolean;visible?:boolean}){
  const {palette}=useTheme(),window=useWindowDimensions(),reduced=useMotionPreference();
  const fontScale=fontScaleOverride??window.fontScale,p=useSharedValue(selected==='home'?0:1);
  const [labels,setLabels]=useState({home:32*fontScale,profile:40*fontScale,homeReady:false,profileReady:false});
@@ -26,26 +26,28 @@ export function Dock({selected,onNavigate,onSearch,bottom,availableWidth,disable
  // onLayout may quantize a fractional glyph advance before reporting it.
  // An upper pixel bound avoids ellipsis at that boundary at every density.
  const measure=(id:Destination,width:number)=>{const bound=Math.ceil(width)+1;if(width>0)setLabels(old=>old[id]===bound&&old.homeReady&&old.profileReady?old:{...old,[id]:bound,homeReady:id==='home'||old.homeReady,profileReady:id==='profile'||old.profileReady})};
- const pill=useAnimatedStyle(()=>{const q=Math.max(-.035,Math.min(1.035,p.value));return {width:home+(profile-home)*q,transform:[{translateX:(inner-profile)*q}]}});
- const homeCell=useAnimatedStyle(()=>({width:home+(inner-profile-home)*Math.max(0,Math.min(1,p.value))}));
- const profileCell=useAnimatedStyle(()=>{const q=Math.max(0,Math.min(1,p.value)),x=home+(inner-profile-home)*q;return {width:inner-x,transform:[{translateX:x}]}});
+ const pill=useAnimatedStyle(()=>{const q=Math.max(-.035,Math.min(1.035,p.value));const w=home+(profile-home)*q;return {transform:[{translateX:(inner-profile)*q+(w-home)/2},{scaleX:w/home}]}});
+ const homeCell={width:inner};
+ const profileCell=useAnimatedStyle(()=>{const q=Math.max(0,Math.min(1,p.value)),x=home+(inner-profile-home)*q;return {width:inner,transform:[{translateX:x}]}});
  const homeIcon=useAnimatedStyle(()=>{const q=Math.max(0,Math.min(1,p.value));return {opacity:1-.4*q,transform:[{translateX:12+((inner-profile)/2-24)*q}]}});
  const profileIcon=useAnimatedStyle(()=>{const q=Math.max(0,Math.min(1,p.value));return {opacity:.6+.4*q,transform:[{translateX:(inner-home)/2-12+(24-(inner-home)/2)*q}]}});
  const homeText=useAnimatedStyle(()=>({opacity:1-visibility(p.value/.5),transform:[{translateX:-4*visibility(p.value/.5)}]}));
  const profileText=useAnimatedStyle(()=>({opacity:visibility((p.value-.5)/.5),transform:[{translateX:4*(1-visibility((p.value-.5)/.5))}]}));
  const textSize=fontScaleOverride?14*fontScale:14,textLine=fontScaleOverride?18*fontScale:18;
- return <View testID="synapse-dock" style={[styles.dock,{opacity:labels.homeReady&&labels.profileReady?1:0,bottom:bottom+14,width:total,marginLeft:-total/2,height:navHeight,zIndex:closing?45:20}]} pointerEvents={disabled?'none':'auto'} aria-hidden={disabled} accessibilityElementsHidden={disabled} importantForAccessibility={disabled?'no-hide-descendants':'auto'}>
+ // Keep the measured dock warm beneath settings/search. Rebuilding it on
+ // every return costs native text measurement and briefly hides its controls.
+ return <View testID="synapse-dock" style={[styles.dock,{opacity:visible&&labels.homeReady&&labels.profileReady?1:0,bottom:bottom+14,width:total,marginLeft:-total/2,height:navHeight,zIndex:closing?45:20}]} pointerEvents={disabled||!visible?'none':'auto'} aria-hidden={disabled||!visible} accessibilityElementsHidden={disabled||!visible} importantForAccessibility={disabled||!visible?'no-hide-descendants':'auto'}>
   <View testID="dock-capsule" style={[styles.nav,{width:navWidth,height:navHeight,borderRadius:navHeight/2,backgroundColor:palette.surface}]}>
-   <Animated.View testID="dock-pill" pointerEvents="none" accessible={false} style={[styles.pill,{left:inset,top:inset,height:pillHeight,borderRadius:pillHeight/2,backgroundColor:palette.active},pill]}/>
+   <Animated.View testID="dock-pill" pointerEvents="none" accessible={false} style={[styles.pill,{left:inset,top:inset,width:home,height:pillHeight,borderRadius:pillHeight/2,backgroundColor:palette.active},pill]}/>
    <Animated.View pointerEvents="none" accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={[styles.cell,{left:inset,height:navHeight-8},homeCell]}>
     <View style={styles.hit}>
-     <Animated.View style={[styles.icon,homeIcon]}><DockIcon name="home" revision={iconRevision.home} active={active&&!disabled&&selected==='home'} reduced={noMotion}/></Animated.View>
+     <Animated.View style={[styles.icon,homeIcon]}><DockIcon name="home" revision={iconRevision.home} active={visible&&active&&!disabled&&selected==='home'} reduced={noMotion}/></Animated.View>
      <Label allowFontScaling={fontScaleOverride===undefined} accessible={false} strong numberOfLines={1} style={[styles.label,{fontSize:textSize,lineHeight:textLine,width:labels.home},homeText]}>Home</Label>
     </View>
    </Animated.View>
    <Animated.View pointerEvents="none" accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={[styles.cell,{left:inset,height:navHeight-8},profileCell]}>
     <View style={styles.hit}>
-     <Animated.View style={[styles.icon,profileIcon]}><DockIcon name="profile" revision={iconRevision.profile} active={active&&!disabled&&selected==='profile'} reduced={noMotion}/></Animated.View>
+     <Animated.View style={[styles.icon,profileIcon]}><DockIcon name="profile" revision={iconRevision.profile} active={visible&&active&&!disabled&&selected==='profile'} reduced={noMotion}/></Animated.View>
      <Label allowFontScaling={fontScaleOverride===undefined} accessible={false} strong numberOfLines={1} style={[styles.label,{fontSize:textSize,lineHeight:textLine,width:labels.profile},profileText]}>Profilo</Label>
     </View>
    </Animated.View>

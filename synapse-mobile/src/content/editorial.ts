@@ -4,7 +4,9 @@ import {generalAudienceScore,makePreview} from './text';
 // First reversible editorial calibration. No learning weights, user scores or network calls.
 export const EDITORIAL_TUNING={enabled:true,preferredScore:1.35,broadPenalty:.7,topicPenalty:1.2,fallbackPerChunk:1};
 export type EditorialAssessment={eligible:boolean;preferred:boolean;score:number;reasons:string[]};
-export function assessEditorial(a:Article):EditorialAssessment{
+const assessments=new WeakMap<Article,{tuning:string;title:string;preview:string[];paragraphs:string[];value:EditorialAssessment}>();
+export function assessEditorial(a:Article):EditorialAssessment{const tuning=Object.values(EDITORIAL_TUNING).join('|'),old=assessments.get(a);if(old?.tuning===tuning&&old.title===a.title&&old.preview===a.preview&&old.paragraphs===a.paragraphs)return old.value;const value=computeAssessment(a);assessments.set(a,{tuning,title:a.title,preview:a.preview,paragraphs:a.paragraphs,value});return value}
+function computeAssessment(a:Article):EditorialAssessment{
  const preview=a.preview.length?a.preview:makePreview(a.paragraphs),text=preview.join(' '),words=text.match(/[\p{L}\p{N}'’]+/gu)||[];
  const reasons:string[]=[];
  if(generalAudienceScore(a.title,a.paragraphs)<.45)return {eligible:false,preferred:false,score:-1,reasons:['Testo insufficiente, poco divulgativo o escluso dal filtro di base']};

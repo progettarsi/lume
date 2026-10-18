@@ -1,7 +1,7 @@
 import * as SQLite from 'expo-sqlite';
 import type { Article, Settings } from './content/types';
 import { parseSettings } from './content/settings';
-import { evictable } from './content/cache';
+import { evictable,CACHE_COUNT,CACHE_BYTES } from './content/cache';
 import {mergeArticle} from './content/articleState';
 import {databaseQueue} from './content/databaseQueue';
 import {storedArticle} from './content/storedArticle';
@@ -121,4 +121,5 @@ export function getClassificationCache(){return run(async db=>{const r=await db.
 export function putClassificationCache(value:ClassificationCache){return run(db=>db.runAsync('INSERT OR REPLACE INTO preferences(key,value) VALUES(?,?)','category-classifications',JSON.stringify(value)))}
 export function getAIMetrics(){return run(async db=>{const r=await db.getFirstAsync<{value:string}>('SELECT value FROM preferences WHERE key=?','ai-metrics');return parseAIMetrics(r?.value||null)})}
 export function putAIMetrics(metrics:AIMetrics){return run(db=>db.runAsync('INSERT OR REPLACE INTO preferences(key,value) VALUES(?,?)','ai-metrics',JSON.stringify(metrics)))}
+export function needsPrune(){return run(async db=>{const row=await db.getFirstAsync<{count:number;bytes:number}>('SELECT COUNT(*) AS count,COALESCE(SUM(LENGTH(CAST(json AS BLOB))),0) AS bytes FROM articles WHERE saved=0');return !!row&&(row.count>CACHE_COUNT||row.bytes>CACHE_BYTES-CACHE_COUNT*128)})}
 export function prune(protect:Set<string>){return run(async db=>{const ids=evictable(await articles(db),protect);await db.withTransactionAsync(async()=>{for(const id of ids)await db.runAsync('DELETE FROM articles WHERE id=? AND saved=0',id)});return ids})}

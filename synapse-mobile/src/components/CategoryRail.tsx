@@ -8,6 +8,7 @@ import Animated,{
   LinearTransition,
   FadeIn,
   withTiming,
+  cancelAnimation,
   runOnJS,
 } from 'react-native-reanimated';
 import {LinearGradient} from 'expo-linear-gradient';
@@ -37,9 +38,8 @@ export function CategoryRail({
 }){
   const {palette}=useTheme(),systemReduced=useMotionPreference();
   const reduced=reducedOverride??systemReduced;
-  const width=useRef(0),content=useRef(0),[atEnd,setAtEnd]=useState(false);
-  const scrollX=useSharedValue(0);
-  const offset=useRef(0),touch=useRef(false),drag=useRef(false),momentum=useRef(false),endFrame=useRef<number|undefined>(undefined);
+  const width=useSharedValue(0),content=useSharedValue(0),scrollX=useSharedValue(0);
+  const touch=useRef(false),drag=useRef(false),momentum=useRef(false),endFrame=useRef<number|undefined>(undefined);
   const begin=()=>{if(endFrame.current!==undefined)cancelAnimationFrame(endFrame.current);onInteractionStart?.()};
   const end=()=>{if(endFrame.current!==undefined)cancelAnimationFrame(endFrame.current);endFrame.current=requestAnimationFrame(()=>{endFrame.current=undefined;if(!touch.current&&!drag.current&&!momentum.current)onInteractionEnd?.()})};
   useEffect(()=>()=>{if(endFrame.current!==undefined)cancelAnimationFrame(endFrame.current);onInteractionEnd?.()},[]);
@@ -71,14 +71,16 @@ export function CategoryRail({
     previous.current=railItems;
   },[membership,reduced]);
   const exited=(token:number)=>setGhosts(old=>old.filter(g=>g.token!==token));
-  const updateOffset=(x:number)=>{offset.current=x;setAtEnd(x+width.current>=content.current-4)};
-  const scroll=useAnimatedScrollHandler(e=>{scrollX.value=e.contentOffset.x;runOnJS(updateOffset)(e.contentOffset.x)});
+  // Both edge fades follow native geometry. Scrolling sends no per-frame JS
+  // callbacks or React state updates, including during momentum/reversal.
+  const scroll=useAnimatedScrollHandler(e=>{scrollX.value=e.contentOffset.x});
   const leftFade=useAnimatedStyle(()=>{
     const progress=Math.max(0,Math.min(1,scrollX.value/32));
     return {opacity:progress*progress*(3-2*progress)};
   });
+  const rightFade=useAnimatedStyle(()=>({opacity:scrollX.value+width.value>=content.value-4?0:1}));
 
-  return <View style={styles.rail} onLayout={e=>{width.current=e.nativeEvent.layout.width;setAtEnd(offset.current+width.current>=content.current-4)}}>
+  return <View style={styles.rail} onLayout={e=>{width.value=e.nativeEvent.layout.width}}>
     <Animated.ScrollView
       horizontal
       showsHorizontalScrollIndicator={false}
@@ -90,7 +92,7 @@ export function CategoryRail({
       onMomentumScrollBegin={()=>{momentum.current=true;begin()}}
       onMomentumScrollEnd={()=>{momentum.current=false;end()}}
       onScrollEndDrag={()=>{drag.current=false;end()}}
-      onContentSizeChange={w=>{content.current=w;setAtEnd(offset.current+width.current>=w-4)}}
+      onContentSizeChange={w=>{content.value=w}}
       onScroll={scroll}
       scrollEventThrottle={16}
     >
@@ -111,7 +113,7 @@ export function CategoryRail({
       {ghosts.map(g=><RailChip {...g.item} key={`exit:${g.item.id}:${g.token}`} selected={selected===g.item.id} disabled reduced={reduced} onPress={()=>{}} ghost={g.rect} onExited={()=>exited(g.token)}/>)}
     </Animated.ScrollView>
     <Animated.View pointerEvents="none" accessible={false} accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={[styles.fade,{right:undefined,left:-1},leftFade]}><LinearGradient colors={[palette.paper,palette.paper+'00']} start={{x:0,y:.5}} end={{x:1,y:.5}} style={StyleSheet.absoluteFill}/></Animated.View>
-    {!atEnd&&<LinearGradient pointerEvents="none" colors={[palette.paper+'00',palette.paper]} start={{x:0,y:.5}} end={{x:1,y:.5}} style={styles.fade}/>}
+    <Animated.View pointerEvents="none" accessible={false} accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={[styles.fade,rightFade]}><LinearGradient colors={[palette.paper+'00',palette.paper]} start={{x:0,y:.5}} end={{x:1,y:.5}} style={StyleSheet.absoluteFill}/></Animated.View>
   </View>;
 }
 
@@ -147,6 +149,8 @@ function RailChip({
     if(reduced)press.value=0;
   },[selected,reduced]);
   useEffect(()=>{if(ghost)opacity.value=withTiming(0,{duration:reduced?0:140},done=>{if(done&&onExited)runOnJS(onExited)()})},[ghost,reduced]);
+
+  useEffect(()=>()=>{cancelAnimation(fill);cancelAnimation(press);cancelAnimation(opacity)},[]);
 
   const selection=useAnimatedStyle(()=>({transform:[{scale:fill.value}]}));
   const pulse=useAnimatedStyle(()=>({opacity:press.value}));

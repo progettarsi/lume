@@ -1,4 +1,6 @@
 $ErrorActionPreference='Stop'
+& node (Join-Path $PSScriptRoot 'patch-native-motion.cjs')
+if($LASTEXITCODE -ne 0){throw 'Verifica correzione Fabric non riuscita.'}
 $taskRoot=Split-Path -Parent $PSScriptRoot
 $taskConfig=(Get-Content -LiteralPath (Join-Path $taskRoot 'app.json') -Raw | ConvertFrom-Json).expo
 $taskVersion=$taskConfig.version

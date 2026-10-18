@@ -55,7 +55,7 @@ export function preparationState(count:number,online:boolean,loading:boolean,sta
 export const TUTORIAL=[
  {id:'swipe',title:'Una scoperta alla volta',body:'Tocca l’articolo per approfondire. Scorri verso l’alto per esplorare il feed.',hint:'Puoi provare qui, oppure continuare.'},
  {id:'categories',title:'Segui la tua curiosità',body:'Ogni articolo indica il suo argomento. Nella Home, la barra delle categorie ti aiuta a esplorare ciò che ti incuriosisce.',hint:'La scelta di un interesse non garantisce articoli già disponibili.'},
- {id:'learning',title:'Il feed impara da te',body:'Tocca due volte un articolo per salvarlo. I salvataggi guidano il tuo feed.',hint:'Le preferenze restano sul telefono. Wikipedia e Gemini, se attivo, possono usare la connessione.'},
+ {id:'learning',title:'Il feed impara da te',body:'Usa il segnalibro per salvare un articolo. I salvataggi guidano il tuo feed.',hint:'Le preferenze restano sul telefono. Wikipedia e Gemini, se attivo, possono usare la connessione.'},
 ] as const;
 export const DEMO_CARDS=[
  {id:'demo:aurora',title:'Aurora polare',category:'Scienza',preview:'Il cielo si illumina quando le particelle solari incontrano l’atmosfera.'},

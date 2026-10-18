@@ -7,7 +7,7 @@ function fixture(){
  const state=v=>{const s=slot(()=>({value:v}));return [s.value,next=>{const v=typeof next==='function'?next(s.value):next;if(v!==s.value){s.value=v;current.dirty=true}}]};
  const effect=(fn,deps)=>{const s=slot(()=>({}));if(!s.deps||deps.some((v,i)=>!Object.is(v,s.deps[i]))){s.deps=deps;current.pending.push(()=>{s.cleanup?.();s.cleanup=fn()})}};
  const react={useRef:v=>slot(()=>({current:v})),useState:state,useLayoutEffect:effect,useEffect:effect,useMemo:fn=>{current.index++;return fn()}};
- const jsx=(type,props,key)=>{if(type==='Lottie')props.ref.current=player;return {type,props,key}};
+ const jsx=(type,props,key)=>{if(type==='Lottie'&&props.ref)props.ref.current=player;return {type,props,key}};
  function load(file){const m={exports:{}};vm.runInNewContext(compile(fs.readFileSync(file,'utf8')),{module:m,exports:m.exports,require:id=>{
   if(id==='react')return react;if(id==='react/jsx-runtime')return {jsx,jsxs:jsx};if(id==='react-native')return {AppState:app,View:'View'};
   if(id==='react-native-svg')return {__esModule:true,default:'Svg',G:'G',Path:'Path'};if(id==='lottie-react-native')return {__esModule:true,default:'Lottie'};
@@ -29,16 +29,16 @@ test('idle icons mount no Lottie players; only revisions trigger and inactive/re
 test('bookmark copies reflect persisted state immediately, but only the pressed copy animates in the correct direction',()=>{
  const f=fixture(),h=f.icon;Object.assign(h.props,{name:'bookmark',filled:false});h.render();h.props.filled=true;h.render();assert(!child(h));
  h.props.filled=false;h.props.revision++;h.render();assert.equal(child(h).props.reverse,true);
- const reverse=f.playback();reverse.render();reverse.tree.props.onAnimationLoaded();assert.deepEqual(Array.from(f.events[0]),[10,0]);
+ const reverse=f.playback();reverse.render();reverse.tree.props.onAnimationLoaded();reverse.render();assert.equal(reverse.tree.props.autoPlay,true);assert.equal(reverse.tree.props.speed,-1);assert.equal(f.events.length,0);
  reverse.tree.props.onAnimationFinish(false);h.render();assert(!child(h));
  h.props.filled=true;h.props.revision++;h.render();assert.equal(child(h).props.reverse,false);
- const forward=f.playback();forward.render();forward.tree.props.onAnimationLoaded();assert.deepEqual(Array.from(f.events.at(-1)),[0,10]);
+ const forward=f.playback();forward.render();forward.tree.props.onAnimationLoaded();forward.render();assert.equal(forward.tree.props.autoPlay,true);assert.equal(forward.tree.props.speed,1);assert.equal(f.events.length,0);
 });
-test('Home plays once forward and backward, with no autoplay or loops; background stops and discards playback',()=>{
+test('Home starts declaratively after mounting and reverses once; background discards without native commands',()=>{
  const f=fixture(),h=f.icon;h.render();h.props.revision++;const p=f.playback();p.render();assert.equal(p.tree.props.autoPlay,false);assert.equal(p.tree.props.loop,false);
- p.tree.props.onAnimationLoaded();assert.deepEqual(Array.from(f.events[0]),[0,31]);p.tree.props.onAnimationFinish(false);assert.deepEqual(Array.from(f.events[1]),[31,0]);
+ const stale=p.tree.props.onAnimationLoaded;p.tree.props.onAnimationLoaded();p.render();assert.equal(p.tree.props.autoPlay,true);assert.equal(p.tree.props.speed,1);p.tree.props.onAnimationFinish(false);p.render();assert.equal(p.tree.props.autoPlay,false);assert.equal(p.tree.props.speed,-1);stale();p.render();assert.equal(p.tree.props.autoPlay,false);p.tree.props.onAnimationLoaded();p.render();assert.equal(p.tree.props.autoPlay,true);
  p.tree.props.onAnimationFinish(false);h.render();assert(!child(h));p.dispose();
- h.props.revision++;const next=f.playback();next.render();f.background();h.render();assert(!child(h));assert.equal(f.events.at(-1),'pause');
+ h.props.revision++;const next=f.playback();next.render();f.background();h.render();assert(!child(h));assert.equal(f.events.length,0);
  f.app.currentState='active';h.render();assert(!child(h));next.dispose();assert.equal(f.listeners.size,0);
 });
 test('official assets are local expression-free vectors; recoloring affects strokes and fills without mutating originals',()=>{

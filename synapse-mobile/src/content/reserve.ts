@@ -3,13 +3,15 @@ import type {Article} from './types';
 import {isVerified} from './edition';
 import {articleBytes} from './cache';
 import {generalAudienceScore} from './text';
-import {identity,rankRecommendations,seenArticle,type Learning} from './recommendations';
+import {identity,rankRecommendations,rankRecommendationsAsync,seenArticle,type Learning} from './recommendations';
 import {assessEditorial,orderEditorial} from './editorial';
 
 export const RESERVE_TARGET=30,RESERVE_LOW=20,RESERVE_BYTES=512*1024,PREVIEW_BYTES=16*1024;
 export const CATEGORY_RESERVE=8,REFILL_AHEAD=12,FEED_WINDOW=64;
 export const BACKGROUND_JOBS_PER_MINUTE=6,BACKGROUND_GAP=1800;
-export function previewOnly(a:Article):Article{if(isVerified(a)||a.edition&&a.complete)return a;return {...a,paragraphs:a.preview,complete:false,simplified:undefined,simplifiedVersion:undefined,simplifiedPreview:undefined,simplifiedInput:undefined,simplifiedPrepared:undefined,contentIssue:undefined,contentIssueKind:undefined}}
+const previews=new WeakMap<Article,Article>();
+export function previewOnly(a:Article):Article{const known=previews.get(a);if(known)return known;const value=computePreview(a);previews.set(a,value);return value}
+function computePreview(a:Article):Article{if(isVerified(a)||a.edition&&a.complete)return a;return {...a,paragraphs:a.preview,complete:false,simplified:undefined,simplifiedVersion:undefined,simplifiedPreview:undefined,simplifiedInput:undefined,simplifiedPrepared:undefined,contentIssue:undefined,contentIssueKind:undefined}}
 /** Immutable bundled text is shared, not a downloaded reserve payload. */
 export const reserveArticleBytes=(a:Article)=>isVerified(a)?JSON.stringify([a.id,a.title,a.preview,a.category]).length*2:articleBytes(previewOnly(a));
 export function reserveArticles(rows:Article[],learning:Learning,served:Set<string>,category='all',limit=RESERVE_TARGET):Article[]{
@@ -36,6 +38,12 @@ export function refreshFuture(current:Article[],incoming:Article[],learning:Lear
   const prefix=current.slice(0,Math.max(0,position+1)),ids=new Set(prefix.map(identity));
   const future=[...current.slice(prefix.length),...incoming].filter(a=>{const id=identity(a);if(!a.preview.length||!assessEditorial(a).eligible||generalAudienceScore(a.title,a.paragraphs)<.45||ids.has(id)||served.has(a.id)||seenArticle(a,learning))return false;ids.add(id);return true});
   return [...prefix,...connectDiscoveries(rankRecommendations(future,learning,()=>.5,prefix.slice(-3),Date.now(),Math.max(0,FEED_WINDOW-prefix.length)+3),prefix,linked)].slice(0,FEED_WINDOW);
+}
+export async function refreshFutureAsync(current:Article[],incoming:Article[],learning:Learning,served:Set<string>,position:number,linked=false,signal?:AbortSignal){
+ const prefix=current.slice(0,Math.max(0,position+1)),ids=new Set(prefix.map(identity));
+ const future=[...current.slice(prefix.length),...incoming].filter(a=>{const id=identity(a);if(!a.preview.length||!assessEditorial(a).eligible||generalAudienceScore(a.title,a.paragraphs)<.45||ids.has(id)||served.has(a.id)||seenArticle(a,learning))return false;ids.add(id);return true});
+ const ranked=await rankRecommendationsAsync(future,learning,()=>.5,prefix.slice(-3),Math.max(0,FEED_WINDOW-prefix.length)+3,signal);
+ return [...prefix,...connectDiscoveries(ranked,prefix,linked)].slice(0,FEED_WINDOW);
 }
 export type ReserveContext={enabled:boolean;category:string;pool:Article[];pendingFull:boolean;refresh?:boolean};
 export function reserveContext(enabled:boolean,category:string,pool:()=>Article[],pendingFull:boolean):ReserveContext{

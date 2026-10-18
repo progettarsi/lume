@@ -15,8 +15,13 @@ export class LibraryViews{
  constructor(private rank:typeof reserveArticles=reserveArticles){}
  reserve(cache:Article[],learning:Learning,served:Set<string>,revision:number,category='all'){
   const sameScores=this.learning&&(['categories','topics','bookmarks','opens','recent','sequence','initialInterests','version','categoryVersion'] as const).every(key=>this.learning![key]===learning[key]);
-  if(cache!==this.cache||!sameScores)this.reserves.clear();
-  else if(learning!==this.learning||revision!==this.consumed){for(const [key,rows] of this.reserves){const remaining=rows.filter(a=>!served.has(a.id)&&!seenArticle(a,learning));if(remaining.length<RESERVE_LOW)this.reserves.delete(key);else this.reserves.set(key,remaining)}}
+  if(!sameScores)this.reserves.clear();
+  else if(cache!==this.cache){for(const key of this.reserves.keys()){
+   if(key==='all'){this.reserves.delete(key);continue}
+   const before=this.cache!.filter(a=>a.category===key),after=cache.filter(a=>a.category===key);
+   if(before.length!==after.length||before.some((a,i)=>a!==after[i]))this.reserves.delete(key);
+  }}
+  if(sameScores&&(learning!==this.learning||revision!==this.consumed)){for(const [key,rows] of this.reserves){const remaining=rows.filter(a=>!served.has(a.id)&&!seenArticle(a,learning));if(remaining.length<RESERVE_LOW)this.reserves.delete(key);else this.reserves.set(key,remaining)}}
   this.cache=cache;this.learning=learning;this.consumed=revision;
   let rows=this.reserves.get(category);
   if(!rows){rows=this.rank(category==='all'?cache:cache.filter(a=>a.category===category),learning,served);if(this.reserves.size>=24)this.reserves.clear();this.reserves.set(category,rows)}

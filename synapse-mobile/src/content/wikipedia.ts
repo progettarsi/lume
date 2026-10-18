@@ -4,7 +4,7 @@ import { generalAudienceScore, makePreview, paragraphsFromExtract } from './text
 import type { Article } from './types';
 import {PERSONALIZATION} from './personalization';
 import {identity,chooseCategory,discoveryAnchor,rankRecommendations,emptyLearning,type Learning} from './recommendations';
-import {paragraphsFromHtml} from './html';
+import {paragraphsFromHtmlAsync} from './html';
 import {discoveryCandidates} from './editorial';
 import {classifyLocal} from './classification';
 declare const __DEV__:boolean;
@@ -72,7 +72,7 @@ export class Wikipedia {
     try{parsed=await this.request({action:'parse',...parseIdentity,prop:'text|revid|properties',redirects:'1'},signal)}catch(error){if(signal?.aborted||!(error instanceof WikiError)||error.kind!=='content')throw error}
     const properties=parsed?.parse?.properties;
     if(Array.isArray(properties)?properties.some(p=>p.name==='disambiguation'):Object.prototype.hasOwnProperty.call(properties||{},'disambiguation'))throw new WikiError('Questa voce è una disambiguazione, non un articolo divulgativo. Apri Wikipedia per scegliere la voce corretta.','content');
-    if(parsed?.parse?.text){const paragraphs=paragraphsFromHtml(parsed.parse.text);if(paragraphs.length)return {...article,paragraphs,preview:article.preview,simplified:undefined,simplifiedVersion:undefined,simplifiedPreview:undefined,simplifiedInput:undefined,simplifiedPrepared:undefined,complete:true,contentIssue:undefined,contentIssueKind:undefined,textVersion:3,revision:parsed.parse.revid||article.revision}}
+    if(parsed?.parse?.text){const paragraphs=await paragraphsFromHtmlAsync(parsed.parse.text,signal);if(paragraphs.length)return {...article,paragraphs,preview:article.preview,simplified:undefined,simplifiedVersion:undefined,simplifiedPreview:undefined,simplifiedInput:undefined,simplifiedPrepared:undefined,complete:true,contentIssue:undefined,contentIssueKind:undefined,textVersion:3,revision:parsed.parse.revid||article.revision}}
     const data=parsed?.query?parsed:await this.request({...fullProps,...identity,exlimit:'1'},signal);
     const page=data.query?.pages?.[0];
     if(Object.prototype.hasOwnProperty.call(page?.pageprops||{},'disambiguation'))throw new WikiError('Questa voce è una disambiguazione, non un articolo divulgativo.','content');
@@ -133,7 +133,7 @@ export class Wikipedia {
     this.usedSeeds.add('full:'+title);
     if(Array.isArray(p.properties)?p.properties.some(x=>x.name==='disambiguation'):p.properties&&'disambiguation' in p.properties)return [];
     const sections:{text:string;section:string}[]=[];
-    const url='https://it.wikipedia.org/wiki/'+encodeURIComponent(p.title||title),paragraphs=paragraphsFromHtml(p.text,undefined,(text,section)=>sections.push({text,section}));
+    const url='https://it.wikipedia.org/wiki/'+encodeURIComponent(p.title||title),paragraphs=await paragraphsFromHtmlAsync(p.text,signal,undefined,(text,section)=>sections.push({text,section}));
     const a=makeEdition({id:'wiki:'+p.pageid,title:p.title||title,category:'general',source:url,revision:p.revid,paragraphs,preview:[],complete:true,textVersion:3,fetchedAt:Date.now(),provenance:{provider:'wikipedia',title:p.title||title,url,revision:p.revid,section:'Passaggi selezionati dalla voce',license:'https://creativecommons.org/licenses/by-sa/4.0/',attribution:'Wikipedia e suoi contributori'}},true);
     if(a?.provenance)a.provenance.section=sections.find(s=>s.text.includes(a.preview[0]?.slice(0,60)))?.section||'Introduzione';
     if(!a||exclude.has(a.id)||exclude.has(identity(a))||generalAudienceScore(a.title,a.preview)<.45)return [];

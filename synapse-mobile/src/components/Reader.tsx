@@ -20,7 +20,7 @@ import {categoryLabel} from '../content/categories';
 import {LinearGradient} from 'expo-linear-gradient';
 import {safeSourceUrl} from '../content/safeSourceUrl';
 function phase(p:number,start:number,end:number){'worklet';const t=Math.max(0,Math.min(1,(p-start)/(end-start)));return t*t*(3-2*t)}
-export function Reader({article:incomingArticle,origin,open,width,height,top,bottom,size,saved,onClose,onReopen,onClosed,onSave,aiMessage:incomingMessage,aiBusy:incomingBusy,onRetryAI,onRetryArticle,notice:incomingNotice,onReturnNear,returnDetached=false,reducedOverride,returnPaper,onDoubleTapSave}:{article:Article;origin:Origin;open:boolean;width:number;height:number;top:number;bottom:number;size:number;saved:boolean;onClose:()=>void;onReopen:()=>void;onClosed:()=>void;onSave:()=>void;aiMessage?:string;aiBusy?:boolean;onRetryAI?:()=>void;onRetryArticle?:()=>void;notice?:ReaderStatus;onReturnNear?:()=>void;returnDetached?:boolean;reducedOverride?:boolean;returnPaper?:string;onDoubleTapSave?:()=>void}){
+export function Reader({article:incomingArticle,origin,open,width,height,top,bottom,size,saved,onClose,onReopen,onClosed,onSave,aiMessage:incomingMessage,aiBusy:incomingBusy,onRetryAI,onRetryArticle,notice:incomingNotice,onReturnNear,returnDetached=false,reducedOverride,returnPaper}:{article:Article;origin:Origin;open:boolean;width:number;height:number;top:number;bottom:number;size:number;saved:boolean;onClose:()=>void;onReopen:()=>void;onClosed:()=>void;onSave:()=>void;aiMessage?:string;aiBusy?:boolean;onRetryAI?:()=>void;onRetryArticle?:()=>void;notice?:ReaderStatus;onReturnNear?:()=>void;returnDetached?:boolean;reducedOverride?:boolean;returnPaper?:string}){
   const {palette}=useTheme(),systemReduced=useReducedMotion(),[reduced,setReduced]=useState(systemReduced),progress=useSharedValue(0),scroll=useSharedValue(0),target=useRef(open);target.current=open;
   useEffect(()=>{
     let listening=true;
@@ -37,10 +37,10 @@ export function Reader({article:incomingArticle,origin,open,width,height,top,bot
   const effectiveNotice=sourceNotice||notice;
   const row=origin.kind==='row',shuffle=origin.kind==='shuffle',destinationY=top+72;
   const preview=useRef(article.preview).current;
-  const revision=hasRevision(article),[titleLayout,setTitleLayout]=useState<TitleGeometry|null>(null);
+  const revision=hasRevision(article);
   // Available text stays readable while a download/revision is pending. Busy
   // describes the request, not the visibility of an already available edition.
-  const edition=JSON.stringify(readerContinuation({...article,preview}));
+  const edition=useMemo(()=>JSON.stringify(readerContinuation({...article,preview})),[article,preview]);
   const paragraphs=useMemo<string[]>(()=>JSON.parse(edition),[edition]);
   const active=useSharedValue(open),viewport=useSharedValue(0),scrolled=useSharedValue(false),bodyY=useSharedValue(0),expandedY=useSharedValue(0);
   const noticeY=useSharedValue(-1),noticeHeight=useSharedValue(0),[noticeVisible,setNoticeVisible]=useState(false),hasNotice=!!effectiveNotice;
@@ -57,7 +57,7 @@ export function Reader({article:incomingArticle,origin,open,width,height,top,bot
     viewport.value=e.layoutMeasurement.height;
     if(active.value&&scroll.value>1)scrolled.value=true;
   });
-  const touch=useRef<{x:number;y:number;moved:boolean}|null>(null),lastTap=useRef<{x:number;y:number;time:number}|null>(null);
+  const touch=useRef<{x:number;y:number;moved:boolean}|null>(null);
   const openLink=async(url:string)=>{try{await Linking.openURL(url);setSourceNotice(null)}catch{setSourceNotice({kind:'network',message:'Impossibile aprire il collegamento. Controlla che sia disponibile un browser.'})}};
   const openSource=()=>{const safe=safeSourceUrl(article.source);if(safe)return openLink(safe);setSourceNotice({kind:'content',message:article.contentIssue||'Approfondimento non disponibile per questa voce.',action:'source'})};
   const completed=()=>{if(!target.current)onClosed()};
@@ -80,7 +80,6 @@ export function Reader({article:incomingArticle,origin,open,width,height,top,bot
   // Both legs are animations, not an input lock. Reopen cancels from the current
   // scroll/paint/geometry; it does not restore a stale saved offset.
   useLayoutEffect(()=>{
-    if(row&&!titleLayout)return;
     runOnUI((opening:boolean,noMotion:boolean)=>{
       'worklet';
       cancelAnimation(returnScroll);cancelAnimation(exit);cancelAnimation(progress);
@@ -100,18 +99,18 @@ export function Reader({article:incomingArticle,origin,open,width,height,top,bot
           :withSpring(0,geometry);
       }
     })(open,motionReduced);
-  },[open,motionReduced,!!titleLayout]);
+  },[open,motionReduced]);
   useEffect(()=>()=>{cancelAnimation(progress);cancelAnimation(returnScroll);cancelAnimation(exit)},[]);
   // Capture every geometry input. A restricted dependency list kept the IME-open
   // origin in this mapper after close supplied the IME-closed shuffle endpoint.
-  const surface=useAnimatedStyle(()=>{const p=Math.max(0,Math.min(1,progress.value));return {opacity:returnDetached?phase(p,0,.12):1,left:origin.x*(1-p),top:origin.y*(1-p),width:origin.width+(width-origin.width)*p,height:origin.height+(height-origin.height)*p,borderRadius:shuffle?28*(1-p):0,backgroundColor:shuffle?interpolateColor(Math.min(1,p/.14),[0,1],[palette.active,palette.paper]):returnPaper?interpolateColor(p,[0,1],[returnPaper,palette.paper]):palette.paper}});
-  const content=useAnimatedStyle(()=>{const p=Math.max(0,Math.min(1,progress.value));const scale=shuffle?origin.width/width+(1-origin.width/width)*p:1;
-    // Centre the miniature around its title, rather than squeezing an unscaled page into a circle.
+  const surface=useAnimatedStyle(()=>{const p=Math.max(0,Math.min(1,progress.value));return {opacity:returnDetached?phase(p,0,.12):1,left:0,top:0,transform:[{translateX:origin.x*(1-p)},{translateY:origin.y*(1-p)}],width:origin.width+(width-origin.width)*p,height:origin.height+(height-origin.height)*p,borderRadius:shuffle?28*(1-p):0,backgroundColor:shuffle?interpolateColor(Math.min(1,p/.14),[0,1],[palette.active,palette.paper]):returnPaper?interpolateColor(p,[0,1],[returnPaper,palette.paper]):palette.paper}});
+  const content=useAnimatedStyle(()=>{const p=Math.max(0,Math.min(1,progress.value));const scale=1;
+    // Text keeps its final metrics; the moving surface clips and reveals it.
     return {width,height,opacity:shuffle?phase(p,.12,.25):embedded?phase(p,.65,.9):1,overflow:'hidden',transformOrigin:'top left',transform:[{translateX:shuffle?0:-(embedded?24:origin.x)*(1-p)},{translateY:shuffle?(origin.height/2-destinationY*scale)*(1-p):row?((origin.title?.y??48)-destinationY)*(1-p):-destinationY*(1-p)},{scale}]};
   });
   const sourcePreview=useAnimatedStyle(()=>{const p=Math.max(0,Math.min(1,progress.value));return {opacity:1-phase(p,.65,.9),transform:[{translateX:24*p},{translateY:destinationY*p}]}});
   const expanded=useAnimatedStyle(()=>({opacity:phase(progress.value,.55,.82),overflow:'hidden'}));
-  const controls=useAnimatedStyle(()=>({height:phase(progress.value,.58,1)*(top+56),transform:[{translateY:-10*(1-progress.value)}],overflow:'hidden'}));
+  const controls=useAnimatedStyle(()=>({height:top+56,opacity:phase(progress.value,.58,1),transform:[{translateY:-10*(1-progress.value)}],overflow:'hidden'}));
   const iconStyle=useAnimatedStyle(()=>{const p=Math.max(0,Math.min(1,progress.value));return {
     left:(origin.width+(width-origin.width)*p-SHUFFLE_ICON_SIZE)/2,
     top:(origin.height+(height-origin.height)*p-SHUFFLE_ICON_SIZE)/2,
@@ -119,9 +118,8 @@ export function Reader({article:incomingArticle,origin,open,width,height,top,bot
   }});
   const iconClip=useAnimatedStyle(()=>{const visible=SHUFFLE_ICON_SIZE*(1-phase(progress.value,0,.12));return {height:visible,top:(SHUFFLE_ICON_SIZE-visible)/2,overflow:'hidden'}});
   const metaStyle=useAnimatedStyle(()=>({width:phase(1-progress.value,.75,1)*Math.max(0,origin.width-30),overflow:'hidden'}));
-  const titleClip=useAnimatedStyle(()=>({top:phase(progress.value,.88,1)*(destinationY-16)}));
-  // Scroll moves the title as a layer; it must not reapply font/layout props.
-  const titleScroll=useAnimatedStyle(()=>({transform:[{translateY:-scroll.value*Math.max(0,Math.min(1,progress.value))}]}));
+  const destinationTitle=useAnimatedStyle(()=>({opacity:phase(progress.value,.22,.77)}));
+  const sourceTitle=useAnimatedStyle(()=>({opacity:1-phase(progress.value,.22,.77),transform:[{translateX:(24-origin.x-(origin.title?.x??0))*phase(progress.value,.22,.77)},{translateY:(destinationY-origin.y-(origin.title?.y??48))*Math.max(0,Math.min(1,progress.value))-scroll.value*Math.max(0,Math.min(1,progress.value))}]}));
   const returnGradient=useAnimatedStyle(()=>({opacity:1-Math.max(0,Math.min(1,progress.value))}));
   const rowHandoff=useAnimatedStyle(()=>({opacity:returnDetached?phase(progress.value,0,.12):1}),[returnDetached]);
   // A detached return is paint only. Even if its final animation callback is
@@ -130,8 +128,8 @@ export function Reader({article:incomingArticle,origin,open,width,height,top,bot
     <Animated.View style={[styles.surface,surface]}>
       <Animated.View style={content}>
         <Animated.ScrollView ref={scrollRef} scrollEnabled={open} onScroll={onScroll} onLayout={e=>{viewport.value=e.nativeEvent.layout.height}} scrollEventThrottle={16} showsVerticalScrollIndicator={false} style={{position:'absolute',top:destinationY-16,left:0,right:0,bottom:0}} contentContainerStyle={{paddingHorizontal:24,paddingTop:16,paddingBottom:bottom+40}}>
-          <View onTouchStart={e=>{touch.current={x:e.nativeEvent.pageX,y:e.nativeEvent.pageY,moved:false}}} onTouchMove={e=>{if(touch.current&&Math.hypot(e.nativeEvent.pageX-touch.current.x,e.nativeEvent.pageY-touch.current.y)>8)touch.current.moved=true}} onTouchCancel={()=>{touch.current=null}} onTouchEnd={()=>{const tap=touch.current;touch.current=null;if(!tap||tap.moved){lastTap.current=null;return}if(!open){lastTap.current=null;onReopen();return}if(onDoubleTapSave){const now=Date.now(),previous=lastTap.current;if(previous&&now-previous.time<=280&&Math.hypot(tap.x-previous.x,tap.y-previous.y)<=24){lastTap.current=null;onDoubleTapSave()}else lastTap.current={x:tap.x,y:tap.y,time:now}}}}>
-            <View>{row?<View accessible accessibilityRole="header" accessibilityLabel={article.title} style={{height:titleLayout?.height||88,marginBottom:22}}/>:<Label accessibilityRole="header" style={styles.title}>{article.title}</Label>}</View>
+          <View onTouchStart={e=>{touch.current={x:e.nativeEvent.pageX,y:e.nativeEvent.pageY,moved:false}}} onTouchMove={e=>{if(touch.current&&Math.hypot(e.nativeEvent.pageX-touch.current.x,e.nativeEvent.pageY-touch.current.y)>8)touch.current.moved=true}} onTouchCancel={()=>{touch.current=null}} onTouchEnd={()=>{const tap=touch.current;touch.current=null;if(tap&&!tap.moved&&!open)onReopen()}}>
+            <Animated.View style={row?destinationTitle:undefined}><Label accessibilityRole="header" style={styles.title}>{article.title}</Label></Animated.View>
             <View onLayout={e=>{bodyY.value=e.nativeEvent.layout.y}}>
               <Animated.View style={row&&returnPaper?expanded:undefined}>{preview.map((p,i)=><Label key={`preview-${i}`} style={{fontSize:size,lineHeight:size*1.47,marginBottom:22}}>{p}</Label>)}</Animated.View>
               <Animated.View style={expanded} onLayout={e=>{expandedY.value=e.nativeEvent.layout.y}}>
@@ -151,19 +149,11 @@ export function Reader({article:incomingArticle,origin,open,width,height,top,bot
       {origin.kind==='home'&&<Animated.View pointerEvents="none" style={[{position:'absolute',bottom:0,left:0,right:0,height:145},returnGradient]}><LinearGradient colors={[(returnPaper||palette.paper)+'00',returnPaper||palette.paper,returnPaper||palette.paper]} locations={[0,.68,1]} style={StyleSheet.absoluteFill}/></Animated.View>}
     </Animated.View>
     {row&&<>
-      {!titleLayout&&<View style={{position:'absolute',left:origin.x,top:origin.y+(origin.title?.y??48),width:origin.width-30}}><TitleWords title={article.title} size={25}/></View>}
-      <View pointerEvents="none" accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={{position:'absolute',left:24,top:destinationY,width:width-48,opacity:0}}><TitleWords title={article.title} size={36} onGeometry={setTitleLayout}/></View>
-      <Animated.View pointerEvents="box-none" style={[{position:'absolute',left:0,right:0,bottom:0,overflow:'hidden'},titleClip,rowHandoff]}><Animated.View pointerEvents="box-none" style={[StyleSheet.absoluteFill,titleScroll]}>{titleLayout?.words.map((box,i)=><MorphWord key={`${article.id}:${i}`} text={article.title.split(/\s+/)[i]} source={origin.title?.words[i]||box} destination={box} origin={origin} destinationY={destinationY} progress={progress} onReopen={()=>{if(!open)onReopen()}}/>)}</Animated.View></Animated.View>
+      <Animated.View pointerEvents="none" accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={[{position:'absolute',left:origin.x+(origin.title?.x??0),top:origin.y+(origin.title?.y??48),width:origin.width-30},sourceTitle,rowHandoff]}><TitleWords title={article.title} size={25}/></Animated.View>
       <Animated.View pointerEvents="none" style={[{position:'absolute',left:origin.x,top:origin.y+21},metaStyle,rowHandoff]}><Label muted numberOfLines={1} style={{fontSize:12,lineHeight:18}}>{categoryLabel(article.category)}</Label></Animated.View>
     </>}
     <Animated.View pointerEvents={open?'auto':'none'} style={[{position:'absolute',top:0,left:0,right:0,backgroundColor:palette.paper},controls]}><View style={[styles.header,{paddingTop:top}]}><Button label="Chiudi approfondimento" onPress={onClose}><Icon name="arrow-left"/></Button><Label muted style={{flex:1,fontSize:14}}>Articolo</Label><SaveButton saved={saved} onPress={onSave} active={open} reduced={motionReduced}/></View></Animated.View>
   </Animated.View>;
-}
-function MorphWord({text,source,destination,origin,destinationY,progress,onReopen}:{text:string;source:{x:number;y:number};destination:{x:number;y:number;width:number};origin:Origin;destinationY:number;progress:SharedValue<number>;onReopen:()=>void}){
-  const animated=useAnimatedStyle(()=>{const p=Math.max(0,Math.min(1,progress.value)),q=phase(p,.22,.77),sourceX=origin.x+(origin.title?.x||0)+source.x,sourceY=origin.y+(origin.title?.y??48)+source.y;
-    return {left:sourceX+(24+destination.x-sourceX)*q,top:sourceY+(destinationY+destination.y-sourceY)*phase(p,0,1)-phase(p,.88,1)*(destinationY-16),fontSize:25+11*q,lineHeight:29+11*q,letterSpacing:-.5-.2*q};
-  });
-  return <Label accessible={false} onPress={onReopen} style={[styles.morph,{width:destination.width+4},animated]}>{text}</Label>;
 }
 const styles=StyleSheet.create({surface:{position:'absolute',overflow:'hidden'},header:{flexDirection:'row',alignItems:'center',gap:8,paddingHorizontal:24,paddingBottom:8},title:{...typography.feed,letterSpacing:-.7,marginBottom:22},morph:{position:'absolute',fontFamily:heading,includeFontPadding:false}});
 

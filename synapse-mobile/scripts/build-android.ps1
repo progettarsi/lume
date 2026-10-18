@@ -1,5 +1,7 @@
 param([switch]$SkipPrebuild)
 $ErrorActionPreference='Stop'
+& node (Join-Path $PSScriptRoot 'patch-native-motion.cjs')
+if($LASTEXITCODE -ne 0){throw 'Verifica correzione Fabric non riuscita.'}
 $taskProject=Split-Path -Parent $PSScriptRoot
 $taskSecrets=Join-Path $taskProject '.credentials'
 $taskKeyStore=Join-Path $taskSecrets 'synapse-release.p12'

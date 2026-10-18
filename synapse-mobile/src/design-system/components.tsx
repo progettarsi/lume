@@ -28,21 +28,25 @@ export function NavigationRow({title,description,icon,value,onPress,style,varian
     <IconBadge name={icon}/><View style={{flex:1,gap:3}}><Label strong style={typography.title}>{title}</Label>{!!description&&<Label muted style={[typography.detail,{color:secondaryText(palette,'active')}]}>{description}</Label>}</View>{value!==undefined&&<Label muted style={[typography.detail,{color:secondaryText(palette,'active')}]}>{value}</Label>}<Icon name="chevron-right" size={20} color={palette.muted}/>
   </Pressable>;
 }
-export function ToggleRow({title,description,value,onChange,disabled=false}:{title:string;description?:string;value:boolean;onChange:(value:boolean)=>void;disabled?:boolean}){
+export function ToggleRow({title,description,value,onChange,disabled=false}:{title:string;description?:string;value:boolean;onChange:(value:boolean)=>void|boolean;disabled?:boolean}){
   const {palette}=useTheme();
-  return <Pressable accessibilityRole="switch" accessibilityLabel={title} accessibilityHint={description} accessibilityState={{checked:value,disabled}} disabled={disabled} onPress={()=>{if(disabled)return;onChange(!value);haptics.emit(value?'off':'on')}} style={[styles.row,{opacity:disabled ? .5 : 1}]}>
+  return <Pressable accessibilityRole="switch" accessibilityLabel={title} accessibilityHint={description} accessibilityState={{checked:value,disabled}} disabled={disabled} onPress={()=>{if(disabled)return;const actual=onChange(!value);haptics.emit((typeof actual==='boolean'?actual:!value)?'on':'off')}} style={[styles.row,{opacity:disabled ? .5 : 1}]}>
     <View style={{flex:1,gap:4}}><Label strong style={typography.title}>{title}</Label>{!!description&&<Label muted style={typography.detail}>{description}</Label>}</View>
     <View pointerEvents="none" accessible={false} importantForAccessibility="no-hide-descendants"><Switch accessible={false} focusable={false} importantForAccessibility="no" value={value} disabled={disabled} trackColor={{false:palette.line,true:palette.accent}} thumbColor={value?palette.paper:palette.muted}/></View>
   </Pressable>;
 }
 export function ChoiceGroup<T extends string|number>({label,value,options,onChange}:{label:string;value:T;options:readonly {value:T;label:string}[];onChange:(value:T)=>void}){
   const {palette}=useTheme(),{fontScale}=useWindowDimensions(),[widths,setWidths]=useState<Record<string,number>>({});
+  const request=useRef<{prop:T;requested?:T}>({prop:value,requested:value});
+  // A rendered value may acknowledge an older click. It may reset deduplication,
+  // but must never replace the latest actual click with a stale prop value.
+  if(request.current.prop!==value){request.current.prop=value;request.current.requested=undefined}
   const key=(text:string)=>text+':'+fontScale;
   return <View>
     <View pointerEvents="none" accessible={false} accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={{position:'absolute',opacity:0,width:2048,height:0,overflow:'hidden'}}>
       {options.map(option=><Label key={key(option.label)} strong numberOfLines={1} onLayout={e=>{const width=Math.ceil(e.nativeEvent.layout.width)+1,k=key(option.label);if(width>1)setWidths(old=>old[k]===width?old:{...old,[k]:width})}} style={{alignSelf:'flex-start',fontSize:15}}>{option.label}</Label>)}
     </View>
-    <View accessibilityRole="radiogroup" accessibilityLabel={label} style={{flexDirection:'row',flexWrap:'wrap',gap:6}}>{options.map(option=><Pressable key={option.value} accessibilityRole="radio" accessibilityLabel={label+': '+option.label} accessibilityState={{checked:value===option.value}} onPress={()=>{if(value===option.value)return;onChange(option.value);haptics.emit('selection')}} style={({pressed})=>({flexGrow:1,flexShrink:0,flexBasis:Math.max(86,(widths[key(option.label)]??option.label.length*8.5*fontScale)+24),maxWidth:'100%',minHeight:metrics.touch,paddingHorizontal:10,paddingVertical:12,borderRadius:radius.control,backgroundColor:value===option.value?palette.active:pressed?palette.line:palette.paper,alignItems:'center',justifyContent:'center',borderWidth:1,borderColor:value===option.value?palette.accent:'transparent'})}><Label numberOfLines={1} strong={value===option.value} style={{fontSize:15,textAlign:'center'}}>{option.label}</Label></Pressable>)}</View>
+    <View accessibilityRole="radiogroup" accessibilityLabel={label} style={{flexDirection:'row',flexWrap:'wrap',gap:6}}>{options.map(option=><Pressable key={option.value} accessibilityRole="radio" accessibilityLabel={label+': '+option.label} accessibilityState={{checked:value===option.value}} onPress={()=>{if(request.current.requested===option.value)return;request.current.requested=option.value;onChange(option.value);haptics.emit('selection')}} style={({pressed})=>({flexGrow:1,flexShrink:0,flexBasis:Math.max(86,(widths[key(option.label)]??option.label.length*8.5*fontScale)+24),maxWidth:'100%',minHeight:metrics.touch,paddingHorizontal:10,paddingVertical:12,borderRadius:radius.control,backgroundColor:value===option.value?palette.active:pressed?palette.line:palette.paper,alignItems:'center',justifyContent:'center',borderWidth:1,borderColor:value===option.value?palette.accent:'transparent'})}><Label numberOfLines={1} strong={value===option.value} style={{fontSize:15,textAlign:'center'}}>{option.label}</Label></Pressable>)}</View>
   </View>;
 }
 export const Field=forwardRef<TextInput,TextInputProps>(function Field({style,editable=true,...props},ref){
@@ -52,8 +56,8 @@ export function Action({title,onPress,disabled=false,secondary=false}:{title:str
   const {palette}=useTheme();return <Button label={title} onPress={onPress} disabled={disabled} style={{minHeight:metrics.controlHeight,paddingHorizontal:20,borderRadius:radius.pill,backgroundColor:secondary?palette.surface:palette.active,opacity:disabled ? .5 : 1}}><Label strong style={{fontSize:16}}>{title}</Label></Button>;
 }
 /** The non-collapsible host owns accessibility; transforms alone do not hide a scene. */
-export function ScreenLayer({active,style,children}:{active:boolean;style?:React.ComponentProps<typeof Animated.View>['style'];children:React.ReactNode}){
-  return <View collapsable={false} pointerEvents={active?'box-none':'none'} accessibilityElementsHidden={!active} importantForAccessibility={active?'auto':'no-hide-descendants'} aria-hidden={!active} style={[StyleSheet.absoluteFill,{zIndex:active?1:0,overflow:'hidden'}]}><Animated.View collapsable={false} pointerEvents={active?'box-none':'none'} accessibilityElementsHidden={!active} importantForAccessibility={active?'auto':'no-hide-descendants'} style={style}>{children}</Animated.View></View>;
+export function ScreenLayer({active,layer,style,children}:{active:boolean;layer?:number;style?:React.ComponentProps<typeof Animated.View>['style'];children:React.ReactNode}){
+  return <View collapsable={false} pointerEvents={active?'box-none':'none'} accessibilityElementsHidden={!active} importantForAccessibility={active?'auto':'no-hide-descendants'} aria-hidden={!active} style={[StyleSheet.absoluteFill,{zIndex:layer??(active?1:0),overflow:'hidden'}]}><Animated.View collapsable={false} pointerEvents={active?'box-none':'none'} accessibilityElementsHidden={!active} importantForAccessibility={active?'auto':'no-hide-descendants'} style={style}>{children}</Animated.View></View>;
 }
 export function PageHeader({title,onBack,backLabel,top=0,active=true}:{title:string;onBack:()=>void;backLabel:string;top?:number;active?:boolean}){
   const {palette}=useTheme(),titleRef=useRef<View>(null);

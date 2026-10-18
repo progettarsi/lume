@@ -19,4 +19,7 @@ test('navbar touch tracks do not move with the decorative spring and stay disjoi
   profile.props.onPress();home.props.onPress();
  }
  assert.deepEqual(calls,['profile','home','profile','home','profile','home']);
+ props.visible=false;render();assert.equal(tree.props.pointerEvents,'none');assert.equal(tree.props.accessibilityElementsHidden,true);
+ assert.equal(tree.props.children[0].props.testID,'dock-capsule');
+ props.visible=true;render();assert.equal(tree.props.pointerEvents,'auto');assert.equal(tree.props.accessibilityElementsHidden,false);
 });

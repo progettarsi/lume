@@ -1,3 +1,4 @@
+import {cooperate} from './cooperative';
 import {CATEGORIES,categoryOrder} from './categories';
 import type {Article} from './types';
 import {PERSONALIZATION as P} from './personalization';
@@ -6,10 +7,15 @@ type Signal={id:string;category:string;tokens:string[];title:string;weight:numbe
 type Bookmark=Signal&{on:boolean};
 export type Learning={seen:string[];categories:Record<string,number>;topics:Record<string,number>;updatedAt:number;version?:number;categoryVersion?:number;bookmarks?:Record<string,Bookmark>;opens?:Record<string,number>;recent?:Signal[];sequence?:number;initialInterests?:{version:1;ids:string[];sequence:number}};
 export const emptyLearning=():Learning=>({seen:[],categories:{},topics:{},updatedAt:Date.now(),version:3,bookmarks:{},opens:{},recent:[],sequence:0});
-export function identity(a:Article):string{try{const url=new URL(a.source),path=decodeURIComponent(url.pathname).replaceAll('_',' ').toLowerCase();return url.hostname==='it.wikipedia.org'?path:url.hostname.toLowerCase()+path}catch{return a.id}}
-export function seenArticle(a:Article,learning:Learning){return !!a.readAt||learning.seen.includes(a.id)||learning.seen.includes(identity(a))}
+const identities=new WeakMap<Article,{source:string;value:string}>();
+export function identity(a:Article):string{const old=identities.get(a);if(old?.source===a.source)return old.value;const value=computeIdentity(a);identities.set(a,{source:a.source,value});return value}
+function computeIdentity(a:Article):string{try{const url=new URL(a.source),path=decodeURIComponent(url.pathname).replaceAll('_',' ').toLowerCase();return url.hostname==='it.wikipedia.org'?path:url.hostname.toLowerCase()+path}catch{return a.id}}
+const seenIndexes=new WeakMap<string[],Set<string>>();
+export function seenArticle(a:Article,learning:Learning){let seen=seenIndexes.get(learning.seen);if(!seen){seen=new Set(learning.seen);seenIndexes.set(learning.seen,seen)}return !!a.readAt||seen.has(a.id)||seen.has(identity(a))}
 const stop=new Set('della delle degli nella nelle dello dallo dalla storia effetto questo questa questi queste quello quella hanno essere viene vengono anche quando molto delle della attraverso quindi permette esempio infatti primo prima parte forma mondo anni come sono sulla sulle degli quale quali oltre altri altre tutti tutte stato stata stati state della delle'.split(' '));
-export function interestTerms(a:Article){
+const termCache=new WeakMap<Article,{title:string;preview:string[];topics?:string[];value:string[]}>();
+export function interestTerms(a:Article){const old=termCache.get(a);if(old?.title===a.title&&old.preview===a.preview&&old.topics===a.topics)return old.value;const value=computeTerms(a);termCache.set(a,{title:a.title,preview:a.preview,topics:a.topics,value});return value}
+function computeTerms(a:Article){
  const words=(s:string)=>(s.toLowerCase().match(/[\p{L}]{5,}/gu)||[]).filter(w=>!stop.has(w));
  const title=words(a.title),counts=new Map<string,number>();for(const w of words(a.preview.join(' ').slice(0,1800)))counts.set(w,(counts.get(w)||0)+1);
  return [...new Set([...title,...(a.topics||[]).map(id=>'topic:'+id),...[...counts].sort((a,b)=>b[1]-a[1]).map(([w])=>w)])].slice(0,P.maxTerms);
@@ -83,15 +89,18 @@ export function discoveryAnchor(p:Learning,random=Math.random){
  for(let i=0;i<candidates.length;i++){pick-=weights[i];if(pick<=0)return candidates[i]}return undefined;
 }
 export function explainRecommendation(a:Article,p:Learning,random=.5){const interest=affinity(a,p,recentScores(p)),editorial=Math.max(0,assessEditorial(a).score)*P.editorialWeight,exploration=random*P.noise;return {score:interest+editorial+exploration,interest,editorial,exploration}}
-export function rankRecommendations(rows:Article[],p:Learning,random=Math.random,recent:Article[]=[],_now=Date.now(),limit=rows.length):Article[]{
- const r=recentScores(p),ids=new Set<string>();const scored=rows.filter(a=>{const id=identity(a);if(seenArticle(a,p)||ids.has(id))return false;ids.add(id);return true}).map(article=>({article,interest:affinity(article,p,r),quality:Math.max(0,assessEditorial(article).score)*P.editorialWeight,noise:random()*P.noise}));
+function* ranking(rows:Article[],p:Learning,random:()=>number,recent:Article[],limit:number):Generator<void,Article[]>{
+ const r=recentScores(p),ids=new Set<string>(),scored:{article:Article;interest:number;quality:number;noise:number}[]=[];
+ for(const article of rows){const id=identity(article);if(!seenArticle(article,p)&&!ids.has(id)){ids.add(id);scored.push({article,interest:affinity(article,p,r),quality:Math.max(0,assessEditorial(article).score)*P.editorialWeight,noise:random()*P.noise})}yield}
  const output:Article[]=[],previous=recent.slice(-3),repetition=repetitionScorer();
  while(scored.length&&output.length<limit){const history=[...previous,...output].slice(-3),explore=(recent.length+output.length+1)%P.exploreEvery===0;let best=-1,value=-Infinity;
   for(let i=0;i<scored.length;i++){const s=scored[i];if(history.length>=2&&s.article.category===history.at(-1)?.category&&s.article.category===history.at(-2)?.category)continue;
-   const adjusted=(explore?-s.interest*.25:s.interest)+s.quality+s.noise-repetition(s.article,history);if(adjusted>value){value=adjusted;best=i}}
+   const adjusted=(explore?-s.interest*.25:s.interest)+s.quality+s.noise-repetition(s.article,history);if(adjusted>value){value=adjusted;best=i}yield}
   output.push(scored.splice(best<0?0:best,1)[0].article);
  }return output;
 }
+export function rankRecommendations(rows:Article[],p:Learning,random=Math.random,recent:Article[]=[],_now=Date.now(),limit=rows.length):Article[]{const steps=ranking(rows,p,random,recent,limit);for(;;){const next=steps.next();if(next.done)return next.value}}
+export function rankRecommendationsAsync(rows:Article[],p:Learning,random=Math.random,recent:Article[]=[],limit=rows.length,signal?:AbortSignal){return cooperate(ranking(rows,p,random,recent,limit),signal)}
 export function parseLearning(json:string|null):Learning{
  try{const x=JSON.parse(json||'null');if(!x||!Array.isArray(x.seen))return {...emptyLearning(),version:1};
  const scores=(v:unknown):Record<string,number>=>Object.fromEntries(Object.entries(v&&typeof v==='object'?v:{}).filter(([k,n])=>k.length<500&&typeof n==='number'&&Number.isFinite(n)&&n>=0));

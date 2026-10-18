@@ -1,15 +1,15 @@
 const {test}=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm'),ts=require('typescript');
 function mount(extra={}){
- let slots=[],cursor=0,effects=[],handlers={},reports=[],directions=[],tree,props={articles:Array.from({length:10},(_,i)=>({id:String(i)})),height:800,position:0,onIndex:i=>reports.push(i),onDirection:d=>directions.push(d),saved:new Set(),...extra};
+ let slots=[],cursor=0,effects=[],handlers={},reports=[],directions=[],js=[],tree,props={articles:Array.from({length:10},(_,i)=>({id:String(i)})),height:800,position:0,onIndex:i=>reports.push(i),onDirection:d=>directions.push(d),saved:new Set(),...extra};
  const slot=fn=>{const i=cursor++;return slots[i]??(slots[i]=fn())};
  const react={memo:f=>f,useRef:v=>slot(()=>({current:v})),useState:v=>{const s=slot(()=>({value:v}));return [s.value,v=>s.value=v]},useMemo:f=>{cursor++;return f()},useCallback:f=>{cursor++;return f},useEffect:()=>{cursor++},useLayoutEffect:(fn,deps)=>{const s=slot(()=>({deps:null}));if(!s.deps||deps.some((v,i)=>v!==s.deps[i]))effects.push(fn);s.deps=deps}};
  const gesture=()=>new Proxy({}, {get:(_,key)=>(...args)=>{if(key.startsWith('on'))handlers[key]=args[0];return chain}});let chain=gesture();
- const shared=[];const reanimated={default:{View:'Animated.View'},useSharedValue:v=>{const s=slot(()=>({value:v}));if(!shared.includes(s))shared.push(s);return s},useAnimatedStyle:()=>{cursor++;return {}},useAnimatedReaction:()=>{cursor++},withSpring:v=>v,withTiming:v=>v,cancelAnimation:()=>{},runOnJS:f=>f};
+ const shared=[];const reanimated={default:{View:'Animated.View'},useSharedValue:v=>{const s=slot(()=>({value:v}));if(!shared.includes(s))shared.push(s);return s},useAnimatedStyle:fn=>{cursor++;return {initial:fn()}},useAnimatedReaction:()=>{cursor++},withSpring:v=>v,withTiming:v=>v,cancelAnimation:()=>{},runOnUI:fn=>fn,runOnJS:f=>(...args)=>{if(extra.deferJS)js.push(()=>f(...args));else f(...args)}};
  const module={exports:{}},jsx=(type,props,key)=>({type,props,key});
  const source=ts.transpileModule(fs.readFileSync('src/components/Feed.tsx','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX,esModuleInterop:true}}).outputText;
- vm.runInNewContext(source,{module,exports:module.exports,require:name=>name.endsWith('/theme')?require('./helpers/theme.cjs'):name==='react'?react:name==='react/jsx-runtime'?{jsx,jsxs:jsx}:name==='react-native'?{View:'View',StyleSheet:{create:x=>x}}:name==='react-native-reanimated'?{...reanimated,__esModule:true}:name==='react-native-gesture-handler'?{Gesture:{Pan:()=>{chain=gesture();return chain}},GestureDetector:'GestureDetector'}:name.includes('useMotionPreference')?{useMotionPreference:()=>false}:name.endsWith('/paging')?require('../.test-build/paging'):name.endsWith('/Atoms')?{useTheme:()=>({palette:{paper:'#f7f4ee'}})}:name.endsWith('/categories')?{CATEGORIES:[]}:{} });
+ vm.runInNewContext(source,{module,exports:module.exports,require:name=>name.endsWith('/theme')?require('./helpers/theme.cjs'):name==='react'?react:name==='react/jsx-runtime'?{jsx,jsxs:jsx}:name==='react-native'?{View:'View',StyleSheet:{create:x=>x}}:name==='react-native-reanimated'?{...reanimated,__esModule:true}:name==='react-native-gesture-handler'?{Gesture:{Pan:()=>{chain=gesture();return chain}},GestureDetector:'GestureDetector'}:name.includes('useMotionPreference')?{useMotionPreference:()=>false}:name.endsWith('/reserve')?require('../.test-build/reserve'):name.endsWith('/paging')?require('../.test-build/paging'):name.endsWith('/Atoms')?{useTheme:()=>({palette:{paper:'#f7f4ee'}})}:name.endsWith('/categories')?{CATEGORIES:[]}:{} });
  const render=()=>{cursor=0;tree=module.exports.Feed(props);while(effects.length)effects.shift()()};render();
- return {get tree(){return tree},shared:shared.slice(2),reports,directions,render,update(position){props.position=position;render()},resize(count){props.articles=props.articles.slice(0,count);render()},start(){handlers.onStart()},move(y){handlers.onUpdate({translationY:y})},end(y,v){handlers.onEnd({translationY:y,velocityY:v})}};
+ return {get tree(){return tree},shared:shared.slice(2),reports,directions,render,replace(articles,presentation,position=0){Object.assign(props,{articles,presentation,position});render()},flushJS(){while(js.length)js.shift()();render()},update(position){props.position=position;render()},resize(count){props.articles=props.articles.slice(0,count);render()},start(){handlers.onStart()},move(y){handlers.onUpdate({translationY:y})},end(y,v){handlers.onEnd({translationY:y,velocityY:v})}};
 }
 test('interrupted spring anchors to the visible page and preserves its finger position',()=>{
  const f=mount();f.start();f.move(-200);f.end(-200,-900);assert.deepEqual(f.reports,[1]);
@@ -60,4 +60,39 @@ test('only another upward swipe on the last settled tutorial card requests the f
  f.start();f.move(-120);f.end(-120,-900);assert.equal(ends,0);assert.equal(f.reports.at(-1),3);
  f.start();f.move(-100);f.move(10);f.end(10,600);assert.equal(ends,0);
  f.update(3);f.start();f.move(-120);f.end(-120,-900);assert.equal(ends,1);
+});
+
+
+test('reserve resizing keeps the transformed native host stable and its cached lateral endpoint at rest',()=>{
+ const f=mount({entry:-24,position:2});
+ const track=()=>f.tree.props.children.props.children[0];
+ const height=track().props.style[0].height;assert(Number.isFinite(height));
+ assert.equal(track().props.style[1].initial.transform[1].translateX,0);
+ f.resize(5);assert.equal(track().props.style[0].height,height);assert.equal(f.shared[0].value,1600);
+});
+
+test('reusing feed slots resets paging and rejects JS completions from the previous category without dropping a save intent',()=>{
+ const opened=[],saved=[],f=mount({presentation:0,deferJS:true,onOpen:a=>opened.push(a.id),onSave:a=>saved.push(a.id)});
+ const pages=()=>f.tree.props.children.props.children[0].props.children[0];
+ const previousKeys=pages().map(p=>p.key),old=pages()[0].props.children.props,article=old.article;
+ f.start();f.move(-200);f.end(-200,-900); // JS commit/direction still queued.
+ f.replace(Array.from({length:10},(_,i)=>({id:'new'+i})),1);f.flushJS();
+ assert.deepEqual(f.reports,[]);assert.deepEqual(f.directions,[]);assert.equal(f.shared[0].value,0);
+ assert.deepEqual(pages().map(p=>p.key),previousKeys);assert.equal(pages()[0].props.children.props.article.id,'new0');
+ old.onOpen(article,null,'home');old.onSave(article);assert.deepEqual(opened,[]);assert.deepEqual(saved,[article.id]);
+ pages()[0].props.children.props.onOpen({id:'new0'},null,'home');assert.deepEqual(opened,['new0']);
+ f.start();f.move(-200);f.end(-200,-900);f.flushJS();assert.deepEqual(f.reports,[1]);
+});
+
+test('a native pan begun in an abandoned presentation cannot move or settle its replacement',()=>{
+ const f=mount({presentation:0,position:3});f.start();f.move(-100);
+ f.replace(Array.from({length:6},(_,i)=>({id:'other'+i})),1);f.move(-300);f.end(-300,-900);
+ assert.equal(f.shared[0].value,0);assert.deepEqual(f.reports,[]);
+ f.start();f.move(-200);f.end(-200,-900);assert.equal(f.reports.at(-1),1);
+});
+
+test('1000 category reversals keep a bounded set of slots and ignore queued obsolete paging',()=>{
+ const f=mount({presentation:0,deferJS:true});const rows=Array.from({length:12},(_,i)=>({id:'n'+i}));
+ for(let i=1;i<=1000;i++){f.start();f.move(-200);f.end(-200,-900);f.replace(rows,i);f.flushJS();assert.equal(f.shared[0].value,0);assert(f.tree.props.children.props.children[0].props.children[0].length<=6)}
+ assert.deepEqual(f.reports,[]);assert.deepEqual(f.directions,[]);
 });

@@ -1,4 +1,4 @@
-import {useEffect,useReducer,useRef,useState} from 'react';
+import {useEffect,useReducer,useRef,useState,useMemo} from 'react';
 import {Keyboard} from 'react-native';
 import {OnboardingController,initialOnboarding,interestOptions,preparationState,usablePreviewCount,TutorialDemo,type OnboardingStage} from './content/onboarding';
 import {LocalPhoto} from './content/onboardingPhoto';
@@ -17,7 +17,8 @@ export function useOnboarding(lib:ReturnType<typeof useLibrary>,reduced:boolean,
  const replay=controller?.replayIndex!==null&&controller?.replayIndex!==undefined;
  const active=!!controller&&(!state?.completed||replay),stage:OnboardingStage|undefined=replay?'tutorial':state?.stage;
  const revision=controller?.navigationRevision??0;
- const preparation=preparationState(usablePreviewCount(lib.getFeed('all')),lib.online,lib.loading,lib.availability.all??{phase:'idle'});
+ const preparation=useMemo(()=>preparationState(active?usablePreviewCount(lib.getFeed('all')):1,lib.online,lib.loading,lib.availability.all??{phase:'idle'}),[active,lib.cache,lib.online,lib.loading,lib.availability]);
+ const options=useMemo(()=>active?interestOptions(lib.registry,new Set(lib.cache.filter(a=>a.preview.length).map(a=>a.category))):[],[active,lib.registry,lib.cache]);
  const references=()=>controller?[controller.state.profile.photoUri,controller.state.draft.photoUri].filter((s):s is string=>!!s):[];
  useEffect(()=>{let alive=true;const uri=active?state?.draft.photoUri:state?.profile.photoUri;void photo.current.usable(uri).then(value=>{if(alive){setPhotoUri(value);if(uri&&!value)setPhotoError('Questa foto non è più disponibile. Puoi sceglierne un’altra o rimuoverla.');else setPhotoError('')}});return()=>{alive=false}},[state?.draft.photoUri,state?.profile.photoUri,active]);
  useEffect(()=>{if(durable.current)void cleanPhotos([durable.current.state.draft.photoUri,durable.current.state.profile.photoUri].filter((s):s is string=>!!s)).catch(()=>{})},[!!durable.current]);
@@ -42,7 +43,7 @@ export function useOnboarding(lib:ReturnType<typeof useLibrary>,reduced:boolean,
   reduced,appActive,photoPresentationRevision,motionEnabled:!reduced&&appActive&&active,
   tutorialIndex:replay?controller!.replayIndex!:state?.tutorialIndex??0,tutorialNavigationRevision:controller?.tutorialNavigationRevision??0,demo:demo.current,demoRevision,
   interactDemo:(action:(d:TutorialDemo)=>void)=>{demo.current.interact();action(demo.current);updateDemo()},
-  options:interestOptions(lib.registry,new Set(lib.cache.filter(a=>a.preview.length).map(a=>a.category))),preparation,navigate,presentPreparation:()=>{},updateDraft,pickPhoto,
+  options,preparation,navigate,presentPreparation:()=>{},updateDraft,pickPhoto,
   seekTutorial:(index:number)=>{if(controller&&!lib.onboardingError)void controller.seekTutorial(index).catch(()=>{})},
   toggleInterest:(id:string)=>{if(!controller||controller.busy)return;const ids=controller.draftValue.interests;updateDraft({interests:ids.includes(id)?ids.filter(v=>v!==id):[...ids,id]})},
   reportPhotoUnavailable:()=>{setPhotoUri(undefined);setPhotoError('Questa foto non è più disponibile. Puoi sceglierne un’altra o rimuoverla.')},

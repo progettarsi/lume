@@ -23,19 +23,14 @@ test('a detached reader return cannot cover the new page with an invisible touch
 });
 test('embedded reader contracts to the measured source without fading the whole reader',()=>{
  const demo=reader(true),normal=reader(false);
- for(const p of [1,.75,.3,0,.4,1]){demo.progress.value=p;const surface=demo.tree.props.children[0].props.style[1].read();assert.equal(surface.width,300+84*p);assert.equal(surface.height,250+582*p);assert.equal(surface.left,40*(1-p));assert.equal(surface.top,260*(1-p));assert.equal(surface.opacity,1)}
+ for(const p of [1,.75,.3,0,.4,1]){demo.progress.value=p;const surface=demo.tree.props.children[0].props.style[1].read();assert.equal(surface.width,300+84*p);assert.equal(surface.height,250+582*p);assert.equal(surface.transform[0].translateX,40*(1-p));assert.equal(surface.transform[1].translateY,260*(1-p));assert.equal(surface.opacity,1)}
  demo.progress.value=0;const surface=demo.tree.props.children[0],content=surface.props.children[0].props.style.read();assert.equal(content.opacity,0);assert.equal(content.transform[0].translateX,-24);
  const source=find(surface,n=>n.props?.style?.[0]?.width===300&&n.props?.style?.[0]?.height===250);assert.ok(source);assert.equal(source.props.style[1].read().opacity,1);assert.equal(source.props.style[0].width,300);
  demo.progress.value=1;assert.equal(source.props.style[1].read().opacity,0);assert.equal(surface.props.children[0].props.style.read().opacity,1);
  normal.progress.value=0;assert.equal(normal.tree.props.children[0].props.style[1].read().width,300);
 });
 
-test('reader double tap saves once, while distant taps and scroll gestures never save',()=>{
- const demo=reader(true);demo.time(1000);demo.tap();demo.time(1200);demo.tap();assert.equal(demo.saves(),1);
- demo.time(1300);demo.tap();assert.equal(demo.saves(),1);demo.time(1700);demo.tap();assert.equal(demo.saves(),1);
- demo.time(1800);demo.tap(100,100);assert.equal(demo.saves(),1);demo.drag();demo.time(1900);demo.tap(100,100);assert.equal(demo.saves(),1);
- demo.time(2000);demo.tap(100,100);assert.equal(demo.saves(),2);
-});
+test('reader taps and drags never save; bookmarks use the explicit control',()=>{const demo=reader(true);for(let i=0;i<20;i++){demo.time(i*50);demo.tap();demo.drag()}assert.equal(demo.saves(),0)});
 
 test('reader source and license failures are handled, and a successful retry clears the notice',async()=>{
  let fail=true;const notices=[],urls=[],demo=reader(false,'home',{onState:value=>notices.push(value),openURL:async url=>{urls.push(url);if(fail)throw Error('No browser')}});
@@ -53,3 +48,5 @@ test('tutorial row returns its title while withdrawing the preview before it hit
  demo.progress.value=1;assert.equal(body.props.style.read().opacity,1);
  assert.equal(preview(normal.tree).props.style,undefined);
 });
+
+test('shuffle never scales text during opening, reversal or closing',()=>{const demo=reader(false,'shuffle');for(const p of [0,.1,.5,1,.6,0]){demo.progress.value=p;const content=demo.tree.props.children[0].props.children[0].props.style.read();assert.equal(content.transform[2].scale,1)}});

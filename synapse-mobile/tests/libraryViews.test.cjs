@@ -34,3 +34,12 @@ test('reader/foreground/offline suspension never ranks the reserve; resuming obt
  for(let i=0;i<30;i++)assert.equal(reserveDemand(reserveContext(false,'all',pool,true)),undefined);
  assert.equal(calls,0);const active=reserveContext(true,'all',pool,false);assert.equal(calls,1);assert.equal(active.pool.length,1);assert.equal(reserveDemand(active),'all');
 });
+
+test('an unrelated category download does not invalidate a warm ordered category view',()=>{
+ let calls=0;const views=new LibraryViews(rows=>{calls++;return rows}),profile=emptyLearning(),served=new Set();
+ const science=article(1),nature=article(2),rows=[science,nature],first=views.reserve(rows,profile,served,0,'science');
+ const incoming={...article(4),title:'Nuova natura'},updated=[...rows,incoming];
+ assert.strictEqual(views.reserve(updated,profile,served,0,'science'),first);assert.equal(calls,1);
+ const revised={...science,preview:[text+' Altro testo.']};const changed=[revised,nature,incoming];
+ assert.notStrictEqual(views.reserve(changed,profile,served,0,'science'),first);assert.equal(calls,2);
+});
