@@ -23,7 +23,7 @@ import {useOnboarding} from './src/useOnboarding';
 import {OnboardingScreen} from './src/components/OnboardingScreen';
 import { CATEGORIES } from './src/content/categories';
 import { body,heading,light,dark,spring } from './src/theme';
-import { Button,Icon,Label,ThemeContext } from './src/components/Atoms';
+import { Button,HapticPressable,Icon,Label,ThemeContext } from './src/components/Atoms';
 import {useKeyboardLift} from './src/useKeyboardLift';
 import {ArticleList} from './src/components/ArticleList';
 import {useReturnRows} from './src/components/useReturnRows';
@@ -42,7 +42,7 @@ import {rankLocal,continuation,hasRevision} from './src/content/text';
 import {articleStatus,aiFailure,type ReaderStatus} from './src/content/readerStatus';
 import {captureRef,releaseCapture} from './src/captureTheme';
 import {ThemeReveal,type ThemeSnapshot} from './src/components/ThemeReveal';
-import type { Article,ThemeMode } from './src/content/types';
+import type { Article,Settings,ThemeMode } from './src/content/types';
 import {isDarkTheme} from './src/content/settings';
 import {GeminiIntegration,type GeminiConfigurationState} from './src/content/geminiIntegration';
 import {GeminiSettings} from './src/components/GeminiSettings';
@@ -60,7 +60,12 @@ function Synapse({fontsReady}:{fontsReady:boolean}){
   const [appActive,setAppActive]=useState(AppState.currentState==='active');
   const onboarding=useOnboarding(lib,reduced,appActive);
 
-  useLayoutEffect(()=>{haptics.configure(lib.ready&&appActive&&lib.settings.hapticsEnabled!==false);return()=>haptics.configure(false)},[lib.ready,appActive,lib.settings.hapticsEnabled]);
+  // Single gate for haptic enablement; configure() is idempotent, so unchanged values keep pending confirmations.
+  const hapticsAllowed=(enabled:boolean|undefined)=>lib.ready&&appActive&&enabled!==false;
+  useLayoutEffect(()=>{haptics.configure(hapticsAllowed(lib.settings.hapticsEnabled))},[lib.ready,appActive,lib.settings.hapticsEnabled]);
+  useEffect(()=>()=>haptics.configure(false),[]);
+  // Apply the preference before the toggle's own cue, so turning it on is felt immediately.
+  const updateSettings=(patch:Partial<Settings>)=>{if('hapticsEnabled' in patch)haptics.configure(hapticsAllowed(patch.hapticsEnabled));lib.updateSettings(patch)};
 
   const [editIdentity,setEditIdentity]=useState(false);
   const [settingsFocus,setSettingsFocus]=useState(0),[profileFocus,setProfileFocus]=useState(0);
@@ -250,7 +255,7 @@ function Synapse({fontsReady}:{fontsReady:boolean}){
       <ScreenLayer active={!!collection&&!searchOpen&&!readerOpen} style={[StyleSheet.absoluteFill,paper,collectionStyle]}>
         {displayCollection==='settings'?<PageKeyboard>
           <PageHeader title={settingsPage==='gemini'?'Gemini':settingsPage==='gallery'?'Design system':'Impostazioni'} top={top} active={collection==='settings'&&(settingsPage!=='main'||!settingsFocus)} backLabel={settingsPage==='main'?'Torna al profilo':'Torna alle impostazioni'} onBack={closeSettings}/>
-          <SettingsScreen focusRequest={settingsFocus} active={settingsPage==='main'} settings={lib.settings} gemini={geminiState} onTheme={mode=>void changeTheme(mode)} onUpdate={lib.updateSettings} onGemini={()=>setSettingsPage('gemini')} onGallery={()=>setSettingsPage('gallery')} onPreview={()=>onboarding.developmentPreview()} bottom={bottom}/>
+          <SettingsScreen focusRequest={settingsFocus} active={settingsPage==='main'} settings={lib.settings} gemini={geminiState} onTheme={mode=>void changeTheme(mode)} onUpdate={updateSettings} onGemini={()=>setSettingsPage('gemini')} onGallery={()=>setSettingsPage('gallery')} onPreview={()=>onboarding.developmentPreview()} bottom={bottom}/>
           {settingsPage==='gemini'&&<PageScroll bottom={bottom}>
             <GeminiSettings online={lib.online} onRetryConfiguration={()=>void gemini.current!.load()}
               state={geminiState}
@@ -279,7 +284,7 @@ function Synapse({fontsReady}:{fontsReady:boolean}){
       {!searchOpen&&collection!=='settings'&&<Dock selected={route} iconRevision={dockIconRevision} active={appActive&&!collection&&!onboarding.active&&!editIdentity} onNavigate={navigate} onSearch={()=>{setSearchOpen(true);input.current?.focus()}} bottom={bottom} availableWidth={width-32} disabled={readerOpen} closing={!!reader&&!readerOpen}/>}
       {reader&&<Reader key={reader.session} article={readerArticle!} aiMessage={aiStatus.id===reader.article.id?aiStatus.message:''} aiBusy={aiStatus.busy} onRetryAI={lib.settings.aiEnabled?retryAI:undefined} onRetryArticle={retryAI} notice={aiStatus.id===reader.article.id?aiStatus.notice:undefined} origin={reader.origin} open={readerOpen} width={width} height={height} top={top} bottom={bottom} size={lib.settings.size} saved={saved.has(reader.article.id)} onClose={close} onReopen={reopen} onClosed={closed} onReturnNear={returnNear} returnDetached={collectionReturn.changed||searchReturn.changed||reader.context!==`${route}:${collection}:${searchOpen}`||reader.origin.kind==='home'&&visibleArticle?.id!==reader.article.id} onSave={()=>save(reader.article)}/>}
       {snapshot&&<ThemeReveal key={snapshot.id} snapshot={snapshot} width={width} height={height} topInset={insets.top} onReady={()=>{if(snapshotRef.current?.id===snapshot.id){pendingThemeMode.current=null;lib.updateSettings({themeMode:snapshot.themeMode})}}} onDone={()=>finishTheme(snapshot)}/>}
-      {removedSaved.length>0&&collection==='saved'&&!reader&&<Animated.View entering={reduced?undefined:FadeInUp.duration(180)} exiting={reduced?undefined:FadeOutDown.duration(150)} accessibilityLiveRegion="polite" style={[styles.toast,{bottom:bottom+94,left:24,right:24,backgroundColor:palette.surface,borderRadius:18,flexDirection:'row',alignItems:'center',gap:8}]}><Label style={{flex:1,fontSize:14}}>{removedSaved.length===1?'Segnalibro rimosso':`${removedSaved.length} segnalibri rimossi`}</Label><Pressable accessibilityRole="button" accessibilityLabel="Annulla ultima rimozione dai salvati" onPress={undoSaved} style={{padding:12,minHeight:48}}><Label strong>Annulla</Label></Pressable><Pressable accessibilityRole="button" accessibilityLabel="Chiudi avviso di rimozione" onPress={()=>setRemovedSaved([])} style={{minWidth:48,minHeight:48,alignItems:'center',justifyContent:'center'}}><Icon name="close" size={18}/></Pressable></Animated.View>}
+      {removedSaved.length>0&&collection==='saved'&&!reader&&<Animated.View entering={reduced?undefined:FadeInUp.duration(180)} exiting={reduced?undefined:FadeOutDown.duration(150)} accessibilityLiveRegion="polite" style={[styles.toast,{bottom:bottom+94,left:24,right:24,backgroundColor:palette.surface,borderRadius:18,flexDirection:'row',alignItems:'center',gap:8}]}><Label style={{flex:1,fontSize:14}}>{removedSaved.length===1?'Segnalibro rimosso':`${removedSaved.length} segnalibri rimossi`}</Label><Pressable accessibilityRole="button" accessibilityLabel="Annulla ultima rimozione dai salvati" onPress={undoSaved} style={{padding:12,minHeight:48}}><Label strong>Annulla</Label></Pressable><HapticPressable accessibilityRole="button" accessibilityLabel="Chiudi avviso di rimozione" onPress={()=>setRemovedSaved([])} style={{minWidth:48,minHeight:48,alignItems:'center',justifyContent:'center'}}><Icon name="close" size={18}/></HapticPressable></Animated.View>}
       {!!toast&&<DismissibleNotice key={toast} reduced={reduced} closeColor={palette.paper} onDismiss={()=>setToast(current=>current===toast?'':current)} style={[styles.toast,{bottom:bottom+174,backgroundColor:palette.ink}]}><Label style={{color:palette.paper,fontSize:15,paddingRight:42,minHeight:48,textAlignVertical:'center'}}>{toast}</Label></DismissibleNotice>}
       </View>
   <ProfileEditorSheet ref={profileEditor} open={editIdentity} binding={onboarding} onClose={()=>setEditIdentity(false)} height={height} top={top} bottom={bottom} keyboard={keyboardLift} reduced={reduced||!appActive}/>

@@ -21,4 +21,6 @@ async function play(cue:HapticCue){
   else await ExpoHaptics.selectionAsync();
  }
 }
+/** Only Android 14+ plays the continuous reveal sequence; elsewhere the worklet skips the JS hop. */
+export const revealSupported=Platform.OS==='android'&&Number(Platform.Version)>=34;
 export const haptics=new HapticFeedback(play,()=>AppState.currentState==='active'&&Platform.OS!=='web');

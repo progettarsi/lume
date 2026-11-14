@@ -19,10 +19,10 @@ export class HapticFeedback {
   try{void this.play(cue).catch(()=>{})}catch{}
  }
  begin(key:string){
-  const ticket={},generation=this.generation,time=this.now(),eligible=this.enabled&&this.active();this.pending.set(key,ticket);
+  const ticket={},generation=this.generation,time=this.now();this.pending.set(key,ticket);
   return (cue?:HapticCue)=>{
    if(this.pending.get(key)!==ticket)return;this.pending.delete(key);
-   if(cue&&eligible&&generation===this.generation&&this.now()-time<=1500)this.emit(cue);
+   if(cue&&generation===this.generation&&this.now()-time<=1500)this.emit(cue);
   };
  }
 }

@@ -1,5 +1,5 @@
 import {memo,useEffect,useRef,useCallback} from 'react';
-import {haptics} from '../haptics';
+import {haptics,revealSupported} from '../haptics';
 import {revealHapticStep} from '../content/revealHaptics';
 import {View,StyleSheet} from 'react-native';
 import Animated,{useSharedValue,useAnimatedStyle,useAnimatedReaction,withTiming,cancelAnimation,Easing,runOnUI,runOnJS,type SharedValue} from 'react-native-reanimated';
@@ -11,10 +11,12 @@ const EDGE=36;
 type Props={open:boolean;paragraphs:string[];size:number;scroll:SharedValue<number>;viewport:SharedValue<number>;scrolled:SharedValue<boolean>;bodyY:SharedValue<number>;expandedY:SharedValue<number>;progress:SharedValue<number>;active:SharedValue<boolean>;reduced:boolean};
 export const ReaderReveal=memo(function ReaderReveal({open,paragraphs,size,scroll,viewport,scrolled,bodyY,expandedY,progress,active,reduced}:Props){
   const {palette}=useTheme(),height=useSharedValue(0),sweep=useSharedValue(0),frontier=useSharedValue(0),paintReady=useSharedValue(false);
-  const latest=useRef({open,reduced}),alive=useRef(true),deadline=useRef(Date.now()+2600);
-  latest.current={open,reduced};
-  const pulseAt=useSharedValue(0),hapticFinished=useSharedValue(false),hapticDeadline=deadline.current;
-  const signalReveal=useCallback(()=>{if(alive.current&&latest.current.open&&!latest.current.reduced&&!scrolled.value&&Date.now()<=deadline.current)haptics.emit('reveal')},[scrolled]);
+  // The worklet owns visibility, scroll, reduced-motion and deadline gates; HapticFeedback owns the pulse interval.
+  const latestOpen=useRef(open),alive=useRef(true),deadline=useRef(0);
+  if(!deadline.current)deadline.current=Date.now()+2600;
+  latestOpen.current=open;
+  const hapticFinished=useSharedValue(false),hapticDeadline=deadline.current;
+  const signalReveal=useCallback(()=>{if(alive.current&&latestOpen.current)haptics.emit('reveal')},[]);
   useAnimatedReaction(()=>({height:height.value,ready:active.value&&progress.value>=.82}), (next,previous)=>{
     if(!next.ready||next.height<=0)return;
     paintReady.value=true;
@@ -30,8 +32,8 @@ export const ReaderReveal=memo(function ReaderReveal({open,paragraphs,size,scrol
   },[reduced,size]);
   useAnimatedReaction(()=>frontier.value,(next,previous)=>{
     const time=Date.now(),visibleEnd=scroll.value+viewport.value-(16+bodyY.value+expandedY.value);
-    const eligible=!hapticFinished.value&&!reduced&&active.value&&progress.value>=.82&&!scrolled.value&&time<=hapticDeadline;
-    if(revealHapticStep(previous??-1,next,height.value,visibleEnd,eligible)&&time-pulseAt.value>=70){pulseAt.value=time;runOnJS(signalReveal)()}
+    const eligible=revealSupported&&!hapticFinished.value&&!reduced&&active.value&&progress.value>=.82&&!scrolled.value&&time<=hapticDeadline;
+    if(revealHapticStep(previous??-1,next,height.value,visibleEnd,eligible))runOnJS(signalReveal)()
     if(height.value>0&&next>=height.value)hapticFinished.value=true;
   },[reduced,hapticDeadline,signalReveal]);
   useEffect(()=>{alive.current=true;return()=>{alive.current=false;cancelAnimation(sweep)}},[]);

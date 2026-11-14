@@ -1,6 +1,6 @@
-# Feedback aptico — prova 0.2.4b, 17 ottobre 2026
+# Feedback aptico — Lume v0.2.5
 
-APK richiesto: `lume-haptic-0.2.4b.apk`. La versione Android resta 0.2.4/code26: il suffisso identifica la seconda build di prova, senza pubblicare una nuova release.
+Rilasciato in v0.2.5 (code 27, [note di rilascio](RELEASE-v0.2.5.md)). Le sezioni «Verifica della build b» e «Prova manuale» documentano la build di prova `lume-haptic-0.2.4b.apk` (0.2.4/code26) del 17 ottobre 2026 che ha preceduto il rilascio.
 
 ## Interazioni
 

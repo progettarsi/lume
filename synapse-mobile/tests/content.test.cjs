@@ -8,7 +8,7 @@ const page=(id,title='Il cielo',index=1)=>({pageid:id,title,index,extract:intro+
 const mock=pages=>async()=>new Response(JSON.stringify({query:{pages}}));
 const article=(id,extra={})=>({id,title:id,category:'science',paragraphs:[intro],preview:[intro],source:'https://it.wikipedia.org',fetchedAt:Number(id)||1,...extra});
 test('native requests identify Lume instead of the blocked generic okhttp agent',async()=>{
- const wiki=new Wikipedia(async(url,options)=>{assert(options.headers['User-Agent'].startsWith('Lume/'+require('../package.json').version+' '));assert.match(options.headers['Api-User-Agent'],/^Lume\//);assert.equal(options.headers.Accept,'application/json');assert.equal(new URL(url).protocol,'https:');return new Response(JSON.stringify({query:{pages:[page(1)]}}))});
+ const wiki=new Wikipedia(async(url,options)=>{assert(options.headers['User-Agent'].startsWith('Lume/'+require('../package.json').version+' '));assert(options.headers['Api-User-Agent'].startsWith('Lume/'+require('../package.json').version+' '));assert.equal(options.headers.Accept,'application/json');assert.equal(new URL(url).protocol,'https:');return new Response(JSON.stringify({query:{pages:[page(1)]}}))});
  assert.equal((await wiki.search('cielo')).length,1);
 });
 test('HTTP refusal retains its status rather than masquerading as an offline connection',async()=>{

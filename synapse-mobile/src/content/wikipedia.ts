@@ -9,6 +9,8 @@ import {discoveryCandidates} from './editorial';
 import {classifyLocal} from './classification';
 declare const __DEV__:boolean;
 const ENDPOINT='https://it.wikipedia.org/w/api.php';
+/** Single source for the release version sent to Wikimedia; tests check it against package.json. */
+const CLIENT_AGENT='Lume/0.2.5 (personal educational reader; app.synapse.reader)';
 type Page={pageid:number;title:string;extract?:string;fullurl?:string;revisions?:{revid:number}[];missing?:boolean;pageprops?:Record<string,string>;categories?:{title:string}[]};
 type Response={query?:{pages?:Page[]};parse?:{pageid?:number;title?:string;text:string;revid?:number;properties?:{name:string;value:string}[]|Record<string,string>};continue?:Record<string,string>;error?:{code:string;info:string}};
 export class WikiError extends Error { constructor(message:string,public kind:'network'|'limit'|'content'='network',public retryAfterMs=0,public recoverable=true,public status?:number){super(message)} }
@@ -32,7 +34,7 @@ export class Wikipedia {
       const timeout=setTimeout(()=>controller.abort(),10000);
       let retrySeconds=0;
       try{
-      const response=await this.fetcher(url.toString(),{signal:controller.signal,headers:{'User-Agent':'Lume/0.2.5 (personal educational reader; app.synapse.reader) ReactNative/0.86','Api-User-Agent':'Lume/0.2.5 (personal educational reader; app.synapse.reader)','Accept':'application/json'}});
+      const response=await this.fetcher(url.toString(),{signal:controller.signal,headers:{'User-Agent':CLIENT_AGENT+' ReactNative/0.86','Api-User-Agent':CLIENT_AGENT,'Accept':'application/json'}});
       if(response.status===429||response.status===503){
         const delay=retryDelay(response.headers.get('Retry-After'));
         if(response.status===429){this.serviceAfter=Date.now()+delay;this.serviceKind='limit';throw new WikiError('Il servizio richiede una pausa. Riprova tra poco.','limit',delay)}

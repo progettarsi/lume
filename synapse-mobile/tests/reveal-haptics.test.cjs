@@ -17,7 +17,7 @@ function fixture({open=true,reduced=false}={}){
   if(id==='react-native-reanimated')return {__esModule:true,default:{View:'AnimatedView'},useSharedValue:shared,useAnimatedStyle:()=>({}),useAnimatedReaction:(read,fn)=>reactions.push(fn),runOnJS:fn=>fn,cancelAnimation:()=>{},Easing:{linear:()=>{}}};
   if(id==='expo-linear-gradient')return {LinearGradient:'Gradient'};
   if(id==='./Atoms')return {useTheme:()=>({palette:{paper:'#fff'}}),Label:'Label'};
-  if(id==='../haptics')return {haptics:{emit:cue=>cues.push(cue)}};
+  if(id==='../haptics')return {revealSupported:true,haptics:{emit:cue=>cues.push(cue)}};
   if(id==='../content/revealHaptics')return {revealHapticStep};
   if(id==='../content/reveal')return require('../.test-build/reveal');
   throw Error(id);

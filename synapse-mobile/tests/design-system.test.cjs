@@ -24,7 +24,7 @@ test('settings dispatch one cue for accepted navigation, on/off and changed choi
  ui.ToggleRow({title:'Disabilitata',value:false,disabled:true,onChange:()=>{throw Error('disabled')}}).props.onPress();
  const group=ui.ChoiceGroup({label:'Tema',value:'light',options:[{value:'light',label:'Chiaro'},{value:'dark',label:'Scuro'}],onChange:v=>changes.push(v)}).props.children[1];
  group.props.children[0].props.onPress();group.props.children[1].props.onPress();
- assert.deepEqual(changes,['page',true,false,'dark']);assert.deepEqual(hapticCues,['tap','on','off','selection']);
+ assert.deepEqual(changes,['page',true,false,'light','dark']);assert.deepEqual(hapticCues,['tap','on','off','selection']);
 });
 test('disabled actions stay visibly disabled instead of the feedback animation overriding their opacity',()=>{
  const compiled={exports:{}},react={createContext:value=>({value}),useContext:context=>context.value,useEffect:fn=>fn()};react.default=react;

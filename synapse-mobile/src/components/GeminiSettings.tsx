@@ -1,7 +1,7 @@
 import {haptics} from '../haptics';
 import React,{useEffect,useState} from 'react';
 import {Alert,Linking,Pressable,View} from 'react-native';
-import {Label,Icon,useTheme} from './Atoms';
+import {Label,Icon,HapticPressable,useTheme} from './Atoms';
 import {Action,Field,Section,Surface,ToggleRow} from '../design-system/components';
 import {typography} from '../theme';
 import type {GeminiConfigurationState} from '../content/geminiIntegration';
@@ -13,7 +13,7 @@ export function GeminiSettings({state,aiKey,keyEdited,onChangeKey,onSaveKey,onRe
  const [guide,setGuide]=useState(false),[privacy,setPrivacy]=useState(false),[replace,setReplace]=useState(false),[linkError,setLinkError]=useState('');
  useEffect(()=>{if(!keyEdited)setReplace(false)},[keyEdited]);
  const open=(url:string)=>{setLinkError('');void Linking.openURL(url).catch(()=>setLinkError('Impossibile aprire il collegamento. Controlla che sia disponibile un browser.'))};
- const link=(title:string,url:string)=><Pressable accessibilityRole="link" accessibilityLabel={title} onPress={()=>open(url)} style={{minHeight:48,justifyContent:'center'}}><Label strong style={{color:palette.accent,fontSize:15}}>{title} ↗</Label></Pressable>;
+ const link=(title:string,url:string)=><HapticPressable accessibilityRole="link" accessibilityLabel={title} onPress={()=>open(url)} style={{minHeight:48,justifyContent:'center'}}><Label strong style={{color:palette.accent,fontSize:15}}>{title} ↗</Label></HapticPressable>;
  const disclosure=(title:string,value:boolean,set:(value:boolean)=>void)=><Pressable accessibilityRole="button" accessibilityLabel={title} accessibilityState={{expanded:value}} onPress={()=>{set(!value);haptics.emit('selection')}} style={{minHeight:56,flexDirection:'row',alignItems:'center',gap:12}}><Label strong style={{flex:1,fontSize:16}}>{title}</Label><Icon name={value?'chevron-up':'chevron-down'} size={20}/></Pressable>;
  return <View>
   <Label muted style={[typography.body,{marginBottom:24}]}>Rielabora i testi e aiuta a classificare gli articoli. È facoltativo: Lume funziona anche senza Gemini.</Label>
