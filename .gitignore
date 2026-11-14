@@ -1,30 +1,8 @@
-# Repository Synapse: deny unrelated workspace content by default.
+# Repository Lume: deny unrelated workspace content by default.
 /*
 !/.gitignore
 !/AGENTS.md
-!/synapse-mobile/
-!/synapse/
-
-# Reference prototype: source, required assets and safe configuration only.
-/synapse/*
-!/synapse/.gitignore
-!/synapse/.npmrc
-!/synapse/AGENTS.md
-!/synapse/index.html
-!/synapse/mobile-runtime.lock.json
-!/synapse/package.json
-!/synapse/package-lock.json
-!/synapse/pnpm-lock.yaml
-!/synapse/playwright.config.ts
-!/synapse/tsconfig.json
-!/synapse/vite.config.ts
-!/synapse/selected-design.png
-!/synapse/src/
-!/synapse/public/
-!/synapse/scripts/
-!/synapse/tests/
-!/synapse/worker/
-!/synapse/.openai/
+!/lume/
 
 # Dependencies, portable tools, caches and generated output.
 node_modules/
@@ -45,7 +23,7 @@ coverage/
 test-results/
 playwright-report/
 *.log
-/synapse-mobile/tools/agent-orchestration/.runtime/
+/lume/tools/agent-orchestration/.runtime/
 *.apk
 *.aab
 *.ipa
@@ -55,8 +33,8 @@ playwright-report/
 *.zip
 
 # Historical QA contains snapshots, device output and local test data.
-/synapse-mobile/releases/
-/synapse-mobile/scripts/deliver-network-build.ps1
+/lume/releases/
+/lume/scripts/deliver-network-build.ps1
 
 # Secrets, signing material and machine-specific configuration.
 .credentials/
@@ -92,27 +70,27 @@ Thumbs.db
 .vscode/
 
 # Local inventory and QA scripts tied to a personal device.
-/synapse-mobile/docs/RICERCA-OPPORTUNITA-2026-10-10-inventario.json
-/synapse-mobile/scripts/qa/capture-performance.ps1
-/synapse-mobile/scripts/qa/capture-saved-motion.ps1
-/synapse-mobile/scripts/qa/capture-saved.ps1
-/synapse-mobile/scripts/qa/capture-shuffle-return.ps1
-/synapse-mobile/scripts/qa/final-device.ps1
-/synapse-mobile/scripts/qa/measure-navigation.ps1
-/synapse-mobile/scripts/qa/verify-saved-motion.ps1
+/lume/docs/RICERCA-OPPORTUNITA-2026-10-10-inventario.json
+/lume/scripts/qa/capture-performance.ps1
+/lume/scripts/qa/capture-saved-motion.ps1
+/lume/scripts/qa/capture-saved.ps1
+/lume/scripts/qa/capture-shuffle-return.ps1
+/lume/scripts/qa/final-device.ps1
+/lume/scripts/qa/measure-navigation.ps1
+/lume/scripts/qa/verify-saved-motion.ps1
 
 # Local exports for the Lume design-system verification.
-/synapse-mobile/.design-preview/
-/synapse-mobile/.design-android-export/
+/lume/.design-preview/
+/lume/.design-android-export/
 
 # Local development exports and task checkpoints.
-/synapse-mobile/.theme-export/
-/synapse-mobile/.discovery-export/
-/synapse-mobile/docs/DISCOVERY-PROGRESS.md
+/lume/.theme-export/
+/lume/.discovery-export/
+/lume/docs/DISCOVERY-PROGRESS.md
 
 # Local source dumps and personal-device capture helpers.
-/synapse-mobile/codice-lume.txt
-/synapse-mobile/synapse-mobile-src-only.txt
-/synapse-mobile/scripts/qa/capture-profile-c02.ps1
-/synapse-mobile/scripts/qa/capture-profile-frames.py
-/synapse-mobile/scripts/qa/record-profile-motion.py
+/lume/codice-lume.txt
+/lume/synapse-mobile-src-only.txt
+/lume/scripts/qa/capture-profile-c02.ps1
+/lume/scripts/qa/capture-profile-frames.py
+/lume/scripts/qa/record-profile-motion.py

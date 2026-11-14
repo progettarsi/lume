@@ -1,0 +1,56 @@
+{
+  "expo": {
+    "name": "Lume",
+    "slug": "lume",
+    "version": "0.2.5",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "scheme": "lume",
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "app.synapse.reader"
+    },
+    "android": {
+      "package": "app.synapse.reader",
+      "allowBackup": false,
+      "blockedPermissions": [
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.SYSTEM_ALERT_WINDOW",
+        "android.permission.USE_BIOMETRIC",
+        "android.permission.USE_FINGERPRINT",
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.READ_MEDIA_IMAGES",
+        "android.permission.READ_MEDIA_VIDEO"
+      ],
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png",
+        "backgroundColor": "#F7F1E3"
+      },
+      "softwareKeyboardLayoutMode": "resize",
+      "predictiveBackGestureEnabled": true,
+      "versionCode": 27
+    },
+    "plugins": [
+      "expo-sqlite",
+      "expo-font",
+      "expo-secure-store",
+      "./plugins/withLocalSigning",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Scegli una foto da conservare solo su questo dispositivo.",
+          "cameraPermission": false,
+          "microphonePermission": false
+        }
+      ]
+    ],
+    "web": {
+      "bundler": "metro",
+      "favicon": "./assets/icon.png"
+    }
+  }
+}

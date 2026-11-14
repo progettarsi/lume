@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "projectId": "lume",
+  "readPaths": [
+    "lume/src",
+    "lume/tests",
+    "lume/docs",
+    "lume/AGENTS.md"
+  ],
+  "writePaths": [
+    "lume/src/components",
+    "lume/src/content/onboarding.ts",
+    "lume/src/content/onboardingLayout.ts",
+    "lume/src/content/onboardingBrand.ts",
+    "lume/tests",
+    "lume/docs"
+  ],
+  "protectedPaths": [
+    "lume/src/components/Feed.tsx",
+    "lume/src/content/personalization.ts",
+    "lume/src/content/cache.ts",
+    "lume/src/content/wikipedia.ts",
+    "lume/src/content/categoryMigration.ts",
+    "lume/src/content/recommendations.ts",
+    "lume/src/content/reserve.ts",
+    "lume/src/content/geminiIntegration.ts"
+  ]
+}
