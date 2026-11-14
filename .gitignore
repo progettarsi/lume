@@ -1,7 +1,6 @@
 # Repository Synapse: deny unrelated workspace content by default.
 /*
 !/.gitignore
-!/GIT-COLLABORATION.md
 !/AGENTS.md
 !/synapse-mobile/
 !/synapse/

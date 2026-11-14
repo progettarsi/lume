@@ -1,6 +1,6 @@
 const {test}=require('node:test'),assert=require('node:assert/strict');
 const R=require('../.test-build/recommendations'),{refreshFuture,reserveDemand}=require('../.test-build/reserve');
-const {article,rows,events,scenarios,rng}=require('../scripts/qa/personalization-corpus.cjs');
+const {article,rows,events,scenarios,rng}=require('./helpers/personalization-corpus.cjs');
 const profile=es=>es.reduce((p,e)=>R.learn(p,e.article,e.kind,1000),R.emptyLearning());
 const order=(p,seed=1,rs=rows)=>R.rankRecommendations(rs,p,rng(seed)).slice(0,10),count=(xs,c)=>xs.filter(a=>a.category===c).length;
 test('migration rebuilds mixed v1/v2 aggregates from reliable saved and visited identities without deleting history',()=>{

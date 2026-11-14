@@ -41,7 +41,7 @@ Prossimo passo preciso: acquisire qa-cold dopo installazione, Save3/Undo/riavvio
 
 ## Confronto riproducibile e parametri finali
 
-`node node_modules/typescript/bin/tsc -p tsconfig.test.json`, poi `node scripts/qa/compare-personalization.cjs` e `node scripts/qa/compare-real-personalization.cjs`. Baseline compilata congelata nella cartella QA. Il caso cambio tema parte da20salvataggi dell'interesse precedente. Coda precedente significa una riserva precaricata prima dei nuovi eventi: il vecchio codice non la riordinava. Non confondere quel difetto con il ranking puro, che già reagiva ai salvataggi.
+Il corpus sintetico è in `tests/helpers/personalization-corpus.cjs` ed è verificato da `pnpm test` (`tests/personalization.test.cjs`); gli script di confronto originali restano nella cronologia Git. Baseline compilata congelata nella cartella QA. Il caso cambio tema parte da20salvataggi dell'interesse precedente. Coda precedente significa una riserva precaricata prima dei nuovi eventi: il vecchio codice non la riordinava. Non confondere quel difetto con il ranking puro, che già reagiva ai salvataggi.
 
 | Scenario (20semi, media nei primi10) | Ranking v2 ricalcolato: tema nuovo | Coda v2 già pronta: tema nuovo | Ranking v3: tema nuovo | Riscontro |
 |---|---:|---:|---:|---|

@@ -1,3 +1,0 @@
-- Feedback aptico per pulsanti, navigazione, categorie e salvataggi.
-- Microvibrazioni durante la comparsa del testo.
-- Aptica disattivabile dalle impostazioni, senza vibrazioni duplicate.

@@ -1,7 +1,7 @@
 // Offline normalization of the supplied, closed M/C Figma outlines. The originals
 // are unchanged. Equal angular samples and winding make interpolation compatible.
 const fs=require('node:fs'),path=require('node:path');
-const root=path.resolve(__dirname,'../..'),names=['button-identity','button-interests','cookie-preparation'];
+const root=path.resolve(__dirname,'..'),names=['button-identity','button-interests','cookie-preparation'];
 function outline(name){
  const svg=fs.readFileSync(path.join(root,'assets/onboarding',name+'-1.svg'),'utf8'),box=svg.match(/viewBox="([^"]+)"/)[1].split(' ').map(Number),d=svg.match(/id="shape" d="([^"]+)"/)[1];
  const tokens=d.match(/[MCZ]|[-+]?(?:\d*\.)?\d+(?:e[-+]?\d+)?/ig);let i=0,last,polygon=[];
@@ -16,4 +16,4 @@ function outline(name){
  }return points;
 }
 const shapes=Object.fromEntries(names.map(n=>[n,outline(n)]));
-fs.writeFileSync(path.join(root,'src/content/onboardingShapes.ts'),'// Generated from unchanged local SVG outlines by scripts/qa/normalize-onboarding-shapes.cjs.\nexport const ORGANIC_POINTS='+JSON.stringify(shapes)+' as const;\n');
+fs.writeFileSync(path.join(root,'src/content/onboardingShapes.ts'),'// Generated from unchanged local SVG outlines by scripts/normalize-onboarding-shapes.cjs.\nexport const ORGANIC_POINTS='+JSON.stringify(shapes)+' as const;\n');

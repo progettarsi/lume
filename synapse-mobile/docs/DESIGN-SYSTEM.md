@@ -85,11 +85,9 @@ Non introdurre attese che bloccano l'input. Movimenti ridotti devono raggiungere
 
 ## Sviluppo e verifica
 
-La galleria è accessibile soltanto in sviluppo da Impostazioni → Sviluppo. Usa stato locale. La fixture `scripts/qa/DesignSystemHarness.tsx` contiene confronti, nomi lunghi e stati Gemini simulati; non importa storage o rete. `scripts/qa/build-design-system.ps1` produce un pacchetto separato e ripristina sempre i file di ingresso e l'identità di produzione.
+La galleria è accessibile soltanto in sviluppo da Impostazioni → Sviluppo. Usa stato locale.
 
-`scripts/build-design-system.ps1` produce invece l'APK di produzione senza cambiare applicationId o versione. I due script vanno eseguiti in sequenza: condividono la directory di build Android.
-
-Verifiche e limiti effettivamente osservati sono riportati in `DESIGN-SYSTEM-VERIFICATION.md`; non confondere typecheck/export con installazione, TalkBack o verifica dei gesti sul telefono.
+`scripts/build-release.ps1` produce l'APK di produzione senza cambiare applicationId o versione. Non confondere typecheck/export con installazione, TalkBack o verifica dei gesti sul telefono.
 
 ## Icone e movimento mirato
 
